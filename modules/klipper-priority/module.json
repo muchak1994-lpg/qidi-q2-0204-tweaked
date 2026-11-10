@@ -1,0 +1,19 @@
+{
+ "id": "klipper-priority",
+ "order": 119,
+ "title": "Klipper gets the CPU first (Nice=-10)",
+ "files": {
+  "/etc/systemd/system/klipper.service.d/q2-klipper-priority.conf": {
+   "source": "files/q2-klipper-priority.conf"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ]
+ ],
+ "restart": [
+  "klipper"
+ ]
+}

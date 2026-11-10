@@ -1,0 +1,20 @@
+{
+ "id": "external-filament-load-finish",
+ "order": 17,
+ "title": "External filament load: turn fan and heater off when done",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "        M400\n        SET_PRINT_MAIN_STATUS MAIN_STATUS=ready\n",
+     "        M400\n        M106 S0\n        M104 S0\n        SET_PRINT_MAIN_STATUS MAIN_STATUS=ready\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

@@ -1,0 +1,31 @@
+{
+ "id": "serialqueue-fixes",
+ "order": 4,
+ "title": "Serial queue: close pipes and clean up on start-up errors",
+ "files": {
+  "/home/qidi/klipper/klippy/chelper/serialqueue.c": {
+   "stock_sha256": "f55ddc3bf58d0696f0c36dafb52f3cc997f00e105737c14e0bacdde83256abce",
+   "edits": [
+    [
+     "\r\n#include <linux/can.h> // // struct can_frame\r\n",
+     "\r\n#include <errno.h> // errno\r\n#include <linux/can.h> // // struct can_frame\r\n"
+    ],
+    [
+     "    if (ret)\r\n        goto fail;\r\n    ret = pthread_cond_init(&sq->cond, NULL);\r\n    if (ret)\r\n        goto fail;\r\n    ret = pthread_mutex_init(&sq->fast_reader_dispatch_lock, NULL);\r\n    if (ret)\r\n        goto fail;\r\n    ret = pthread_create(&sq->tid, NULL, background_thread, sq);\r\n    if (ret)\r\n        goto fail;\r\n\r\n",
+     "    if (ret)\r\n        goto fail_queues;\r\n    ret = pthread_cond_init(&sq->cond, NULL);\r\n    if (ret)\r\n        goto fail_lock;\r\n    ret = pthread_mutex_init(&sq->fast_reader_dispatch_lock, NULL);\r\n    if (ret)\r\n        goto fail_cond;\r\n    ret = pthread_create(&sq->tid, NULL, background_thread, sq);\r\n    if (ret)\r\n        goto fail_dispatch_lock;\r\n\r\n"
+    ],
+    [
+     "\r\nfail:\r\n    report_errno(\"init\", ret);\r\n    return NULL;\r\n",
+     "\r\nfail_dispatch_lock:\r\n    pthread_mutex_destroy(&sq->fast_reader_dispatch_lock);\r\nfail_cond:\r\n    pthread_cond_destroy(&sq->cond);\r\nfail_lock:\r\n    pthread_mutex_destroy(&sq->lock);\r\nfail_queues:\r\n    message_queue_free(&sq->old_sent);\r\n    message_queue_free(&sq->old_receive);\r\n    pollreactor_free(sq->pr);\r\n    close(sq->pipe_fds[0]);\r\n    close(sq->pipe_fds[1]);\r\nfail:\r\n    // pthread functions return an error number without setting errno.\r\n    if (ret > 0)\r\n        errno = ret;\r\n    report_errno(\"init\", ret);\r\n    free(sq);\r\n    return NULL;\r\n"
+    ],
+    [
+     "    pollreactor_free(sq->pr);\r\n    free(sq);\r\n",
+     "    pollreactor_free(sq->pr);\r\n    close(sq->pipe_fds[0]);\r\n    close(sq->pipe_fds[1]);\r\n    free(sq);\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

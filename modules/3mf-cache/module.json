@@ -1,0 +1,47 @@
+{
+ "id": "3mf-cache",
+ "order": 26,
+ "title": "3MF files: thumbnails and metadata cached once per file",
+ "files": {
+  "/home/qidi/moonraker/moonraker/components/file_manager/file_manager.py": {
+   "stock_sha256": "b0c26fdb2930911ff3c018f3cd68380bbf74682a64049a39a004b66e19d27302",
+   "edits": [
+    [
+     "            gcpath = pathlib.Path(self.file_paths[\"gcodes\"]).joinpath(requested_file)\r\n            if not gcpath.is_file():\r\n",
+     "            gcpath = pathlib.Path(self.file_paths[\"gcodes\"]).joinpath(requested_file)\r\n            if gcpath.suffix.lower() == \".3mf\":\r\n                root = pathlib.Path(self.file_paths[\"gcodes\"])\r\n                if not gcpath.resolve().is_relative_to(root.resolve()):\r\n                    raise self.server.error(\"3MF rescan path is outside the gcodes root\", 403)\r\n                self.check_reserved_path(gcpath, False)\r\n                if not gcpath.is_file():\r\n                    raise self.server.error(f\"File '{requested_file}' does not exist\", 404)\r\n                requested_file = os.path.relpath(gcpath, root)\r\n                path_info = self.get_path_info(gcpath, \"gcodes\")\r\n                path_info['_3mf_path'] = str(gcpath)\r\n                metadata = await self.gcode_metadata.rescan_3mf_metadata(requested_file, path_info)\r\n                metadata['filename'] = requested_file\r\n                return metadata\r\n            if not gcpath.is_file():\r\n"
+    ],
+    [
+     "\r\n    def _has_valid_data(self,\r\n                        fname: str,\r\n                        path_info: Dict[str, Any]\r\n                        ) -> bool:\r\n        if path_info.get('ufp_path', None) is not None:\r\n            # UFP files always need processing\r\n            return False\r\n        if path_info.get('_3mf_path', None) is not None:\r\n            return False\r\n        mdata: Dict[str, Any]\r\n        mdata = self.metadata.get(fname, {'size': \"\", 'modified': 0})\r\n        for field in ['size', 'modified']:\r\n            if mdata[field] != path_info.get(field, None):\r\n                return False\r\n        return True\r\n\r\n",
+     "\r\n    def _tltg_3mf_extractor_stamp(self):\r\n        # Detect extractor replacement as well as edits, without rereading it per archive.\r\n        try:\r\n            st = os.stat(METADATA_SCRIPT)\r\n        except OSError:\r\n            return None\r\n        return [st.st_mtime_ns, st.st_ctime_ns, st.st_size, self.enable_object_proc]\r\n\r\n    def _has_valid_data(self, fname, path_info):\r\n        if path_info.get('ufp_path') is not None or path_info.get('_tltg_force_rescan'):\r\n            return False\r\n        mdata = self.metadata.get(fname, {})\r\n        if path_info.get('_3mf_path') is not None:\r\n            stamp = self._tltg_3mf_extractor_stamp()\r\n            if stamp is None or mdata.get('tltg_3mf_extractor') != stamp:\r\n                return False\r\n        return all(mdata.get(field) == path_info.get(field) and field in mdata\r\n                   for field in ('size', 'modified'))\r\n\r\n"
+    ],
+    [
+     "        mevt = asyncio.Event()\r\n        ext = os.path.splitext(fname)[1]\r\n        if (\r\n",
+     "        mevt = asyncio.Event()\r\n        ext = os.path.splitext(fname)[1].lower()\r\n        if (\r\n"
+    ],
+    [
+     "\r\n    async def _process_3mf_metadata_update(self) -> None:\r\n        while self.pending_requests:\r\n            fname, (path_info, mevt) = \\\r\n                list(self.pending_requests.items())[0]\r\n            ufp_path: Optional[str] = path_info.get('ufp_path', None)\r\n            _3mf_path: Optional[str] = path_info.get('_3mf_path', None)\r\n            retries = 3\r\n            while retries:\r\n                try:\r\n                    await self._run_extract_metadata(fname, ufp_path, _3mf_path)\r\n                except Exception:\r\n                    logging.exception(\"Error running extract_metadata.py\")\r\n                    retries -= 1\r\n                else:\r\n                    break\r\n            self.pending_requests.pop(fname, None)\r\n            mevt.set()\r\n        self.busy = False\r\n\r\n    def parse_3mf_thumbnail(self,\r\n                            fname: str,\r\n                            path_info: Dict[str, Any]\r\n                            ) -> asyncio.Event:\r\n        if fname in self.pending_requests:\r\n            return self.pending_requests[fname][1]\r\n        mevt = asyncio.Event()\r\n        # ext = os.path.splitext(fname)[1]\r\n        self.pending_requests[fname] = (path_info, mevt)\r\n        if self.busy:\r\n            return mevt\r\n        self.busy = True\r\n        event_loop = self.server.get_event_loop()\r\n        event_loop.register_callback(self._process_3mf_metadata_update)\r\n        return mevt\r\n\r\n",
+     "\r\n\r\n    def parse_3mf_thumbnail(self, fname, path_info):\r\n        # Uploads and filesystem observation share the same cache and queue worker.\r\n        return self.parse_metadata(fname, path_info)\r\n\r\n    async def rescan_3mf_metadata(self, fname, path_info):\r\n        # Join pending work rather than running a second extractor for the same archive.\r\n        if fname in self.pending_requests:\r\n            request, event = self.pending_requests[fname]\r\n            request['_tltg_force_rescan'] = True\r\n        else:\r\n            request = dict(path_info, _tltg_force_rescan=True)\r\n            event = self.parse_3mf_thumbnail(fname, request)\r\n        await event.wait()\r\n        metadata = self.get(fname)\r\n        if not request.get('_tltg_extraction_succeeded') or metadata is None:\r\n            raise self.server.error(f\"Failed to parse metadata for file '{fname}'\", 500)\r\n        return metadata\r\n\r\n"
+    ],
+    [
+     "            fname, (path_info, mevt) = \\\r\n                list(self.pending_requests.items())[0]\r\n            if self._has_valid_data(fname, path_info):\r\n                mevt.set()\r\n",
+     "            fname, (path_info, mevt) = \\\r\n                next(iter(self.pending_requests.items()))\r\n            if self._has_valid_data(fname, path_info):\r\n                self.pending_requests.pop(fname, None)\r\n                mevt.set()\r\n"
+    ],
+    [
+     "                else:\r\n                    break\r\n            else:\r\n                if ufp_path is None:\r\n                    self.metadata[fname] = {\r\n",
+     "                else:\r\n                    path_info['_tltg_extraction_succeeded'] = True\r\n                    break\r\n            else:\r\n                if ufp_path is None and not path_info.get('_tltg_force_rescan'):\r\n                    self.metadata[fname] = {\r\n"
+    ],
+    [
+     "                                    ) -> None:\r\n        # Escape single quotes in the file name so that it may be\r\n",
+     "                                    ) -> None:\r\n        extractor_stamp = self._tltg_3mf_extractor_stamp() if _3mf_path is not None else None\r\n        # Escape single quotes in the file name so that it may be\r\n"
+    ],
+    [
+     "        metadata.update({'print_start_time': None, 'job_id': None})\r\n        self.metadata[path] = metadata\r\n",
+     "        metadata.update({'print_start_time': None, 'job_id': None})\r\n        if _3mf_path is not None and extractor_stamp is not None:\r\n            metadata['tltg_3mf_extractor'] = extractor_stamp\r\n        self.metadata[path] = metadata\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "moonraker"
+ ]
+}

@@ -1,0 +1,13 @@
+{
+ "id": "screws-tilt",
+ "order": 29,
+ "title": "Bed screws tilt helper",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_screws_tilt.cfg": {
+   "source": "files/q2_screws_tilt.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

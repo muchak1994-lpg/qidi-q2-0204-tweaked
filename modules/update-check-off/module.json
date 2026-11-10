@@ -1,0 +1,19 @@
+{
+ "id": "update-check-off",
+ "order": 112,
+ "title": "Firmware update check off in the screen program (no \"new firmware\" popup)",
+ "files": {
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "byte_edits": [
+    [
+     88429328,
+     "6f",
+     "30"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "qidi-client"
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "id": "resume-after-heating",
+ "order": 7,
+ "title": "Resume: purge only after the nozzle is hot again",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "            G1 Y{printer['gcode_macro PRINTER_PARAM'].clear_y_position} F9000\n            {% if printer.extruder.can_extrude %}                  \n                G91\n                G1  E{e} F300\n                G90\n            {% endif %}\n            {% if printer.save_variables.variables.box_count >= 1 and printer.save_variables.variables.enable_box == 1 %} \n",
+     "            G1 Y{printer['gcode_macro PRINTER_PARAM'].clear_y_position} F9000\n            _QIDI_RESUME_PRIME E={e}\n            {% if printer.save_variables.variables.box_count >= 1 and printer.save_variables.variables.enable_box == 1 %} \n"
+    ],
+    [
+     "    {% endif %}\n    \n\n[gcode_macro RESUME]\n",
+     "    {% endif %}\n    \n\n# Evaluate extrusion readiness at execution time, after RESUME_PRINT M109.\n[gcode_macro _QIDI_RESUME_PRIME]\ngcode:\n    {% set e = params.E|default(150)|int %}\n    {% if printer.extruder.can_extrude %}\n        G91\n        G1  E{e} F300\n        G90\n    {% endif %}\n\n[gcode_macro RESUME]\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

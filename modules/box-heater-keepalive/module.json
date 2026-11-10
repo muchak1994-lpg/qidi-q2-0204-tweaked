@@ -1,0 +1,20 @@
+{
+ "id": "box-heater-keepalive",
+ "order": 111,
+ "title": "QIDI Box heaters: keep-alive sent earlier, no \"max_duration\" MCU shutdown while drying (QIDI_Q2 #34)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/heaters.py": {
+   "stock_sha256": "aeb8130c23437d680a8a02e3d3f579babbbf25294b1a64d12660086141dd8d00",
+   "edits": [
+    [
+     "        self.next_pwm_time = pwm_time + 0.75 * MAX_HEAT_TIME\r\n",
+     "        self.next_pwm_time = pwm_time + (0.25 if 'heater_box' in self.name else 0.75) * MAX_HEAT_TIME  # q2-box-heater-keepalive (QIDI_Q2 issue #34)\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "Tested by the issue reporter: 8000+ tool changes with 3-4 Boxes drying, 0 shutdowns. Affects only heaters whose name contains heater_box."
+}

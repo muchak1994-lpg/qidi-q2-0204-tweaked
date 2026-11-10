@@ -1,0 +1,19 @@
+{
+ "id": "external-slot16-literal",
+ "order": 34,
+ "title": "External slot: accept the \"slot16\" value QIDI writes",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/save_variables.py": {
+   "stock_sha256": "4b7f1c7a0548d33ab59083a678a68bcfe7464ffbcb3ecb5eb93592d430f88160",
+   "edits": [
+    [
+     "        value = gcmd.get('VALUE')\r\n        try:\r\n",
+     "        value = gcmd.get('VALUE')\r\n        # Accept the exact external-slot string emitted by QIDI's native adapter.\r\n        if varname == 'last_load_slot' and value == 'slot16':\r\n            value = repr(value)\r\n        try:\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

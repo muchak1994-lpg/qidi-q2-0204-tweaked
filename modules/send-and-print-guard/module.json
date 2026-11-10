@@ -1,0 +1,29 @@
+{
+ "id": "send-and-print-guard",
+ "order": 1,
+ "title": "Fluidd \"Upload & Print\": guard that keeps the fix in place (runs at boot and nightly)",
+ "files": {
+  "/home/qidi/fix-fluidd-upload-print.sh": {
+   "source": "files/fix-fluidd-upload-print.sh"
+  },
+  "/etc/systemd/system/fix-fluidd-upload-print.service": {
+   "source": "files/fix-fluidd-upload-print.service"
+  },
+  "/etc/systemd/system/fix-fluidd-upload-print.timer": {
+   "source": "files/fix-fluidd-upload-print.timer"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ],
+  [
+   "systemctl",
+   "enable",
+   "--now",
+   "fix-fluidd-upload-print.timer"
+  ]
+ ],
+ "note": "TO REVIEW: the script lists approved screen-program hashes; it must be regenerated from the final screen build."
+}

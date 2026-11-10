@@ -1,0 +1,19 @@
+{
+ "id": "pressure-advance-history",
+ "order": 3,
+ "title": "Free pressure-advance history on extruder reset (memory leak)",
+ "files": {
+  "/home/qidi/klipper/klippy/chelper/kin_extruder.c": {
+   "stock_sha256": "c9f24b00fd117d664ed257cd3b663d1e6a08568b4a4643963beeea19e63cbd67",
+   "edits": [
+    [
+     "        list_del(&first_pa->node);\r\n        first_pa = next_pa;\r\n",
+     "        list_del(&first_pa->node);\r\n        free(first_pa);\r\n        first_pa = next_pa;\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

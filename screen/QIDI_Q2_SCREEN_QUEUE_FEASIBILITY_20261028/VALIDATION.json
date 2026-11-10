@@ -1,0 +1,264 @@
+{
+  "validation": "static assertions on recorded instructions and cached ELF, NOT runtime tests",
+  "sha256": {
+    "04": "2b0ef3b449b8d2e319f3c972325681f116ba1a479c688993752f1b40cb853e6a",
+    "03.02": "c222bb9c77df6fe714e974f915834841be96c291bb75d44cd6f4d371e174f423"
+  },
+  "old_GUI_mutex": "0x5a2c240",
+  "old_timer_call_sites": [
+    "0x5b2008",
+    "0x5b7188"
+  ],
+  "old_direct_async_B_BL": 259,
+  "installed28_wrapper_B_BL": 2,
+  "old_helper_join_before_main_thread": true,
+  "new_queue_static_init": "0x459060",
+  "new_queue_atexit_destructor": "0x5cd320",
+  "new_queue_drain_retry_front_on_LVGL_failure": true,
+  "section_proofs": {
+    "04": {
+      "address": "0x5a2c240",
+      "section": ".bss",
+      "SHT_NOBITS": true
+    },
+    "03.02": {
+      "address": "0x7b6f570",
+      "section": ".bss",
+      "SHT_NOBITS": true
+    }
+  },
+  "queue_dependency_calls": {
+    "0x459060": [
+      {
+        "at": "0x45909c",
+        "dest": "0x447aa0",
+        "import": "_Znwm"
+      },
+      {
+        "at": "0x4590bc",
+        "dest": "0x447aa0",
+        "import": "_Znwm"
+      },
+      {
+        "at": "0x459100",
+        "dest": "0x4490a0",
+        "import": "__cxa_atexit"
+      },
+      {
+        "at": "0x459104",
+        "dest": "0x4477e0",
+        "import": "__cxa_begin_catch"
+      },
+      {
+        "at": "0x459108",
+        "dest": "0x449070",
+        "import": "__cxa_rethrow"
+      },
+      {
+        "at": "0x459110",
+        "dest": "0x448f50",
+        "import": "__cxa_end_catch"
+      },
+      {
+        "at": "0x459118",
+        "dest": "0x4477e0",
+        "import": "__cxa_begin_catch"
+      },
+      {
+        "at": "0x459128",
+        "dest": "0x447960",
+        "import": "_ZdlPvm"
+      },
+      {
+        "at": "0x459134",
+        "dest": "0x449070",
+        "import": "__cxa_rethrow"
+      },
+      {
+        "at": "0x45913c",
+        "dest": "0x448f50",
+        "import": "__cxa_end_catch"
+      },
+      {
+        "at": "0x459144",
+        "dest": "0x448aa0",
+        "import": "_Unwind_Resume"
+      }
+    ],
+    "0x5cd390": [
+      {
+        "at": "0x5cd40c",
+        "dest": "0x447860",
+        "import": "memmove"
+      },
+      {
+        "at": "0x5cd43c",
+        "dest": "0x447aa0",
+        "import": "_Znwm"
+      },
+      {
+        "at": "0x5cd478",
+        "dest": "0x447860",
+        "import": "memmove"
+      },
+      {
+        "at": "0x5cd488",
+        "dest": "0x447960",
+        "import": "_ZdlPvm"
+      },
+      {
+        "at": "0x5cd4ec",
+        "dest": "0x447860",
+        "import": "memmove"
+      },
+      {
+        "at": "0x5cd4f4",
+        "dest": "0x447890",
+        "import": "_ZSt17__throw_bad_allocv"
+      }
+    ],
+    "0x5cd500": [
+      {
+        "at": "0x5cd530",
+        "dest": "0x4496f0",
+        "import": "syscall"
+      },
+      {
+        "at": "0x5cd54c",
+        "dest": "0x449100",
+        "import": "pthread_mutex_lock"
+      },
+      {
+        "at": "0x5cd580",
+        "dest": "0x448a90",
+        "import": "pthread_mutex_unlock"
+      },
+      {
+        "at": "0x5cd5b4",
+        "dest": "0x77b5b0",
+        "import": null
+      },
+      {
+        "at": "0x5cd610",
+        "dest": "0x447aa0",
+        "import": "_Znwm"
+      },
+      {
+        "at": "0x5cd640",
+        "dest": "0x448250",
+        "import": "_ZSt20__throw_system_errori"
+      },
+      {
+        "at": "0x5cd648",
+        "dest": "0x5cd390",
+        "import": null
+      },
+      {
+        "at": "0x5cd65c",
+        "dest": "0x448940",
+        "import": "_ZSt20__throw_length_errorPKc"
+      },
+      {
+        "at": "0x5cd66c",
+        "dest": "0x448a90",
+        "import": "pthread_mutex_unlock"
+      },
+      {
+        "at": "0x5cd674",
+        "dest": "0x448aa0",
+        "import": "_Unwind_Resume"
+      }
+    ],
+    "0x5cd680": [
+      {
+        "at": "0x5cd69c",
+        "dest": "0x4496f0",
+        "import": "syscall"
+      },
+      {
+        "at": "0x5cd6c0",
+        "dest": "0x449100",
+        "import": "pthread_mutex_lock"
+      },
+      {
+        "at": "0x5cd6fc",
+        "dest": "0x448a90",
+        "import": "pthread_mutex_unlock"
+      },
+      {
+        "at": "0x5cd708",
+        "dest": "0x77b5b0",
+        "import": null
+      },
+      {
+        "at": "0x5cd720",
+        "dest": "0x449100",
+        "import": "pthread_mutex_lock"
+      },
+      {
+        "at": "0x5cd758",
+        "dest": "0x448a90",
+        "import": "pthread_mutex_unlock"
+      },
+      {
+        "at": "0x5cd764",
+        "dest": "0x447960",
+        "import": "_ZdlPvm"
+      },
+      {
+        "at": "0x5cd7e4",
+        "dest": "0x447aa0",
+        "import": "_Znwm"
+      },
+      {
+        "at": "0x5cd818",
+        "dest": "0x5cd390",
+        "import": null
+      },
+      {
+        "at": "0x5cd824",
+        "dest": "0x448250",
+        "import": "_ZSt20__throw_system_errori"
+      },
+      {
+        "at": "0x5cd830",
+        "dest": "0x448940",
+        "import": "_ZSt20__throw_length_errorPKc"
+      },
+      {
+        "at": "0x5cd840",
+        "dest": "0x448a90",
+        "import": "pthread_mutex_unlock"
+      },
+      {
+        "at": "0x5cd848",
+        "dest": "0x448aa0",
+        "import": "_Unwind_Resume"
+      }
+    ],
+    "0x5cd320": [
+      {
+        "at": "0x5cd358",
+        "dest": "0x447960",
+        "import": "_ZdlPvm"
+      },
+      {
+        "at": "0x5cd37c",
+        "dest": "0x447960",
+        "import": "_ZdlPvm"
+      }
+    ]
+  },
+  "missing_for_port": [
+    "queue object/static initialization and destruction",
+    "native helper dependencies, imports, data literals and unwind metadata",
+    "producer routing plus two drain integrations",
+    "startup GUI calls before first drain retain safe behavior",
+    "async payload lifetime/cancel/return handling review",
+    "new targeted runtime/concurrency/low-memory proof and rollback validation"
+  ],
+  "printer_contact": false,
+  "runtime_executed": false,
+  "ELF_patch_created": false,
+  "public_package_modified": false
+}

@@ -1,0 +1,34 @@
+{
+ "id": "save-variables-atomic",
+ "order": 117,
+ "title": "Saved variables: atomic write (no empty file after a power cut)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/save_variables.py": {
+   "edits": [
+    [
+     "# This file may be distributed under the terms of the GNU GPLv3 license.\r\nimport os, logging, ast, configparser, requests, time, threading\r\n\r\n",
+     "# This file may be distributed under the terms of the GNU GPLv3 license.\r\nimport os, logging, ast, configparser, requests, time, threading, io, stat, tempfile  # q2-save-variables-atomic\r\n\r\n"
+    ],
+    [
+     "            varfile.set(section, option, value)\r\n            with open(self.filename, 'w') as configfile:\r\n                varfile.write(configfile)\r\n        except Exception as e:\r\n",
+     "            varfile.set(section, option, value)\r\n            self._q2_write_atomic(varfile)  # q2-save-variables-atomic\r\n        except Exception as e:\r\n"
+    ],
+    [
+     "        try:\r\n            f = open(self.filename, \"w\")\r\n            varfile.write(f)\r\n            f.close()\r\n        except:\r\n",
+     "        try:\r\n            self._q2_write_atomic(varfile)  # q2-save-variables-atomic\r\n        except:\r\n"
+    ],
+    [
+     "        try:\r\n            with open(self.filename, \"w\") as f:\r\n                varfile.write(f)\r\n        except Exception as e:\r\n",
+     "        try:\r\n            self._q2_write_atomic(varfile)  # q2-save-variables-atomic\r\n        except Exception as e:\r\n"
+    ],
+    [
+     "\r\n    def get_status(self, eventtime):\r\n        status = {'variables': self.allVariables}\r\n",
+     "\r\n    def _q2_write_atomic(self, varfile):\r\n        # q2-save-variables-atomic (Q2 tweaked): the stock code truncated the file and then wrote it in place, so a\r\n        # power cut at that moment could leave an empty or half-written file (lost settings, or Klipper refusing to\r\n        # start on a parse error). Now: write a temporary file in the same folder, fsync, rename over the original\r\n        # (atomic), fsync the folder. Identical content is not rewritten at all (fewer flash writes).\r\n        buf = io.StringIO()\r\n        varfile.write(buf)\r\n        data = buf.getvalue().encode('utf-8')\r\n        try:\r\n            with open(self.filename, 'rb') as f:\r\n                if f.read() == data:\r\n                    return\r\n        except OSError:\r\n            pass\r\n        dirname = os.path.dirname(os.path.abspath(self.filename))\r\n        fd, tmp = tempfile.mkstemp(prefix='.saved_variables.', suffix='.tmp', dir=dirname)\r\n        try:\r\n            with os.fdopen(fd, 'wb') as f:\r\n                try:\r\n                    st = os.stat(self.filename)\r\n                    os.fchmod(f.fileno(), stat.S_IMODE(st.st_mode))\r\n                    try:\r\n                        os.fchown(f.fileno(), st.st_uid if os.geteuid() == 0 else -1, st.st_gid)\r\n                    except OSError:\r\n                        pass\r\n                except OSError:\r\n                    os.fchmod(f.fileno(), 0o644)\r\n                f.write(data)\r\n                f.flush()\r\n                os.fsync(f.fileno())\r\n            os.replace(tmp, self.filename)\r\n        except BaseException:\r\n            try:\r\n                os.unlink(tmp)\r\n            except OSError:\r\n                pass\r\n            raise\r\n        try:\r\n            dfd = os.open(dirname, os.O_DIRECTORY)\r\n            try:\r\n                os.fsync(dfd)\r\n            finally:\r\n                os.close(dfd)\r\n        except OSError:\r\n            pass\r\n\r\n    def get_status(self, eventtime):  # q2-save-variables-atomic\r\n        status = {'variables': self.allVariables}\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

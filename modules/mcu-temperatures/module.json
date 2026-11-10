@@ -1,0 +1,23 @@
+{
+ "id": "mcu-temperatures",
+ "order": 36,
+ "title": "Approximate MCU / electronics temperatures in Fluidd",
+ "files": {
+  "/home/qidi/printer_data/config/printer.cfg": {
+   "base": "printer",
+   "stock_sha256": "1dc68948238549a997d836e5993177900637597dec275d981e841f6dd291116b",
+   "edits": [
+    [
+     "[ai_func_manager]\n",
+     "[ai_func_manager]\n\n# QIDI_Q2_APPROX_MCU_TEMPERATURES begin v0.1.0\n[include q2_electronics_temperature_approx.cfg]\n# QIDI_Q2_APPROX_MCU_TEMPERATURES end v0.1.0\n"
+    ]
+   ]
+  },
+  "/home/qidi/printer_data/config/q2_electronics_temperature_approx.cfg": {
+   "source": "files/q2_electronics_temperature_approx.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

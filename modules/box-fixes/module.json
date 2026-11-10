@@ -1,0 +1,19 @@
+{
+ "id": "box-fixes",
+ "order": 11,
+ "title": "QIDI Box: heater settings visible to the config checker (QIDI #23)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/box_config.py": {
+   "stock_sha256": "261f1e69f54a42715de76c2e841c88db6c4da30ee509d06be2101d99cbd03da9",
+   "edits": [
+    [
+     "                fileconfig.set(section_name, key, config.get(cfg_key))\r\n        access_tracking = {}\r\n        fake_cfg = configfile.ConfigWrapper(\r\n",
+     "                fileconfig.set(section_name, key, config.get(cfg_key))\r\n        # Expose consumed BOX heater settings through configfile.settings,\r\n        # using the same registry as the parent configuration.\r\n        access_tracking = config.access_tracking if module == \"heater_generic\" else {}\r\n        fake_cfg = configfile.ConfigWrapper(\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

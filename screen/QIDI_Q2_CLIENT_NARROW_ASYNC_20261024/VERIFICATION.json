@@ -1,0 +1,59 @@
+{
+  "checks": {
+    "object_ARM64": true,
+    "no_exception_personality_object": true,
+    "no_LSDA_object": true,
+    "no_undefined_linked_symbols": true,
+    "no_linked_relocations": true,
+    "correct_original_B": true,
+    "single_site_branch_fits": true,
+    "new_PT_LOAD_no_original_overlap": true,
+    "no_writable_executable_LOAD": true,
+    "exact_reviewed_BL_targets": true,
+    "GOT_points_to_existing_GUI_mutex": true,
+    "original_source_unchanged": true,
+    "host_cases_passed": true
+  },
+  "passed": true,
+  "text_bytes": 88,
+  "entry": "0x8000000",
+  "original_tail_site": "0x4f7c50",
+  "original_tail_bytes": "b8a90814",
+  "prospective_B_bytes": "ec20ec15",
+  "prospective_B_NOT_APPLIED": true,
+  "BL": [
+    {
+      "at": "0x800001c",
+      "target": "0x4485a0"
+    },
+    {
+      "at": "0x800002c",
+      "target": "0x722330"
+    },
+    {
+      "at": "0x800003c",
+      "target": "0x447f90"
+    },
+    {
+      "at": "0x8000054",
+      "target": "0x447f50"
+    }
+  ],
+  "original_load_max_end": "0x7a357d8",
+  "overlaps": [],
+  "PT_LOAD": [
+    {
+      "start": "0x8000000",
+      "bytes": 88,
+      "flags": 5
+    },
+    {
+      "start": "0x8001000",
+      "bytes": 120,
+      "flags": 4
+    }
+  ],
+  "frame_data_standalone_only": true,
+  "fragment_sha256": "454e3312b6fdb8ddc542f512b8833c03286718a310f1f6f3354bb38e5665d14d",
+  "original_runtime_and_full_link_not_tested": true
+}

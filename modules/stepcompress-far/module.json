@@ -1,0 +1,23 @@
+{
+ "id": "stepcompress-far",
+ "order": 120,
+ "title": "Step compression: no out-of-bounds write for far-future steps (Klipper PR #7421)",
+ "files": {
+  "/home/qidi/klipper/klippy/chelper/stepcompress.c": {
+   "stock_sha256": "eb263a9351f6bee0d1dd40aef3bb43dfb0ef32d9aff6cbcf3fcd30a383fd3d4b",
+   "edits": [
+    [
+     "\r\n// Slow path for queue_append() - handle next step far in future\r\nstatic int\r\nqueue_append_far(struct stepcompress *sc)\r\n{\r\n    uint64_t step_clock = sc->next_step_clock;\r\n    sc->next_step_clock = 0;\r\n    int ret = queue_flush(sc, step_clock - CLOCK_DIFF_MAX + 1);\r\n    if (ret)\r\n        return ret;\r\n    if (step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX)\r\n        return stepcompress_flush_far(sc, step_clock);\r\n    *sc->queue_next++ = step_clock;\r\n    return 0;\r\n}\r\n\r\n// Slow path for queue_append() - expand the internal queue storage\r\n",
+     "\r\n// Slow path for queue_append() - expand the internal queue storage\r\n"
+    ],
+    [
+     "    *sc->queue_next++ = sc->next_step_clock;\r\n    sc->next_step_clock = 0;\r\n    return 0;\r\n}\r\n\r\n// Add a step time to the queue (flushing the queue if needed)\r\n",
+     "    *sc->queue_next++ = sc->next_step_clock;\r\n    sc->next_step_clock = 0;\r\n    return 0;\r\n}\r\n\r\n// Slow path for queue_append() - handle next step far in future\r\n// q2-stepcompress-far: port of Klipper PR #7421 (K. O'Connor) - the old code stored the step at queue_next without\r\n// checking for the end of the allocated queue (possible out-of-bounds write); now the regular extend path is used.\r\nstatic int\r\nqueue_append_far(struct stepcompress *sc)\r\n{\r\n    uint64_t step_clock = sc->next_step_clock;\r\n    int ret = queue_flush(sc, step_clock - CLOCK_DIFF_MAX + 1);\r\n    if (ret)\r\n        return ret;\r\n    if (step_clock >= sc->last_step_clock + CLOCK_DIFF_MAX) {\r\n        sc->next_step_clock = 0;\r\n        return stepcompress_flush_far(sc, step_clock);\r\n    }\r\n    return queue_append_extend(sc);\r\n}\r\n\r\n// Add a step time to the queue (flushing the queue if needed)\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

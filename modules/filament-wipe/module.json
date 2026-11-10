@@ -1,0 +1,13 @@
+{
+ "id": "filament-wipe",
+ "order": 27,
+ "title": "Filament purge and wipe macro (extra, does not replace the stock one)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/filament_wipe.cfg": {
+   "source": "files/filament_wipe.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

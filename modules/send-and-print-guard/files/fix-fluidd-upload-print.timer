@@ -1,0 +1,12 @@
+[Unit]
+Description=QIDI Q2 - nightly and boot Fluidd Upload and Print repair
+
+[Timer]
+OnCalendar=*-*-* 03:30:00 Europe/Warsaw
+OnBootSec=3min
+Persistent=true
+RandomizedDelaySec=0
+Unit=fix-fluidd-upload-print.service
+
+[Install]
+WantedBy=timers.target

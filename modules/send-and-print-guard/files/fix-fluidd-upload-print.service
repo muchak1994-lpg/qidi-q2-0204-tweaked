@@ -1,0 +1,8 @@
+[Unit]
+Description=QIDI Q2 - repair Fluidd Upload and Print button
+
+[Service]
+Type=oneshot
+ExecStart=/home/mks/fix-fluidd-upload-print.sh
+StandardOutput=journal
+StandardError=journal

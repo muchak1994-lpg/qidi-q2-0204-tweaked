@@ -1,0 +1,53 @@
+{
+ "id": "z-offset-persistence",
+ "order": 41,
+ "title": "Z offset: mark temporary offsets so they are not saved",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/gcode_move.py": {
+   "stock_sha256": "7bd6f9e88f641f2157bc381c8ad5fb7985ae0c4314c9fd6eccaaa29e1e6a57d5",
+   "edits": [
+    [
+     "        self.homing_position = [0.0, 0.0, 0.0, 0.0]\r\n        self.speed = 25.\r\n",
+     "        self.homing_position = [0.0, 0.0, 0.0, 0.0]\r\n        self.q2_z_offset_valid = False\r\n        self.speed = 25.\r\n"
+    ],
+    [
+     "            'homing_origin': self.Coord(*self.homing_position),\r\n            'position': self.Coord(*self.last_position),\r\n",
+     "            'homing_origin': self.Coord(*self.homing_position),\r\n            'q2_z_offset_valid': self.q2_z_offset_valid,\r\n            'position': self.Coord(*self.last_position),\r\n"
+    ],
+    [
+     "                offset += self.homing_position[pos]\r\n            delta = offset - self.homing_position[pos]\r\n",
+     "                offset += self.homing_position[pos]\r\n            if axis == 'Z':\r\n                self.q2_z_offset_valid = not gcmd.get_int(\r\n                    'Q2_TEMPORARY', 0, minval=0, maxval=1)\r\n            delta = offset - self.homing_position[pos]\r\n"
+    ],
+    [
+     "            'homing_position': list(self.homing_position),\r\n            'speed': self.speed, 'speed_factor': self.speed_factor,\r\n",
+     "            'homing_position': list(self.homing_position),\r\n            'q2_z_offset_valid': self.q2_z_offset_valid,\r\n            'speed': self.speed, 'speed_factor': self.speed_factor,\r\n"
+    ],
+    [
+     "        self.homing_position = list(state['homing_position'])\r\n        self.speed = state['speed']\r\n",
+     "        self.homing_position = list(state['homing_position'])\r\n        self.q2_z_offset_valid = state.get('q2_z_offset_valid', False)\r\n        self.speed = state['speed']\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "gcode:\n    {% if printer.gcode_move.homing_origin.z < 0.5 %}\n       SAVE_VARIABLE VARIABLE=z_offset VALUE={printer.gcode_move.homing_origin.z}\n",
+     "gcode:\n    {% if printer.gcode_move.q2_z_offset_valid and printer.gcode_move.homing_origin.z < 0.5 %}\n       SAVE_VARIABLE VARIABLE=z_offset VALUE={printer.gcode_move.homing_origin.z}\n"
+    ],
+    [
+     "    M141 S{chambertemp}    \n    SET_GCODE_OFFSET Z=0 MOVE=0\n    BUFFER_MONITORING ENABLE=0\n",
+     "    M141 S{chambertemp}    \n    SET_GCODE_OFFSET Z=0 MOVE=0 Q2_TEMPORARY=1\n    BUFFER_MONITORING ENABLE=0\n"
+    ],
+    [
+     "    DISABLE_ALL_SENSOR\n    SET_GCODE_OFFSET Z=0 MOVE=0\n    BED_MESH_CLEAR\n",
+     "    DISABLE_ALL_SENSOR\n    SET_GCODE_OFFSET Z=0 MOVE=0 Q2_TEMPORARY=1\n    BED_MESH_CLEAR\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

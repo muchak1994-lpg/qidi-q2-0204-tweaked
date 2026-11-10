@@ -1,0 +1,13 @@
+{
+ "id": "end-guard",
+ "order": 116,
+ "title": "End guard: chamber heater and fans off at print end and when drying finishes",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_end_guard.cfg": {
+   "source": "files/q2_end_guard.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

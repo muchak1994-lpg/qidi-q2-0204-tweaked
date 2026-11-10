@@ -1,0 +1,14 @@
+{
+ "id": "firmware-download-guard",
+ "order": 13,
+ "title": "Firmware updates blocked: the download folder is made read-only (immutable flag)",
+ "files": {},
+ "actions": [
+  [
+   "chattr",
+   "+i",
+   "/home/qidi/download"
+  ]
+ ],
+ "note": "Undo: chattr -i /home/qidi/download. Works together with update-check-off in the screen program."
+}

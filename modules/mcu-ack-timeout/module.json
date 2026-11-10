@@ -1,0 +1,56 @@
+{
+ "id": "mcu-ack-timeout",
+ "order": 12,
+ "title": "MCU: clear \"No communication with MCU\" error instead of a hang",
+ "files": {
+  "/home/qidi/klipper/klippy/mcu.py": {
+   "stock_sha256": "4fd7a69b8db493e3d83f891b9783c131e2742f0c42dce760429c6414833965ab",
+   "edits": [
+    [
+     "        self._serial = serial\r\n        msgparser = serial.get_msgparser()\r\n",
+     "        self._serial = serial\r\n        self._error = serialhdl.error\r\n        msgparser = serial.get_msgparser()\r\n"
+    ],
+    [
+     "        cmd = self._cmd.encode(data)\r\n        self._serial.raw_send_wait_ack(cmd, minclock, reqclock, self._cmd_queue)\r\n    def get_command_tag(self):\r\n",
+     "        cmd = self._cmd.encode(data)\r\n        try:\r\n            self._serial.raw_send_wait_ack(cmd, minclock, reqclock,\r\n                                           self._cmd_queue)\r\n        except serialhdl.error as e:\r\n            raise self._error(str(e))\r\n    def get_command_tag(self):\r\n"
+    ],
+    [
+     "    def lookup_command(self, msgformat, cq=None):\r\n        return CommandWrapper(self._serial, msgformat, cq)\r\n    def lookup_query_command(self, msgformat, respformat, oid=None,\r\n",
+     "    def lookup_command(self, msgformat, cq=None):\r\n        command = CommandWrapper(self._serial, msgformat, cq)\r\n        command._error = self._printer.command_error\r\n        return command\r\n    def lookup_query_command(self, msgformat, respformat, oid=None,\r\n"
+    ],
+    [
+     "            self._name,))\r\n    # Misc external commands\r\n",
+     "            self._name,))\r\n        self._serial.abort_wait_acks()\r\n    # Misc external commands\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/serialhdl.py": {
+   "stock_sha256": "40fd5d57d3b8433099044e87a71662bc9b1d15023e44f550eb825a1f49d55088",
+   "edits": [
+    [
+     "        self.pending_notifications = {}\r\n    def _bg_thread(self):\r\n",
+     "        self.pending_notifications = {}\r\n        self.can_wait_acks = True\r\n    def _bg_thread(self):\r\n"
+    ],
+    [
+     "            self.serialqueue, freq, conv_time, conv_clock, last_clock)\r\n    def disconnect(self):\r\n",
+     "            self.serialqueue, freq, conv_time, conv_clock, last_clock)\r\n    def abort_wait_acks(self):\r\n        self.can_wait_acks = False\r\n        # Background thread may be running, so work on copy\r\n        pending_notifications = self.pending_notifications.copy()\r\n        for pn in pending_notifications.values():\r\n            pn.complete(None)\r\n    def disconnect(self):\r\n"
+    ],
+    [
+     "            self.serial_dev = None\r\n        for pn in self.pending_notifications.values():\r\n            pn.complete(None)\r\n        self.pending_notifications.clear()\r\n    def stats(self, eventtime):\r\n",
+     "            self.serial_dev = None\r\n        # Abort any waiting commands and then restore ability to wait\r\n        self.abort_wait_acks()\r\n        self.pending_notifications.clear()\r\n        self.can_wait_acks = True\r\n    def stats(self, eventtime):\r\n"
+    ],
+    [
+     "    def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):\r\n        self.last_notify_id += 1\r\n",
+     "    def raw_send_wait_ack(self, cmd, minclock, reqclock, cmd_queue):\r\n        if not self.can_wait_acks:\r\n            self._error(\"No communication with MCU\")\r\n        self.last_notify_id += 1\r\n"
+    ],
+    [
+     "        if params is None:\r\n            self._error(\"Serial connection closed\")\r\n        return params\r\n",
+     "        if params is None:\r\n            self._error(\"No communication with MCU\")\r\n        return params\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

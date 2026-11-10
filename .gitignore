@@ -1,0 +1,6 @@
+# PC-side backups and downloads made by the installer — never commit them
+backups/
+downloads/
+work/
+__pycache__/
+*.pyc

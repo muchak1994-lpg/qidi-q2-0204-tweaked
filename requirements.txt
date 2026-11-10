@@ -1,0 +1,2 @@
+paramiko>=3.0
+capstone>=5.0

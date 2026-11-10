@@ -1,0 +1,19 @@
+{
+ "id": "journal-retention",
+ "order": 130,
+ "title": "System log kept 7 days, max 2 GB (diagnostics)",
+ "files": {
+  "/etc/systemd/journald.conf.d/60-qidi-q2-retention.conf": {
+   "source": "files/60-qidi-q2-retention.conf"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "restart",
+   "systemd-journald"
+  ]
+ ],
+ "default": false,
+ "note": "Off by default. Install with: --with journal-retention"
+}

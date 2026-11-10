@@ -1,0 +1,14 @@
+{
+ "id": "screen-program",
+ "order": 28,
+ "title": "Screen program rebuilt from QIDI 02.04 + 03.02: print history sync, version entry, print queue from 03.02",
+ "files": {
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "generator": "screen",
+   "result_sha256": "da4b3c9f9ca38660b10d452ee307285558317a02c4346c9650a5e05c7aa2e7b9"
+  }
+ },
+ "restart": [
+  "qidi-client"
+ ]
+}

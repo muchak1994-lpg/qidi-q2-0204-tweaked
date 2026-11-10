@@ -1,0 +1,12 @@
+{
+ "id": "ethernet-mac",
+ "order": 35,
+ "title": "Ethernet: the printer's own MAC address from the first moment of boot (QIDI #28)",
+ "files": {},
+ "note": "Generated per printer at install time; never copied between printers. Takes effect after a reboot.",
+ "generate": {
+  "path": "/etc/systemd/network/10-qidi-q2-ethernet-mac.link",
+  "kind": "ethernet-mac",
+  "mac": "02:md5(contents of /root/uuid) bytes 1-5, as /root/.set_mac.sh does"
+ }
+}

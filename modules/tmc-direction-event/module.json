@@ -1,0 +1,19 @@
+{
+ "id": "tmc-direction-event",
+ "order": 40,
+ "title": "TMC: fix misspelled stepper direction event",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/tmc.py": {
+   "stock_sha256": "c4474780d5a4010e2ab86ddc276f6aed42ac5391e3860631e05d31e1116405a1",
+   "edits": [
+    [
+     "                                            self._handle_sync_mcu_pos)\r\n        self.printer.register_event_handler(\"stepper:set_sdir_inverted\",\r\n                                            self._handle_sync_mcu_pos)\r\n",
+     "                                            self._handle_sync_mcu_pos)\r\n        self.printer.register_event_handler(\"stepper:set_dir_inverted\",\r\n                                            self._handle_sync_mcu_pos)\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

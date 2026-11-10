@@ -1,0 +1,161 @@
+{
+ "id": "fluidd-fixes",
+ "order": 19,
+ "title": "Fluidd: file names and folders with special characters, upload/download tracking, controls while paused, SoC temperature, disk usage, print ETA",
+ "files": {
+  "/home/qidi/fluidd/assets/index-DlFvHGAh.js": {
+   "stock_sha256": "178b2e076d3a75716819ee13f9ea1f0c92e536546c8b2adafde8632f6723710c",
+   "edits": [
+    [
+     "return i.append(\"file\",r,r.name),i.append(\"path\",e),i.append(\"root\",t),s&&i.append(\"print\",\"true\"),this.postForm(\"/server/files/upload\",i,n)},serverFilesGet(r,e){return this.get(`/server/files/${encodeURI(r)}?date=${Date.now()}",
+     "return i.append(\"file\",r,r.name),i.append(\"path\",e),i.append(\"root\",t),s&&i.append(\"print\",\"true\"),this.postForm(\"/server/files/upload\",i,n)},serverFilesGet(r,e){return this.get(`/server/files/${r.replace(/[^/]+/g,t=>encodeURIComponent(t))}?date=${Date.now()}"
+    ],
+    [
+     "/${r}`:r;try{const i=new AbortController;this.$store.dispatch(\"files/updateFileDownload\",{filepath:n,size:t,loaded:0,percent:0,speed:0,abortController:i});const a=await rt.serverFilesGet(n,{...s,signal:i.signal,onDownloadProgress:o=>{if(i.signal.aborted)return;const l=o.progress??(t>0?o.loaded/t:0),c={filepath:n,loaded:o.loaded,percent:Math.round(l*100),speed:o.rate??0};o.total&&(t=c.size=o.total),this.$store.dispatch(\"files/updateFileDownload\",c)}});return i.abort(),a}finally{this.$store.dispatch(\"files/removeFileDownload\")}}",
+     "/${r}`:r,i=tc();try{const a=new AbortController;this.$store.dispatch(\"files/updateFileDownload\",{uid:i,filepath:n,size:t,loaded:0,percent:0,speed:0,abortController:a});const o=await rt.serverFilesGet(n,{...s,signal:a.signal,onDownloadProgress:l=>{if(a.signal.aborted)return;const c=l.progress??(t>0?l.loaded/t:0),u={uid:i,loaded:l.loaded,percent:Math.round(c*100),speed:l.rate??0};l.total&&(t=u.size=l.total),this.$store.dispatch(\"files/updateFileDownload\",u)}});return a.abort(),o}finally{this.$store.dispatch(\"files/removeFileDownload\",i)}}"
+    ],
+    [
+     "return`${this.apiUrl}/server/files/${encodeURI(s)}?date=${t||Date.now()}",
+     "return`${this.apiUrl}/server/files/${s.replace(/[^/]+/g,n=>encodeURIComponent(n))}?date=${t||Date.now()}"
+    ],
+    [
+     "`}async uploadFile(r,e,t,s,n){const i=e?`${e}/${r.name}`:r.name;try{const a=new AbortController;this.$store.dispatch(\"files/updateFileUpload\",{filepath:i,size:r.size,loaded:0,percent:0,speed:0,cancelled:!1,abortController:a});const o=await rt.serverFilesUploadPost(r,e,t,s,{...n,signal:a.signal,onUploadProgress:l=>{a.signal.aborted||this.$store.dispatch(\"files/updateFileUpload\",{filepath:i,loaded:l.loaded,percent:l.progress?Math.round(l.progress*100):0,speed:l.rate??0})}",
+     "`}async uploadFile(r,e,t,s,n,i){const a=e?`${e}/${r.name}`:r.name,o=i||tc();try{const l=new AbortController;this.$store.dispatch(\"files/updateFileUpload\",{uid:o,filepath:a,size:r.size,loaded:0,percent:0,speed:0,cancelled:!1,complete:!1,abortController:l});const c=await rt.serverFilesUploadPost(r,e,t,s,{...n,signal:l.signal,onUploadProgress:u=>{l.signal.aborted||this.$store.dispatch(\"files/updateFileUpload\",{uid:o,loaded:u.loaded,percent:u.progress?Math.round(u.progress*100):0,speed:u.rate??0})}"
+    ],
+    [
+     ");return a.abort(),o}finally{this.$store.dispatch(\"files/removeFileUpload\",i)}}getFullPathAndFile(r,e){return\"path\"in e?[[r,e.path].filter(t=>!!t).join(\"/\"),e.file]:[r,e]}async uploadFiles(r,e,t,s){for(const n of r){const[i,a]=this.getFullPathAndFile(e,n),o=i?`${i}/${a.name}`:a.name;this.$store.dispatch(\"files/updateFileUpload\",{filepath:o,size:a.size,loaded:0,percent:0,speed:0,unit:\"kB\",cancelled:!1})}r.length>1&&(s=!1);for(const n of r){const[i,a]=this.getFullPathAndFile(e,n),o=i?`${i}/${a.name}`:a.name,l=this.$store.state.files.uploads.find(c=>c.filepath===o);if(l&&!(l!=null&&l.cancelled))try{await this.uploadFile(a,i,t,s)}catch(c){ye.error(\"[FileUpload] file\",c)}else this.$store.dispatch(\"files/removeFileUpload\",o)}}",
+     ");return l.abort(),c}finally{this.$store.dispatch(\"files/removeFileUpload\",o)}}getFullPathAndFile(r,e){return\"path\"in e?[[r,e.path].filter(t=>!!t).join(\"/\"),e.file]:[r,e]}async uploadFiles(r,e,t,s){const n=[...r].map(i=>{const a=tc(),[o,l]=this.getFullPathAndFile(e,i),c=o?`${o}/${l.name}`:l.name;return this.$store.dispatch(\"files/updateFileUpload\",{uid:a,filepath:c,size:l.size,loaded:0,percent:0,speed:0,unit:\"kB\",cancelled:!1,complete:!1}),{uid:a,file:i}});n.length>1&&(s=!1);for(const i of n){const[a,o]=this.getFullPathAndFile(e,i.file),l=this.$store.state.files.uploads.find(c=>c.uid===i.uid);if(l&&!l.cancelled)try{await this.uploadFile(o,a,t,s,void 0,i.uid)}catch(c){ye.error(\"[FileUpload] file\",c)}else this.$store.dispatch(\"files/removeFileUpload\",i.uid)}}"
+    ],
+    [
+     "get readonly(){return this.rootProperties.readonly}get thumbnailSize(){const t=this.$store.state.config.uiSettings.general.thumbnailSize;",
+     "get readonly(){return this.rootProperties.readonly}getThumbnailImageData(item){const size=this.thumbnailSize,thumb=this.getThumb(item,this.root,item.path,size>16,item.modified),limit=Number(size),style={\"max-width\":`${size}px`,\"max-height\":`${size}px`,\"object-fit\":\"scale-down\"};if(Number.isFinite(limit)&&limit>=0){let width=Number(thumb?.width),height=Number(thumb?.height);if(Number.isFinite(width)&&width>0&&Number.isFinite(height)&&height>0){const scale=Math.min(1,limit/width,limit/height);width*=scale;height*=scale}else{width=height=limit}style.width=`${width}px`;style.height=`${height}px`}return{style,attrs:{src:thumb?.url??\"\",loading:\"lazy\"}}}get thumbnailSize(){const t=this.$store.state.config.uiSettings.general.thumbnailSize;"
+    ],
+    [
+     "},[e._v(\" \"+e._s(e.getItemIcon(s))+\" \")]):t(\"img\",{style:{\"max-width\":`${e.thumbnailSize}px`,\"max-height\":`${e.thumbnailSize}px`},attrs:{src:e.getThumbUrl(s,e.root,s.path,e.thumbnailSize>16,s.modified)}})],1)],1),t(\"file-row-item\",{attrs:{nowrap:!1}}",
+     "},[e._v(\" \"+e._s(e.getItemIcon(s))+\" \")]):t(\"img\",e.getThumbnailImageData(s))],1)],1),t(\"file-row-item\",{attrs:{nowrap:!1}}"
+    ],
+    [
+     "f(this,\"hasCopied\",!1)}handleCopy(){this.inputValue&&navigator.clipboard&&(navigator.clipboard.writeText(this.inputValue.toString()),this.hasCopied=!0,setTimeout(()=>{this.hasCopied=!1},2e3))}}",
+     "f(this,\"hasCopied\",!1)}handleCopy(){if(!this.inputValue)return;const t=this.inputValue.toString();(async()=>{let s=!1;if(navigator.clipboard)try{await navigator.clipboard.writeText(t),s=!0}catch{}if(!s)try{const a=document.createElement(\"textarea\");a.value=t,a.setAttribute(\"readonly\",\"\"),a.style.cssText=\"position:fixed;top:-9999px;left:-9999px;opacity:0\",(this.$el||document.body).appendChild(a),a.select(),s=document.execCommand(\"copy\"),a.remove()}catch{}s&&(this.hasCopied=!0,setTimeout(()=>{this.hasCopied=!1},2e3))})()}}"
+    ],
+    [
+     "},[t(xe,[e._l(e.files,function(s,n){return[(s.percent!==100||!s.complete)&&!s.cancelled?t(Y,{key:s.filepath,staticClass:\"py-2\"},[t(k,[t(\"div\",{staticClass:\"mb-2 filename\"}",
+     "},[t(xe,[e._l(e.files,function(s,n){return[(s.percent!==100||!s.complete)&&!s.cancelled?t(Y,{key:s.uid,staticClass:\"py-2\"},[t(k,[t(\"div\",{staticClass:\"mb-2 filename\"}"
+    ],
+    [
+     "},[t(x,[e._v(\"$close\")])],1)],1)],1):e._e(),(s.percent!==100||!s.complete)&&n<e.files.length-1?t(F,{key:`divider-${s.filepath}`}",
+     "},[t(x,[e._v(\"$close\")])],1)],1)],1):e._e(),(s.percent!==100||!s.complete)&&n<e.files.length-1?t(F,{key:`divider-${s.uid}`}"
+    ],
+    [
+     "handleDragStart(t,s,n){if(t.type===\"file\"){const i=this.createFileUrl(t.name,this.currentPath);n.setData(\"text/html\",`<A HREF=\"${encodeURI(i)}\">${t.filename}",
+     "handleDragStart(t,s,n){if(t.type===\"file\"){const i=this.createFileUrl(t.name,this.currentPath);n.setData(\"text/html\",`<A HREF=\"${i}\">${t.filename}"
+    ],
+    [
+     "this.$store.dispatch(\"wait/removeWait\",n)}handleCancelUpload(t){t.complete||(t.loaded===0&&this.$store.dispatch(\"files/updateFileUpload\",{filepath:t.filepath,cancelled:!0}),t.loaded>0&&t.loaded<t.size&&t.abortController.abort())}",
+     "this.$store.dispatch(\"wait/removeWait\",n)}handleCancelUpload(t){t.complete||(t.loaded===0&&this.$store.dispatch(\"files/updateFileUpload\",{uid:t.uid,cancelled:!0}),t.loaded>0&&t.loaded<t.size&&t.abortController.abort())}"
+    ],
+    [
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`X [ ${e.livePosition[0].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.xHomed&&!e.xForceMove,readonly:e.printerBusy,value:e.useGcodeCoords?e.gcodePosition[0].toFixed(2):e.toolheadPosition[0].toFixed(2)},on:{change:function(s){return e.moveTo(\"X\",s)}",
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`X [ ${e.livePosition[0].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.xHomed&&!e.xForceMove,readonly:e.printerPrinting,value:e.useGcodeCoords?e.gcodePosition[0].toFixed(2):e.toolheadPosition[0].toFixed(2)},on:{change:function(s){return e.moveTo(\"X\",s)}"
+    ],
+    [
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`Y [ ${e.livePosition[1].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.yHomed&&!e.yForceMove,readonly:e.printerBusy,value:e.useGcodeCoords?e.gcodePosition[1].toFixed(2):e.toolheadPosition[1].toFixed(2)},on:{change:function(s){return e.moveTo(\"Y\",s)}",
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`Y [ ${e.livePosition[1].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.yHomed&&!e.yForceMove,readonly:e.printerPrinting,value:e.useGcodeCoords?e.gcodePosition[1].toFixed(2):e.toolheadPosition[1].toFixed(2)},on:{change:function(s){return e.moveTo(\"Y\",s)}"
+    ],
+    [
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`Z [ ${e.livePosition[2].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.zHomed&&!e.zForceMove,readonly:e.printerBusy,value:e.useGcodeCoords?e.gcodePosition[2].toFixed(2):e.toolheadPosition[2].toFixed(2)},on:{change:function(s){return e.moveTo(\"Z\",s)}",
+     ",[t(ce,{staticClass:\"v-input--width-small\",attrs:{color:e.forceMove?\"error\":\"primary\",label:`Z [ ${e.livePosition[2].toFixed(2)} ]`,outlined:\"\",\"hide-details\":\"\",dense:\"\",type:\"number\",disabled:!e.klippyReady||!e.zHomed&&!e.zForceMove,readonly:e.printerPrinting,value:e.useGcodeCoords?e.gcodePosition[2].toFixed(2):e.toolheadPosition[2].toFixed(2)},on:{change:function(s){return e.moveTo(\"Z\",s)}"
+    ],
+    [
+     ",[t(Te,{attrs:{top:\"\"},scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"positioning-toggle-button\",attrs:{disabled:!e.klippyReady||e.printerBusy}},\"app-btn\",n,!1),s),[t(x,{attrs:{small:\"\"}",
+     ",[t(Te,{attrs:{top:\"\"},scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"positioning-toggle-button\",attrs:{disabled:!e.klippyReady||e.printerPrinting}},\"app-btn\",n,!1),s),[t(x,{attrs:{small:\"\"}"
+    ],
+    [
+     ",[t(\"span\",[e._v(e._s(e.$t(\"app.tool.tooltip.absolute_positioning\")))])]),t(Te,{attrs:{top:\"\"},scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"positioning-toggle-button\",attrs:{disabled:!e.klippyReady||e.printerBusy}},\"app-btn\",n,!1),s),[t(x,{attrs:{small:\"\"}",
+     ",[t(\"span\",[e._v(e._s(e.$t(\"app.tool.tooltip.absolute_positioning\")))])]),t(Te,{attrs:{top:\"\"},scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"positioning-toggle-button\",attrs:{disabled:!e.klippyReady||e.printerPrinting}},\"app-btn\",n,!1),s),[t(x,{attrs:{small:\"\"}"
+    ],
+    [
+     ",scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"mb-2\",attrs:{block:\"\",color:\"primary\"},on:{click:e.restartKlippy}",
+     ",scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"mb-2\",attrs:{block:\"\",color:\"primary\",disabled:e.klippyReady&&e.printerBusy&&!e.printerPaused},on:{click:e.restartKlippy}"
+    ],
+    [
+     ",scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"mb-2\",attrs:{block:\"\",color:\"primary\"},on:{click:e.firmwareRestartKlippy}",
+     ",scopedSlots:e._u([{key:\"activator\",fn:function({on:s,attrs:n}){return[t(R,e._g(e._b({staticClass:\"mb-2\",attrs:{block:\"\",color:\"primary\",disabled:e.klippyReady&&e.printerBusy&&!e.printerPaused},on:{click:e.firmwareRestartKlippy}"
+    ],
+    [
+     ";let b0=class extends ${get procStats(){return this.$store.getters[\"server/getProcessStats\"]}get systemStats(){return this.$store.getters[\"printer/getSystemStats\"]}",
+     ";let b0=class extends ${get socTemperature(){const t=this.$store.state.server.cpu_temp;return this.$store.getters[\"socket/getConnectionState\"]&&Number.isFinite(t)?t.toFixed(1)+\" °C\":\"--\"}get procStats(){return this.$store.getters[\"server/getProcessStats\"]}get systemStats(){return this.$store.getters[\"printer/getSystemStats\"]}"
+    ],
+    [
+     "},[t(xe,[t(Y,[t(\"system-load-chart\"),t(\"klipper-load-chart\"),t(\"moonraker-load-chart\"),t(\"system-memory-chart\"),e._l(e.mcus,function(s,n){return[t(\"mcu-load-chart\",{key:n,attrs:{mcu:s.name}}",
+     "},[t(xe,[t(\"div\",{staticClass:\"d-flex justify-space-between mb-3\",attrs:{\"data-q2-soc-temperature\":\"\"}},[t(\"span\",[e._v(e.$i18n.locale===\"pl\"?\"Temperatura SoC\":\"SoC temperature\")]),t(\"span\",[e._v(e._s(e.socTemperature))])]),t(Y,[t(\"system-load-chart\"),t(\"klipper-load-chart\"),t(\"moonraker-load-chart\"),t(\"system-memory-chart\"),e._l(e.mcus,function(s,n){return[t(\"mcu-load-chart\",{key:n,attrs:{mcu:s.name}}"
+    ],
+    [
+     ";let $0=class extends ${get sdInfo(){const e=this.$store.getters[\"server/getSystemInfo\"];return(e==null?void 0:e.sd_info)||{}",
+     ";let $0=class extends ${get diskUsageReady(){return this.$store.getters[\"socket/getConnectionState\"]&&this.$store.getters[\"socket/getApiConnected\"]&&this.$store.getters[\"files/isRootAvailable\"](\"gcodes\")}refreshDiskUsage(e){e&&I.serverFilesGetDirectory(\"gcodes\",\"gcodes\")}get sdInfo(){const e=this.$store.getters[\"server/getSystemInfo\"];return(e==null?void 0:e.sd_info)||{}"
+    ],
+    [
+     "$0=zhe([L({components:{JobHistory:O2}}",
+     "$0=zhe([L({components:{JobHistory:O2},watch:{diskUsageReady:{immediate:!0,handler:\"refreshDiskUsage\"}}}"
+    ],
+    [
+     "},[t(\"tbody\",[e.sdInfo.manufacturer?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.manufacturer\")))]),t(\"td\",[e._v(e._s(e.sdInfo.manufacturer))])]):e._e(),e.sdInfo.manufacturer_date?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.manufactured\")))]),t(\"td\",[e._v(e._s(e.sdInfo.manufacturer_date))])]):e._e(),e.sdInfo.product_name?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.product_name\")))]),t(\"td\",[e._v(e._s(e.sdInfo.product_name)+\" \"+e._s(e.sdInfo.product_revision))])]):e._e(),e.sdInfo.capacity?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.capacity\")))]),t(\"td\",[e._v(e._s(e.sdInfo.capacity))])]):e._e(),e.sdInfo.serial_number?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.serial_number\")))]),t(\"td\",[e._v(e._s(e.sdInfo.serial_number))])]):e._e()])])],1)},Whe=[],Ghe=A($0,Uhe,Whe,!1,null,null);",
+     "},[t(\"tbody\",[e.sdInfo.manufacturer?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.manufacturer\")))]),t(\"td\",[e._v(e._s(e.sdInfo.manufacturer===\"Unknown\"?\"GENERIC\":e.sdInfo.manufacturer))])]):e._e(),e.sdInfo.manufacturer_date?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.manufactured\")))]),t(\"td\",[e._v(e._s(e.sdInfo.manufacturer_date))])]):e._e(),e.sdInfo.product_name?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.product_name\")))]),t(\"td\",[e._v(e._s(e.sdInfo.product_name)+\" \"+e._s(e.sdInfo.product_revision))])]):e._e(),e.sdInfo.capacity?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.capacity\")))]),t(\"td\",[e._v(e._s(e.sdInfo.capacity))])]):e._e(),e.sdInfo.serial_number?t(\"tr\",[t(\"th\",[e._v(e._s(e.$t(\"app.system_info.label.serial_number\")))]),t(\"td\",[e._v(e._s(e.sdInfo.serial_number))])]):e._e()])])],1)},Whe=[],Ghe=A($0,Uhe,Whe,!1,null,null);"
+    ],
+    [
+     "=B0();Object.assign(r,{klippy_retries:e,info:t})},setServerInfo(r,e){$.set(r,\"info\",e)}",
+     "=B0();r.klippy_retries=e,r.info.klippy_connected=t.klippy_connected,r.info.klippy_state=t.klippy_state},setServerInfo(r,e){$.set(r,\"info\",e)}"
+    ],
+    [
+     "},setMoonrakerStats(r,e){if(e.cpu_temp&&$.set(r,\"cpu_temp\",e.cpu_temp),e.throttled_state&&(r.throttled_state={...r.throttled_state,...e.throttled_state}),e.moonraker_stats&&Array.isArray(e.moonraker_stats))$.set(r,\"moonraker_stats\",e.moonraker_stats);",
+     "},setMoonrakerStats(r,e){if(e.cpu_temp!==void 0&&$.set(r,\"cpu_temp\",Number.isFinite(e.cpu_temp)?e.cpu_temp:null),e.throttled_state&&(r.throttled_state={...r.throttled_state,...e.throttled_state}),e.moonraker_stats&&Array.isArray(e.moonraker_stats))$.set(r,\"moonraker_stats\",e.moonraker_stats);"
+    ],
+    [
+     ",getTimeEstimates:(r,e,t)=>{var y,C,w,S,E,W,X;const s=e.getPrintProgress,n=e.getFileRelativePrintProgress,i=((y=r.printer.print_stats)==null?void 0:y.total_duration)??0,a=((C=r.printer.print_stats)==null?void 0:C.print_duration)??0,o=a>0&&n>0?a/n-a:0,l=(S=(w=r.printer.current_file)==null?void 0:w.history)==null?void 0:S.status,c=(W=(E=r.printer.current_file)==null?void 0:E.history)==null?void 0:W.total_duration,u=l===\"completed\"&&c!=null?c-a:0,d=(X=r.printer.current_file)==null?void 0:X.estimated_time,p=d!=null&&d>0?d-a:0,m=t.config.uiSettings.general.printEtaCalculation.map(ae=>{switch(ae){case\"file\":return u>0?u:o;case\"slicer\":return p;",
+     ",getTimeEstimates:(r,e,t)=>{var y,C,w,S,E,W,X;const s=e.getPrintProgress,n=e.getFileRelativePrintProgress,i=((y=r.printer.print_stats)==null?void 0:y.total_duration)??0,a=((C=r.printer.print_stats)==null?void 0:C.print_duration)??0,o=a>0&&n>=.01?a/n-a:0,l=(S=(w=r.printer.current_file)==null?void 0:w.history)==null?void 0:S.status,c=(W=(E=r.printer.current_file)==null?void 0:E.history)==null?void 0:W.total_duration,u=l===\"completed\"&&c!=null?c-a:0,d=(X=r.printer.current_file)==null?void 0:X.estimated_time,p=d!=null&&d>0?d-a:0,m=t.config.uiSettings.general.printEtaCalculation.map(ae=>{switch(ae){case\"file\":return u>0?u:o;case\"slicer\":return p;"
+    ],
+    [
+     "}).filter(ae=>ae>0),g=m.reduce((ae,ue)=>ae+ue,0)/m.length||0,v=Date.now()+g*1e3;return{progress:Math.floor(s*100),printDuration:a,totalDuration:i,slicerLeft:p,fileLeft:o,actualLeft:u,eta:v}",
+     "}).filter(ae=>ae>0),g=m.reduce((ae,ue)=>ae+ue,0)/m.length||0,v=g>0?Date.now()+g*1e3:0;return{progress:Math.floor(s*100),printDuration:a,totalDuration:i,slicerLeft:p,fileLeft:o,actualLeft:u,eta:v}"
+    ],
+    [
+     "},async notifyDeleteDir({commit:r},e){const t=e.item.root,s=qt(e.item.path,t);",
+     "},async notifyDeleteDir({commit:r,getters:g},e){const t=e.item.root,s=qt(e.item.path,t);"
+    ],
+    [
+     "`,root:t})}",
+     "`,root:t});const p=g.getCurrentPathByRoot(t),d=`${s.rootPath}/${s.filename}`;if(p===d||p.startsWith(`${d}/`))r(\"setCurrentPath\",{root:t,path:s.rootPath})}"
+    ],
+    [
+     "for(const n of s)$.delete(r.pathFiles,n)},setUpdateFileUpload(r,e){const t=r.uploads.findIndex(s=>s.filepath===e.filepath);t>=0?$.set(r.uploads,t,{...r.uploads[t],...e}):r.uploads.push(e)},setRemoveFileUpload(r,e){const t=r.uploads.findIndex(s=>s.filepath===e);t>=0&&r.uploads.splice(t,1)},setUpdateFileDownload(r,e){r.download={...r.download,...e}},setRemoveFileDownload(r){r.download=null},setCurrentPath(r,e){$.set(r.currentPaths,e.root,e.path)}",
+     "for(const n of s)$.delete(r.pathFiles,n)},setUpdateFileUpload(r,e){if(!e.uid)return;const t=r.uploads.findIndex(s=>s.uid===e.uid);t>=0?$.set(r.uploads,t,{...r.uploads[t],...e}):e.filepath!==void 0&&r.uploads.push(e)},setRemoveFileUpload(r,e){const t=r.uploads.findIndex(s=>s.uid===e);t>=0&&r.uploads.splice(t,1)},setUpdateFileDownload(r,e){if(!e.uid)return;e.abortController?r.download={...e}:r.download?.uid===e.uid&&(r.download={...r.download,...e})},setRemoveFileDownload(r,e){r.download?.uid===e&&(r.download=null)},setCurrentPath(r,e){$.set(r.currentPaths,e.root,e.path)}"
+    ],
+    [
+     "f(this,\"cache\",null);this.url=e.url,this.reconnectEnabled=e.reconnectEnabled||!1,this.reconnectInterval=e.reconnectInterval||1e3,this.store=e.store?e.store:null}pong(){clearTimeout(this.pingTimeout),!this.store.state.socket.disconnecting&&!this.store.state.files.download&&(this.store.commit(\"socket/setSocketOpen\",!0),this.store.dispatch(\"socket/onSocketConnecting\",!1)),this.pingTimeout=setTimeout(()=>{!this.store.state.socket.disconnecting&&!this.store.state.files.download&&(ye.debug(`${this.logPrefix}",
+     "f(this,\"cache\",null);f(this,\"reconnectTimer\",null);f(this,\"manualClose\",!1);this.url=e.url,this.reconnectEnabled=e.reconnectEnabled||!1,this.reconnectInterval=e.reconnectInterval||1e3,this.store=e.store?e.store:null,typeof window<\"u\"&&(window.addEventListener(\"online\",()=>this.retryNow()),document.addEventListener(\"visibilitychange\",()=>{document.hidden||this.retryNow()}))}retryNow(){this.reconnectTimer&&(clearTimeout(this.reconnectTimer),this.reconnectTimer=null,this.connect())}pong(){clearTimeout(this.pingTimeout),!this.store.state.socket.disconnecting&&!this.store.state.files.download&&(this.store.commit(\"socket/setSocketOpen\",!0),this.store.dispatch(\"socket/onSocketConnecting\",!1)),this.pingTimeout=setTimeout(()=>{!this.store.state.socket.disconnecting&&!this.store.state.files.download&&(ye.debug(`${this.logPrefix}"
+    ],
+    [
+     ",fe.SOCKET_PING_INTERVAL)}close(){this.connection&&(this.cache=null,this.connection.close(),this.reconnectCount=0)}async connect(e){var t;e&&(this.url=e),this.cache=null;try{const n=(await rt.accessOneshotTokenGet()).data.result;",
+     ",fe.SOCKET_PING_INTERVAL)}close(){this.manualClose=!0,clearTimeout(this.reconnectTimer),this.reconnectTimer=null,this.connection&&(this.cache=null,this.connection.close(),this.reconnectCount=0)}async connect(e){var t;clearTimeout(this.reconnectTimer),this.reconnectTimer=null,this.manualClose=!1,e&&(this.url=e),this.cache=null;try{const n=(await rt.accessOneshotTokenGet()).data.result;"
+    ],
+    [
+     ",this.connection.onclose=i=>{ye.debug(`${this.logPrefix} Connection closed:`,i),clearTimeout(this.pingTimeout),this.store&&this.store.dispatch(\"socket/onSocketClose\",i),i.wasClean||this.reconnect()},this.connection.onerror=i=>{ye.error(`${this.logPrefix}",
+     ",this.connection.onclose=i=>{ye.debug(`${this.logPrefix} Connection closed:`,i),clearTimeout(this.pingTimeout);const q2s=i.wasClean&&!this.manualClose;this.store&&this.store.dispatch(\"socket/onSocketClose\",q2s?{wasClean:!1,code:i.code,reason:i.reason}:i),(!i.wasClean||q2s)&&this.reconnect()},this.connection.onerror=i=>{ye.error(`${this.logPrefix}"
+    ],
+    [
+     "}reconnect(){this.reconnectCount<=this.allowedReconnectAttempts?(this.reconnectCount+=1,this.connection=null,ye.debug(`${this.logPrefix} Reconnecting in ${this.reconnectInterval}`),setTimeout(()=>{this.connect()},this.reconnectInterval)):this.store&&this.store.dispatch(\"socket/onSocketConnecting\",!1)}emit(e,t){var s,n;",
+     "}reconnect(){if(this.reconnectTimer||this.manualClose)return;const n=Math.round(Math.min(15e3,this.reconnectInterval*2**Math.max(0,this.reconnectCount-1))*(.8+Math.random()*.4));this.reconnectCount+=1,this.connection=null,this.store&&this.store.dispatch(\"socket/onSocketConnecting\",!0),ye.debug(`${this.logPrefix} Reconnecting in ${n}`),this.reconnectTimer=setTimeout(()=>{this.reconnectTimer=null,this.connect()},n)}emit(e,t){var s,n;"
+    ],
+    [
+     ")}}saveConfigAndRestart(e=!1){if(!e&&this.$store.state.config.uiSettings.general.confirmOnSaveConfigAndRestart){this.pendingChangesDialogOpen=!0;",
+     ")}else this.uploadFile(e,\"\",\"gcodes\",!0)}saveConfigAndRestart(e=!1){if(!e&&this.$store.state.config.uiSettings.general.confirmOnSaveConfigAndRestart){this.pendingChangesDialogOpen=!0;"
+    ],
+    [
+     "},[e.socketConnected&&e.apiConnected&&(!e.klippyReady||e.hasWarnings)&&!e.inLayout&&e.$route.path!==\"/login\"?t(Y,[t(k,[t(_3e)],1)],1):e._e(),e.socketConnected&&e.apiConnected||!e.authenticated&&e.apiConnected?t(\"router-view\"):e._e(),t(r3e)],1),!e.socketConnected&&!e.apiConnected||!e.socketConnected&&e.authenticated?t(YCe):e._e(),t(\"file-system-download-dialog\"),t(NCe),t(\"spool-selection-dialog\"),t(yL),t(_L)],1),t(wCe),t(um,{attrs:{message:e.$t(\"app.file_system.overlay.drag_files_folders_upload\"),icon:\"$fileUpload\"},model:{value:e.dragState,callback:function(n){e.dragState=n}",
+     "},[e.socketConnected&&e.apiConnected&&(!e.klippyReady||e.hasWarnings)&&!e.inLayout&&e.$route.path!==\"/login\"?t(Y,[t(k,[t(_3e)],1)],1):e._e(),e.socketConnected&&e.apiConnected||!e.authenticated&&e.apiConnected?t(\"router-view\"):e._e(),t(r3e)],1),!e.socketConnected&&!e.apiConnected||!e.socketConnected&&e.authenticated?t(YCe):e._e(),e.socketConnected?[t(\"file-system-download-dialog\"),t(NCe),t(\"spool-selection-dialog\"),t(yL),t(_L)]:e._e()],1),t(wCe),t(um,{attrs:{message:e.$t(\"app.file_system.overlay.drag_files_folders_upload\"),icon:\"$fileUpload\"},model:{value:e.dragState,callback:function(n){e.dragState=n}"
+    ]
+   ]
+  }
+ },
+ "restart": []
+}

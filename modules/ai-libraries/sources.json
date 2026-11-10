@@ -1,0 +1,1231 @@
+[
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_ARC4.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_ARC4.abi3.so",
+  "sha256": "53dd7c72c871ab6cf7aab397e6c725f23681120fe284790e03a6cc599a0ed85d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_Salsa20.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_Salsa20.abi3.so",
+  "sha256": "6a8cd3b23d6266ff42179875257c0e3879750b6e16f0ac7402688d4070763470"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_chacha20.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_chacha20.abi3.so",
+  "sha256": "59041e3a87a6b37a9b7470ed38f490fc32a6065300ef8ea101cfa5cd570b286f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_pkcs1_decode.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_pkcs1_decode.abi3.so",
+  "sha256": "7ba2d1ef5cf8a74b80723476bafb64b4d758e25dd9dac5b8ace8a10b40556ca3"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_aes.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_aes.abi3.so",
+  "sha256": "5d46ef668af167fa02351766a073ab7f5743845d09d168ee3b6a5e9aefa831d9"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_arc2.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_arc2.abi3.so",
+  "sha256": "257d3591331ca27094156ac332e3b65dbe8aafc5146994c968c19bff27dd845d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_blowfish.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_blowfish.abi3.so",
+  "sha256": "c20cfea6e8381d77bd276b88dbecb36685b87e37a92bf92b841293518812423e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_cast.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_cast.abi3.so",
+  "sha256": "4c71536da8aaecaf223d9337fb769b0f294b27bbfe47429386fdd52b715c2742"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_cbc.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_cbc.abi3.so",
+  "sha256": "305472613dbf0967c348816659f5205f1958f7fc89177e663e9bce2608aa0716"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_cfb.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_cfb.abi3.so",
+  "sha256": "eb5fd977690c87d5e6bd2a48aee7ac07ae5f368e2a8d7d5b912bafbc834b5033"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_ctr.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_ctr.abi3.so",
+  "sha256": "d7d44fb159048a4d8d31783cb133a8dfa27676d36645038653a5e211213c1140"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_des.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_des.abi3.so",
+  "sha256": "11e0958642b55e22dfc058de4cdcb58f345e62a8c6cce5637d40b9af9917264f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_des3.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_des3.abi3.so",
+  "sha256": "c0516dad7355f08493cf103459c14ce8b069746a573e707800b878e88f15a9ba"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_ecb.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_ecb.abi3.so",
+  "sha256": "7811058cb2d1758293057e1c1137f31bd945f32a82569c8506b91e0f53286035"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_eksblowfish.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_eksblowfish.abi3.so",
+  "sha256": "4997fbff6b67bdfd34e5e55d363da8660716e7dba7e74f53b4b10d6079266ea0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_ocb.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_ocb.abi3.so",
+  "sha256": "f2b8219d1fd0fbf355209515bb739325cbe20677f23788a4ac083ca7124dd61c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Cipher/_raw_ofb.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_raw_ofb.abi3.so",
+  "sha256": "71eaf02632a42fe384b0da08fe8488c8d1c32e070838f4b5be4abcd2f6e83a8d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_BLAKE2b.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_BLAKE2b.abi3.so",
+  "sha256": "78589307f0825174c03cf15c331ce777023df34dcce043e620e13949c7b73f48"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_BLAKE2s.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_BLAKE2s.abi3.so",
+  "sha256": "bcfcab945272a543d075532a40c795d41910051aa9f15515ca847727d9290c5e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_MD2.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_MD2.abi3.so",
+  "sha256": "a95f94bf5a2caff39b165b352119898a3b8468e1cac91dd4a1ffb65a35cceddd"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_MD4.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_MD4.abi3.so",
+  "sha256": "06b4bef747e16fe972d1a08c48aadcd43bdc2472e12183643734e7da0a4782ba"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_MD5.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_MD5.abi3.so",
+  "sha256": "63d066deaafe20f24874940a30f2c4b6514a1e660797990d0fc56d543f14dc51"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_RIPEMD160.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_RIPEMD160.abi3.so",
+  "sha256": "61eaee1941cc5293d059649ae2d50b374c0ecdb9380abbdb2b3b40d2d147cf25"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_SHA1.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_SHA1.abi3.so",
+  "sha256": "379a37ea0d3418dc1981667895ec6e3f35b6a80393739323e069a0a0776185d4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_SHA224.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_SHA224.abi3.so",
+  "sha256": "137c03623fe51b4431ae08020c3dd73c2356341819292e2fadb7509f89bf3f8b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_SHA256.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_SHA256.abi3.so",
+  "sha256": "478d1f0b8c6df1e3d3466f36a48f3419e86b0dfb326b030aa0764225e1274210"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_SHA384.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_SHA384.abi3.so",
+  "sha256": "b1e64f7b5f2f5305db8f7490a5c9b094ef6373710745f95a1e31980dd09bca0f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_SHA512.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_SHA512.abi3.so",
+  "sha256": "6422a14a0cc4227a97baba42b2ed8e97d158ba4147944ab3381623b2cbcda6f3"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_ghash_portable.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_ghash_portable.abi3.so",
+  "sha256": "972192ef8e55f09b84d201d0e756bc77804b917e65f7a58d95ae53d515de1dd6"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_keccak.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_keccak.abi3.so",
+  "sha256": "9bef1a15e10a89e1adb09daa97da9944131d2fb4431bc931abd05fd531018e7a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Hash/_poly1305.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Hash/_poly1305.abi3.so",
+  "sha256": "64c7ed08e85a46df7e15a7f3b11a34f618839f53994c6fcf2c9863130bf50f61"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Math/_modexp.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Math/_modexp.abi3.so",
+  "sha256": "ec8c827d92799bbddec7438e6b588b80cf6a2cc106b9a9a40ceec81dec694a58"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Protocol/_scrypt.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Protocol/_scrypt.abi3.so",
+  "sha256": "f75c8372d88fed6cbe5700661f05614f1dda40a8710fc838350de8e95257d8d9"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/PublicKey/_curve25519.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/PublicKey/_curve25519.abi3.so",
+  "sha256": "aaf2aae64683487e5330ba54848050a6c25498ce0689778c9f894d5fd0b98feb"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/PublicKey/_curve448.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/PublicKey/_curve448.abi3.so",
+  "sha256": "4fc51a2921f9c583e062674444665c2420b0715fb64a8e3815117b192ce80869"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/PublicKey/_ec_ws.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/PublicKey/_ec_ws.abi3.so",
+  "sha256": "8d85b7c63c743328049a635887626e58b68685cb0e43570639d6a646062ed7e2"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/PublicKey/_ed25519.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/PublicKey/_ed25519.abi3.so",
+  "sha256": "98194f64506895cf8de328522abf4597040a90093f18db76cd263b7d83979e2e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/PublicKey/_ed448.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/PublicKey/_ed448.abi3.so",
+  "sha256": "132594cc153e978d1f3b2b1cdd36d47322ae8231cb6f264144b70e6f99c9514d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Util/_cpuid_c.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Util/_cpuid_c.abi3.so",
+  "sha256": "ca141e520b06935080449df4f43f7d1a98f6ff988f521707b647b08611cb36c4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pycryptodome-3.23.0-cp37-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "67bd81fcbe34f43ad9422ee8fd4843c8e7198dd88dd3d40e6de42ee65fbe1490",
+  "member": "Crypto/Util/_strxor.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/Crypto/Util/_strxor.abi3.so",
+  "sha256": "0c7cdbb5fa6fbfb6204670e26917164c496b3628c4f6f697fca20c56f6990d35"
+ },
+ {
+  "kind": "debian-deb",
+  "file": "libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "file_sha256": "3b3612dcd7550f01ec3517fbe955838223f4cf115b6983e4ed6d7320cd4b05c4",
+  "url": "http://deb.debian.org/debian/pool/main/p/python3.9/libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "member": "usr/lib/python3.9/lib-dynload/_contextvars.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/_contextvars.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "62718280304ad198b6f78c3da3c8bb7b01968449e86c21a33b86270aea91bc52"
+ },
+ {
+  "kind": "debian-deb",
+  "file": "libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "file_sha256": "3b3612dcd7550f01ec3517fbe955838223f4cf115b6983e4ed6d7320cd4b05c4",
+  "url": "http://deb.debian.org/debian/pool/main/p/python3.9/libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "member": "usr/lib/python3.9/lib-dynload/_ctypes.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/_ctypes.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "5b4a8decc5f746d3a277d69818d13e5b76702e8fc880045379071fc6987438e4"
+ },
+ {
+  "kind": "debian-deb",
+  "file": "libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "file_sha256": "3b3612dcd7550f01ec3517fbe955838223f4cf115b6983e4ed6d7320cd4b05c4",
+  "url": "http://deb.debian.org/debian/pool/main/p/python3.9/libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "member": "usr/lib/python3.9/lib-dynload/_multiprocessing.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/_multiprocessing.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "51532844a263030438d76e24c489529cfb54e52ce3c4496e8df97d8564171c01"
+ },
+ {
+  "kind": "debian-deb",
+  "file": "libpython3.9-minimal_3.9.2-1_arm64.deb",
+  "file_sha256": "b49736ab0e8b8577f97a474ca67e20c1c025f9d7394ec8d7820de6314c903cf9",
+  "url": "http://deb.debian.org/debian/pool/main/p/python3.9/libpython3.9-minimal_3.9.2-1_arm64.deb",
+  "member": "usr/lib/python3.9/lib-dynload/_ssl.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/_ssl.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "90c35b0e392cd4926b473bad2576a50dde344d71e2d10f731c484c1ac0464e38"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "cv2/cv2.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/cv2/cv2.abi3.so",
+  "sha256": "bedf59d9ba20e4bf4ff7f1c4617fc5a068142c58d3ed6b73f0182b29f0574b17"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "cv2/qt/plugins/platforms/libqxcb.so",
+  "target": "/usr/local/bin/algo_app/_internal/cv2/qt/plugins/platforms/libqxcb.so",
+  "sha256": "56e8ece0953af96bd358ba44dab4e7f0179edd0f01077c190e756d125d630b5d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy.libs/libgfortran-daac5196-038a5e3c.so.5.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/numpy.libs/libgfortran-daac5196-038a5e3c.so.5.0.0",
+  "sha256": "8c13f44b44e4dd0005632ea4173f5f5014d2829d50aa12b2054034297c07f233"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy.libs/libscipy_openblas64_-0f683016.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy.libs/libscipy_openblas64_-0f683016.so",
+  "sha256": "f3e216db23e3393127cf7753cab8085da83454fed795c9a1cb544d57ce633f35"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_multiarray_tests.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_multiarray_tests.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "88b722d4fa2c8680190c3afe226ab0db802ff24e6bad47ed8ba87df00414d9d5"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_multiarray_umath.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_multiarray_umath.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "2ff1d58e9d86dbf49e4c2ce168f89dbcaadef536167bc31d6a16d87f97f443f9"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_operand_flag_tests.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_operand_flag_tests.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "4e32203e760392b62355ccab2ee7c3e8bc5dbdfa55653f13f91f08515bd44c6d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_rational_tests.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_rational_tests.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "f5cec7dacd987172609f0ba95c377a55a6d5d8ff931ab09fadf1b1aa9d4913b4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_simd.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_simd.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "b6541ea05aa9b6b9c1cc5cfb105af6faa1f9bc7043b07b8765ade5cd9d92d332"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_struct_ufunc_tests.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_struct_ufunc_tests.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "b94be3fd3ab0b603960e49ca24a169e13bd4f1dcdb6cd4aa10cdf4741bd172e1"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/_core/_umath_tests.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/_core/_umath_tests.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "84ad78db97f1af2f08f98935fc8dec27a115dd31e5402325b25bba717b694257"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/fft/_pocketfft_umath.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/fft/_pocketfft_umath.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "774aa49317312bc60874465a2adc08271ea5f32b4d36d30b0c825acf470f9f6d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/linalg/_umath_linalg.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/linalg/_umath_linalg.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "9b5de6d63ca7e40448335d5107c36b1457908d6bea3735c399e402777a4a6fe0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/linalg/lapack_lite.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/linalg/lapack_lite.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "6780f4ebfa22f826062215e0069ea1aa653e5861dd9aed429a76c78b448a5a66"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_bounded_integers.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_bounded_integers.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "606e3de880d60f03cb59ddc0ebf7492dc6877f3b2ed94e644460663358f7c73a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_common.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_common.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "ad06d6b57df9c562928c8509b45e1c48f17a4bed5028d5e3c8f1e9a05970d07a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_generator.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_generator.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "df754e7307c01c1fb2795dde7cdb3d45f73751438ff497c48f086d7b9a299e17"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_mt19937.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_mt19937.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "803ccf78fbb001c0403df7efc451bb88c0de37d79e49fb007e25aa63958e0bd1"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_pcg64.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_pcg64.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "958d847aee8a0671011ab3a9b4b676d0f72a096141177348c4f739de5d4e3215"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_philox.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_philox.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "a53641c1e020f83c645d9b47b791c45977e8c3130241d8650887af7ab8a07353"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/_sfc64.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/_sfc64.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "8348b6e40874aaa7d61884fadb58bf53cbb0644cf5d03a804842b59ab9b77749"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/bit_generator.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/bit_generator.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "00674f219a92519ba4c4b26044d3e79cb5ed8c1d2ee2cfcd88736212a2ea982a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "numpy-2.0.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "1e795a8be3ddbac43274f18588329c72939870a16cae810c2b73461c40718ab1",
+  "member": "numpy/random/mtrand.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/numpy/random/mtrand.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "30df464f0be1104c660257da4713ecfa167925b0e7a0b289786b298cf44b8eda"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "onnxruntime-1.19.2-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+  "file_sha256": "df2a94179a42d530b936f154615b54748239c2908ee44f0d722cb4df10670f68",
+  "member": "onnxruntime/capi/libonnxruntime_providers_shared.so",
+  "target": "/usr/local/bin/algo_app/_internal/onnxruntime/capi/libonnxruntime_providers_shared.so",
+  "sha256": "d93c6b9016eb23a46b7ace5a6c7d56139fdf11bfe0228e93801de758707dee2b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "onnxruntime-1.19.2-cp39-cp39-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+  "file_sha256": "df2a94179a42d530b936f154615b54748239c2908ee44f0d722cb4df10670f68",
+  "member": "onnxruntime/capi/onnxruntime_pybind11_state.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/onnxruntime/capi/onnxruntime_pybind11_state.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "4e3e7d9ac54723d6602cf0258041a9ef79bb3c40eb28e9c63d4d105a7d1ce5bc"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libQt5Core-104e39d9.so.5.15.16",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libQt5Core-104e39d9.so.5.15.16",
+  "sha256": "4268f2ca1b4bc036f3331a1d040b589f4d7ed1540fea4cb716b493eb0a5cb166"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libQt5Gui-b4c09495.so.5.15.16",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libQt5Gui-b4c09495.so.5.15.16",
+  "sha256": "b15a8141c9f7311f9367218da1a82c05da458b51a4c5f80b213184635cc05470"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libQt5Test-9a114c6a.so.5.15.16",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libQt5Test-9a114c6a.so.5.15.16",
+  "sha256": "8916b8fc0b02de7787fe7953239f0d7af221af38de8397ae868d9e96d82fefbc"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libQt5Widgets-42fd29df.so.5.15.16",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libQt5Widgets-42fd29df.so.5.15.16",
+  "sha256": "7d533a93b832ff887f2623de1292cf1eecc65749f2c8dd0b7e96897c76cb76e9"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libQt5XcbQpa-3d8da064.so.5.15.16",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libQt5XcbQpa-3d8da064.so.5.15.16",
+  "sha256": "22694d27ffbdc22fb17f9ff8016a54bd2d85556609a497fe5ec2bdf1ee6e2889"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libX11-xcb-a0297738.so.1.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libX11-xcb-a0297738.so.1.0.0",
+  "sha256": "89e293841a4b757dd17eea24815105944a01c77147d07b13bc30d7facbee60b0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libXau-21870672.so.6.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libXau-21870672.so.6.0.0",
+  "sha256": "9baa7304c9893a2e355a3a2ba088c7643d3385ce42b718a0d1f5d43efc46186c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libaom-e47476b8.so.3.12.1",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libaom-e47476b8.so.3.12.1",
+  "sha256": "f113bb2593bb7a0baa91798621958c54189f8aeee6c99ae84dbd1c4f63bb0537"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libavcodec-df1d7c1e.so.59.37.100",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libavcodec-df1d7c1e.so.59.37.100",
+  "sha256": "5bb94480d87851246e95dd7994b1b5598e84493af8c38b29db39c234dca1939b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libavformat-ef9e8359.so.59.27.100",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libavformat-ef9e8359.so.59.27.100",
+  "sha256": "891dea25a97b60b8dcff52591e07ba2b5474b604d087ccec8cac61790517b40b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libavif-f4efd5aa.so.16.3.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libavif-f4efd5aa.so.16.3.0",
+  "sha256": "c19219d495fe36f7f8f702d8c14b22d35716b8dfff94ee0920354f67d96b0234"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libavutil-2dc4740f.so.57.28.100",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libavutil-2dc4740f.so.57.28.100",
+  "sha256": "2dcb13dfd5b4884ee6dd40df6cbc2cbf34a64e904253fba281973718e6385758"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libcrypto-43e37667.so.1.1",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libcrypto-43e37667.so.1.1",
+  "sha256": "5a50c359e7d8682f300b25c0ceca9f9ec3c38e76677f3df83a1a4d82bc89691d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libgfortran-8634ef04.so.3.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libgfortran-8634ef04.so.3.0.0",
+  "sha256": "f23ed0eef5926be4c9d62a5b10e8be1cd24106fc558fb3bcf90d39fd8911c47f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libopenblas-r0-8966572e.3.3.so",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libopenblas-r0-8966572e.3.3.so",
+  "sha256": "ba90123073ce955ee603cc3f4b45a85069470504bf58734cfd14ebbab41949d1"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libpng16-035647ca.so.16.48.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libpng16-035647ca.so.16.48.0",
+  "sha256": "6777add0627c75cffed704f353b3f275ee094b750593fd8919f2550d80486135"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libssl-b9692d76.so.1.1",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libssl-b9692d76.so.1.1",
+  "sha256": "0936de9870ccde590f998105bb0b64eaa926f53e27f1a9301f98c2a2179354d7"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libswresample-da2ce214.so.4.7.100",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libswresample-da2ce214.so.4.7.100",
+  "sha256": "ba311c8e3c7fe348f17dc44bd646ad4e7a5175e2c0eb49252564555968f97d14"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libswscale-e52af062.so.6.7.100",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libswscale-e52af062.so.6.7.100",
+  "sha256": "64fbe02ed606afc0e431c89b247bd8bae8549a7b065f8a1be1e0c9be49f3e38e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libvpx-06ef2ab1.so.11.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libvpx-06ef2ab1.so.11.0.0",
+  "sha256": "ea1bd3412752cc26142118a79728bb82ee68d00a5e7306600c0ab24ff8e07a72"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-icccm-05fb8c7f.so.4.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-icccm-05fb8c7f.so.4.0.0",
+  "sha256": "bf0743cfe5dc4c71a6d18efb3c4325d7ad5254b04b52b49e0a698de5d09a70db"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-image-75825d2e.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-image-75825d2e.so.0.0.0",
+  "sha256": "99cffdddb347ff1f2003e6fdbf6ba061739b7d4d8a3cee576551820bf4e60582"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-keysyms-73cd270d.so.1.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-keysyms-73cd270d.so.1.0.0",
+  "sha256": "def4198635b6fbfbcf0d7330cca743d33c2a94abec0fd86f20cbcfea98790d26"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-randr-e1606dfc.so.0.1.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-randr-e1606dfc.so.0.1.0",
+  "sha256": "560f8b661081dcf4ee7028df2a093a434ff3f19b5e8527bb23bcf825f0ecbbc6"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-render-76b15fe5.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-render-76b15fe5.so.0.0.0",
+  "sha256": "c3eaba5f362f3b1d4d82742078246f171f440a5d6418fe635b0523658aca28d3"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-render-util-486ef3ee.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-render-util-486ef3ee.so.0.0.0",
+  "sha256": "6d47c01030f78d30e7ea9388240e2ad4c0757e5a5128c1ed512e5c4fe2521ff6"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-shape-e8fe4bc4.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-shape-e8fe4bc4.so.0.0.0",
+  "sha256": "706e1cd859d7350c79b417b142a2592e439678c32c5e4ed917785f8d60950699"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-shm-cad72500.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-shm-cad72500.so.0.0.0",
+  "sha256": "8795522ebd99b51b148c067ca3e55e052446e37467bb0b60e32fbfbb93d53dd4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-sync-dc271c48.so.1.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-sync-dc271c48.so.1.0.0",
+  "sha256": "18ff759a8ec1401d2f29952e6812a294fb5325bd927bdcd2eadc9ef638f09423"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-util-c74d156a.so.1.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-util-c74d156a.so.1.0.0",
+  "sha256": "5ae6b7032338d2ef238bac7a65d8454d3d8d8f9ea9fd8841cd875e162caddc20"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-xfixes-f4cf71d4.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-xfixes-f4cf71d4.so.0.0.0",
+  "sha256": "87c742638c51b7719a9c9a6c216cec783e2bb7dd6044ea48618938d1da47c79f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-xinerama-6372573d.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-xinerama-6372573d.so.0.0.0",
+  "sha256": "4de47be7e7b22f332a7ca35cf3706a1bb45fb6d0316a0dd6918836458e8643c0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxcb-xkb-e2f6f9de.so.1.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxcb-xkb-e2f6f9de.so.1.0.0",
+  "sha256": "d18d60c99d4a1f636280ef268045655953a6a36f8eda1d136989fc3cd4d71b24"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxkbcommon-e272a37d.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxkbcommon-e272a37d.so.0.0.0",
+  "sha256": "4be8de966be2e7f8f55f739485ae829da99d33417aa3b99d201e13de17912a6d"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "opencv_python-4.12.0.88-cp37-abi3-manylinux2014_aarch64.manylinux_2_17_aarch64.whl",
+  "file_sha256": "51fd981c7df6af3e8f70b1556696b05224c4e6b6777bdd2a46b3d4fb09de1a92",
+  "member": "opencv_python.libs/libxkbcommon-x11-b76c7d31.so.0.0.0",
+  "target": "/usr/local/bin/algo_app/_internal/opencv_python.libs/libxkbcommon-x11-b76c7d31.so.0.0.0",
+  "sha256": "5f1468cd5ae9076b3820ba2c62ea0ecb0f8e1cc2c3ef37a8574cafacbb8ccb8b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "psutil-7.0.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "a5f098451abc2828f7dc6b58d44b532b22f2088f4999a937557b603ce72b1993",
+  "member": "psutil/_psutil_linux.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/psutil/_psutil_linux.abi3.so",
+  "sha256": "b8e95260efaed89ee63f0f09ad6dc129cd4bb5bdf8e4edaff589938e0d3ba500"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "psutil-7.0.0-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "a5f098451abc2828f7dc6b58d44b532b22f2088f4999a937557b603ce72b1993",
+  "member": "psutil/_psutil_posix.abi3.so",
+  "target": "/usr/local/bin/algo_app/_internal/psutil/_psutil_posix.abi3.so",
+  "sha256": "e484c988fbc3ae488b5516bc63121ffa7f117169fc37e25152f68dda14932c3e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "pydantic_core-2.33.2-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "c54c939ee22dc8e2d545da79fc5381f1c020d6d3141d3bd747eab59164dc89fb",
+  "member": "pydantic_core/_pydantic_core.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/pydantic_core/_pydantic_core.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "824db615aae63086c1746ff06efdced877dfb41f5cdf9ef7d6ecabf9ad09242e"
+ },
+ {
+  "kind": "debian-deb",
+  "file": "libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "file_sha256": "3b3612dcd7550f01ec3517fbe955838223f4cf115b6983e4ed6d7320cd4b05c4",
+  "url": "http://deb.debian.org/debian/pool/main/p/python3.9/libpython3.9-stdlib_3.9.2-1_arm64.deb",
+  "member": "usr/lib/python3.9/lib-dynload/resource.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/resource.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "28e832410662d32a8fec3ee6b67a6d75abc0b198ba58af8f01a407339100ec4f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "websockets-15.0.1-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl",
+  "file_sha256": "d591f8de75824cbb7acad4e05d2d710484f15f29d4a915092675ad3456f11770",
+  "member": "websockets/speedups.cpython-39-aarch64-linux-gnu.so",
+  "target": "/usr/local/bin/algo_app/_internal/websockets/speedups.cpython-39-aarch64-linux-gnu.so",
+  "sha256": "ec8d37cfd9794645bf3c33cf7f7a40a9406c653a855ec21143c9bebd8eb0afe0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet-4.0.0.dist-info/LICENSE",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/LICENSE",
+  "sha256": "6095e9ffa777dd22839f7801aa845b31c9ed07f3d6bf8a26dc5d2dec8ccc0ef3"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/__init__.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/__init__.py",
+  "sha256": "99665a5a6bd9921c1f044013f4ed58ea74537cace14fb1478504d302e8dba940"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/big5freq.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/big5freq.py",
+  "sha256": "0ffccae46cb3a15b117acd0790b2738a5b45417d1b2822ceac57bdff10ef3bff"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/big5prober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/big5prober.py",
+  "sha256": "901c476dd7ad0693deef1ae56fe7bdf748a8b7ae20fde1922dddf6941eff8773"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/chardistribution.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/chardistribution.py",
+  "sha256": "df0a164bad8aac6a282b2ab3e334129e315b2696ba57b834d9d68089b4f0725f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/charsetgroupprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/charsetgroupprober.py",
+  "sha256": "1992d17873fa151467e3786f48ea060b161a984acacf2a7a460390c55782de48"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/charsetprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/charsetprober.py",
+  "sha256": "2929b0244ae3ca9ca3d1b459982e45e5e33b73c61080b6088d95e29ed64db2d8"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/cli/__init__.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/cli/__init__.py",
+  "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/cli/chardetect.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/cli/chardetect.py",
+  "sha256": "9143de4028bea2539b5e93aae4cb652ae067d44535f6b91e7a700cc3197b5116"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/codingstatemachine.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/codingstatemachine.py",
+  "sha256": "558a7fe9ccb2922e6c1e05c34999d75b8ab5a1e94773772ef40c904d7eeeba0f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/compat.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/compat.py",
+  "sha256": "e34cebeb0202670927c72b8b18670838fcaf7bc0d379b0426dbbedb6f9e6a794"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/cp949prober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/cp949prober.py",
+  "sha256": "4d9e37e105fccf306c9d4bcbffcc26e004154d9d9992a10440bfe5370f5ff68c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/enums.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/enums.py",
+  "sha256": "0229b075bf5ab357492996853541f63a158854155de9990927f58ae6c358f1c5"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/escprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/escprober.py",
+  "sha256": "924caa560d58c370c8380309d9b765c9081415086e1c05bc7541ac913a0d5927"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/escsm.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/escsm.py",
+  "sha256": "46e5e580dbd32036ab9ddbe594d0a4e56641229742c50d2471df4402ec5487ce"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/eucjpprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/eucjpprober.py",
+  "sha256": "883f09769d084918e08e254dedfd1ef3119e409e46336a1e675740f276d2794c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/euckrfreq.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/euckrfreq.py",
+  "sha256": "fbb19d9af8167b3e3e78ee12b97a5aeed0620e2e6f45743c5af74503355a49fa"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/euckrprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/euckrprober.py",
+  "sha256": "32a14c4d05f15b81dbcc8a59f652831c1dc637c48fe328877a74e67fc83f3f16"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/euctwfreq.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/euctwfreq.py",
+  "sha256": "368d56c9db853a00795484d403b3cbc82e6825137347231b07168a235975e8c0"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/euctwprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/euctwprober.py",
+  "sha256": "d77a7a10fe3245ac6a9cfe221edc47389e91db3c47ab5fe6f214d18f3559f797"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/gb2312freq.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/gb2312freq.py",
+  "sha256": "257f25b3078a2e69c2c2693c507110b0b824affacffe411bbe2bc2e2a3ceae57"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/gb2312prober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/gb2312prober.py",
+  "sha256": "806bc85a2f568438c4fb14171ef348cab9cbbc46cc01883251267ae4751fca5c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/hebrewprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/hebrewprober.py",
+  "sha256": "737499f8aee1bf2cc663a251019c4983027fb144bd93459892f318d34601605a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/jisfreq.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/jisfreq.py",
+  "sha256": "be9989bf606ed09f209cc5513c730579f4d1be8fe16b59abc8b8a0f0207080e8"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/jpcntx.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/jpcntx.py",
+  "sha256": "3d894da915104fc2ccddc4f91661c63f48a2b1c1654d6103f763002ef06e9e0a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langbulgarianmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langbulgarianmodel.py",
+  "sha256": "afab6f3ad3bc16a8676d6041e55e1ccdc9757d6338a41f651a259053ef20becc"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langgreekmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langgreekmodel.py",
+  "sha256": "d5c32edb05203c1f1b43645b5634782cdc020844e043e0f0a34120dbfb81d75b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langhebrewmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langhebrewmodel.py",
+  "sha256": "bab3262471c85ed0b069602acb5cc463fe129b0c0dcedef7d1b0ceb635f3463b"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langhungarianmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langhungarianmodel.py",
+  "sha256": "383022b2fa827deb3c07815ec8cfcf83d1d8dd90e7132682893e01c72ce873ac"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langrussianmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langrussianmodel.py",
+  "sha256": "b0faa4ac16d7d10570c32ea8a9197ec7b111bf6278fb368ca02bcba644ac4892"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langthaimodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langthaimodel.py",
+  "sha256": "a69a0a3862fd38f763f40e025321bc478f336e75edf4c37559778261ea5aeac7"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/langturkishmodel.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/langturkishmodel.py",
+  "sha256": "1f795d89c23fae196fd2bdd5169556b542fa5f7d16cb9f7abfbfd81f3dac11d8"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/latin1prober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/latin1prober.py",
+  "sha256": "4b6228391845937f451053a54855ad815c9b4623fa87b0652e574755c94d914f"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/mbcharsetprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/mbcharsetprober.py",
+  "sha256": "011f797851fdbeea927ef2d064df8be628de6b6e4d3810a85eac3cb393bdc4b4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/mbcsgroupprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/mbcsgroupprober.py",
+  "sha256": "87a4d19e762ad8ec46d56743e493b2c5c755a67edd1b4abebc1f275abe666e1e"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/mbcssm.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/mbcssm.py",
+  "sha256": "498df6c15205dc7cdc8d8dc1684b29cbd99eb5b3522b120807444a3e7eed8e92"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/metadata/__init__.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/metadata/__init__.py",
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/metadata/languages.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/metadata/languages.py",
+  "sha256": "e35b4bab778b4ab0446c455542954616af4aee8d659fd6f51e9635974842510a"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/sbcharsetprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/sbcharsetprober.py",
+  "sha256": "9e6c8ccaec731bcec337a2b7464d8c53324b30b47af4cad6a5d9c7ccec155304"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/sbcsgroupprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/sbcsgroupprober.py",
+  "sha256": "86a79f42e5e6885c83040ace8ee8c7ea177a5855e5383d64582b310e18f1e557"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/sjisprober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/sjisprober.py",
+  "sha256": "208b7e9598f4589a8ae2b9946732993f8189944f0a504b45615b98f7a7a4e4c4"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/universaldetector.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/universaldetector.py",
+  "sha256": "0e96535c25f49d41d7c6443db2be06671181fe1bde67a856b77b8cf7872058ab"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/utf8prober.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/utf8prober.py",
+  "sha256": "21d0fcbf7cd63ac07c38b8b23e2fb2fdfab08a9445c55f4d73578a04b4ae204c"
+ },
+ {
+  "kind": "pypi-wheel",
+  "file": "chardet-4.0.0-py2.py3-none-any.whl",
+  "file_sha256": "f864054d66fd9118f2e67044ac8981a54775ec5b67aed0441892edb553d21da5",
+  "member": "chardet/version.py",
+  "target": "/usr/local/bin/algo_app/_internal/chardet/version.py",
+  "sha256": "0380882c501df0c4551b51e85cfa78e622bd44b956c95ef76b512dc04f13be7f"
+ }
+]

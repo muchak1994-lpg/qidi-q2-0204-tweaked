@@ -1,0 +1,45 @@
+{
+ "id": "dark-mode-light",
+ "order": 122,
+ "title": "Dark mode: light off during a print = light and spaghetti detection off until the print ends",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/smart_output_pin.py": {
+   "edits": [
+    [
+     "        self.gcode.run_script_from_command(f\"SAVE_VARIABLE VARIABLE=beep VALUE={self.is_enabled}\")\r\n\r\nclass CaselightOutputPin(BaseSmartOutputPin):\r\n",
+     "        self.gcode.run_script_from_command(f\"SAVE_VARIABLE VARIABLE=beep VALUE={self.is_enabled}\")\r\n\r\nclass Q2LightState:  # q2-night-light\r\n    # What the printer screen shows on its light button: the user's choice, not the lamp itself.\r\n    def __init__(self, pin):\r\n        self.pin = pin\r\n    def get_status(self, eventtime):\r\n        p = self.pin\r\n        if p.q2_night:\r\n            return {'value': 0.}\r\n        return {'value': p.outputpin.last_value if p.outputpin else 0.}\r\n\r\nclass CaselightOutputPin(BaseSmartOutputPin):\r\n"
+    ],
+    [
+     "        self.printer.register_event_handler(\"ui:sleep\", self._handle_ui_event)\r\n    def execute_logic(self):\r\n        logging.info(\"加载了灯箱光的智能管理\")\r\n        self.is_enabled = 1\r\n",
+     "        self.printer.register_event_handler(\"ui:sleep\", self._handle_ui_event)\r\n        # q2-night-light: light switched off by hand during a print = night mode for this print\r\n        self.q2_night = False\r\n        self.q2_peek = False\r\n        self.q2_ai_timer = None\r\n        self.q2_ai_off = False\r\n        self.printer.add_object('q2_light_state', Q2LightState(self))\r\n    def execute_logic(self):\r\n        logging.info(\"加载了灯箱光的智能管理\")\r\n        self.is_enabled = 1\r\n        # q2-night-light: watch SET_PIN PIN=caselight (screen button, LED_ON/LED_OFF, Fluidd)\r\n        key, values = self.gcode.mux_commands['SET_PIN']\r\n        self.q2_orig_set_pin = values[self.short_name]\r\n        values[self.short_name] = self._q2_cmd_set_pin\r\n\r\n    def _q2_cmd_set_pin(self, gcmd):\r\n        self.q2_orig_set_pin(gcmd)\r\n        try:\r\n            on = gcmd.get_float('VALUE', 0.) > 0.\r\n            ps = self.printer.lookup_object('print_stats', None)\r\n            if ps is None or ps.state not in ('printing', 'paused'):\r\n                return\r\n            if not on and not self.q2_night:\r\n                self._q2_cancel_timer()\r\n                self.q2_night = True\r\n                self.q2_peek = False\r\n                self.is_active = False\r\n                self._q2_ai(False)\r\n                if self._q2_ai_set():\r\n                    self.gcode.respond_info(\"Dark mode: light and spaghetti detection are OFF until the print ends. Tap the printer's screen to turn the light on temporarily, turn the light switch on to restore.\")\r\n                else:\r\n                    self.gcode.respond_info(\"Dark mode: light is OFF until the print ends. Tap the printer's screen to turn the light on temporarily, turn the light switch on to restore.\")\r\n            elif not on:\r\n                self.q2_peek = False\r\n            elif self.q2_night:\r\n                self.q2_night = False\r\n                self.q2_peek = False\r\n                self.is_active = True\r\n                self._q2_cancel_timer()\r\n                reactor = self.printer.get_reactor()\r\n                self.q2_ai_timer = reactor.register_timer(self._q2_ai_back, reactor.monotonic() + 60.)\r\n                self.gcode.respond_info(\"Dark mode ended: light ON, spaghetti detection back in 60 s.\" if self._q2_ai_set() else \"Dark mode ended: light ON.\")\r\n        except Exception:\r\n            logging.exception(\"q2-night-light: SET_PIN hook\")\r\n\r\n    def _q2_cancel_timer(self):\r\n        if self.q2_ai_timer is not None:\r\n            self.printer.get_reactor().unregister_timer(self.q2_ai_timer)\r\n            self.q2_ai_timer = None\r\n\r\n    def _q2_ai_back(self, eventtime):\r\n        self.q2_ai_timer = None\r\n        if not self.q2_night:\r\n            self._q2_ai(True)\r\n            if self._q2_ai_set():\r\n                self.gcode.respond_info(\"Spaghetti detection is back ON.\")\r\n        return self.printer.get_reactor().NEVER\r\n\r\n    def _q2_ai_set(self):\r\n        return bool(int(self.save_variables.allVariables.get('enable_noodle_detection', 0)))\r\n\r\n    def _q2_ai(self, on):\r\n        # only the in-memory switch of this print; the saved setting is never changed\r\n        ai = self.printer.lookup_object('ai_func_manager', None)\r\n        if ai is None or (on and not self.q2_ai_off):\r\n            return\r\n        self.q2_ai_off = not on\r\n        for cfg in ai.ai_configs.values():\r\n            if cfg.get('save_key') == 'enable_noodle_detection':\r\n                cfg['enabled'] = int(self.save_variables.allVariables.get('enable_noodle_detection', 0)) if on else 0\r\n\r\n    def _q2_reset(self):\r\n        self._q2_cancel_timer()\r\n        was = self.q2_night\r\n        self.q2_night = False\r\n        self.q2_peek = False\r\n        self._q2_ai(True)\r\n        if was:\r\n            self.gcode.respond_info(\"Dark mode ended with the print.\")\r\n"
+    ],
+    [
+     "        if mode == 0:\r\n            return\r\n        screen = event_data.get('screen', 1)       # 0:熄屏, 1:亮屏\r\n",
+     "        if mode == 0:\r\n            return\r\n        if self.q2_night:  # q2-night-light: the lamp follows the screen, AI stays off\r\n            on = event_data.get('screen', 1) == 1\r\n            self.q2_peek = on\r\n            self.is_active = False\r\n            self.toolhead.register_lookahead_callback(\r\n                lambda print_time: self.outputpin._set_pin(print_time, 1 if on else 0))\r\n            self.gcode.respond_info(\"[%s] Dark mode: screen %s -> light %s\" % (self.name, 'ON' if on else 'OFF', 'ON' if on else 'OFF'))\r\n            return\r\n        screen = event_data.get('screen', 1)       # 0:熄屏, 1:亮屏\r\n"
+    ],
+    [
+     "    def _handle_printer_stats_changed(self, old_status, new_status):\r\n        # 开启逻辑：打印中 或 从暂停恢复\r\n        if not self.is_enabled:\r\n",
+     "    def _handle_printer_stats_changed(self, old_status, new_status):\r\n        # 开启逻辑：打印中 或 从暂停恢复\r\n        # q2-night-light: night mode lasts for one print (pause/resume keeps it)\r\n        if new_status not in ('printing', 'paused') or old_status not in ('printing', 'paused'):\r\n            self._q2_reset()\r\n        elif self.q2_night:\r\n            return\r\n        if not self.is_enabled:\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "byte_edits": [
+    [
+     88349256,
+     "41726520796f75207375726520796f752077616e7420746f207475726e206f666620746865206c696768743f0a5475726e696e67206f666620746865206c6967687420647572696e67207072696e74696e672077696c6c2064697361626c6520736f6d652041492066756e6374696f6e7320616e64206d61792072656475636520746865206163637572616379206f66206f74686572732e",
+     "5475726e206f666620746865206c696768743f0a466f722074686973207072696e7420746865206c6967687420616e642073706167686574746920646574656374696f6e2073746179206f66662e20546170207468652073637265656e20746f206c6f6f6b20696e736964652c207475726e20746865206c69676874206f6e20746f20726573746f72652e00000000000000000000000000"
+    ],
+    [
+     88471840,
+     "6f75747075745f70696e20636173656c69676874",
+     "71325f6c696768745f7374617465000000000000"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper",
+  "qidi-client"
+ ]
+}

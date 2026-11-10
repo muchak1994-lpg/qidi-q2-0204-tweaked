@@ -1,0 +1,19 @@
+{
+ "id": "restart-on-exit",
+ "order": 118,
+ "title": "Klipper and Moonraker restart also after a clean exit",
+ "files": {
+  "/etc/systemd/system/klipper.service.d/q2-restart-on-exit.conf": {
+   "source": "files/q2-restart-on-exit.conf"
+  },
+  "/etc/systemd/system/moonraker.service.d/q2-restart-on-exit.conf": {
+   "source": "files/q2-restart-on-exit.conf"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ]
+ ]
+}

@@ -1,0 +1,24 @@
+{
+ "id": "park-rear-right",
+ "order": 115,
+ "title": "Park at the rear right after a print or a stop (camera sees the bed)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "    G0 Z50 F600\n    G0 X260 Y5  F30000\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n",
+     "    G0 Z50 F600\n    G0 X260 Y260  F30000  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n"
+    ],
+    [
+     "        {% endif %}\n        G1  X265 Y5 F7800\n    {% endif %}\n",
+     "        {% endif %}\n        G1  X260 Y260 F7800  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% endif %}\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

@@ -1,0 +1,19 @@
+{
+ "id": "gcode-history",
+ "order": 29,
+ "title": "Console history: keep multi-line commands as one entry",
+ "files": {
+  "/home/qidi/moonraker/moonraker/components/data_store.py": {
+   "stock_sha256": "d103f3c9bf623ce289776ffd9bac2093b718a9d3e355ec5e741e433d349b0ea2",
+   "edits": [
+    [
+     "        curtime = time.time()\r\n        for cmd in script.split('\\n'):\r\n            cmd = cmd.strip()\r\n            if not cmd:\r\n                continue\r\n            self.gcode_queue.append(\r\n                {'message': script, 'time': curtime, 'type': \"command\"})\r\n\r\n",
+     "        curtime = time.time()\r\n        if script.strip():\r\n            self.gcode_queue.append(\r\n                {'message': script, 'time': curtime, 'type': \"command\"}\r\n            )\r\n\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "moonraker"
+ ]
+}

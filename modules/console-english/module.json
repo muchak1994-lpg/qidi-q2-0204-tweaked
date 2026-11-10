@@ -1,0 +1,29 @@
+{
+ "id": "console-english",
+ "order": 23,
+ "title": "English console messages (light sync)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/smart_output_pin.py": {
+   "stock_sha256": "685bc3e031ba8cca187f6fbc18551722ad965a943a322728ed6eea118852951b",
+   "edits": [
+    [
+     "        self.gcode.respond_info(\r\n            f\"[{self.name}] 照明同步: SCREEN={'亮' if screen else '熄'}, \"\r\n            f\"PRINT={printer_state}, AI={ai_enabled}, TIMELAPSE={timelapse} \"\r\n",
+     "        self.gcode.respond_info(\r\n            f\"[{self.name}] Lighting sync: SCREEN={'ON' if screen else 'OFF'}, \"\r\n            f\"PRINT={printer_state}, AI={ai_enabled}, TIMELAPSE={timelapse} \"\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "\n    { action_respond_info(\"SMART_STATUS 状态更新: MODE=%d, SCREEN=%d, TIMELAPSE=%d\" % (m, s, t)) }\n\n",
+     "\n    { action_respond_info(\"SMART_STATUS state updated: MODE=%d, SCREEN=%d, TIMELAPSE=%d\" % (m, s, t)) }\n\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

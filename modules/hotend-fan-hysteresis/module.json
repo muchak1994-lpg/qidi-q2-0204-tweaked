@@ -1,0 +1,56 @@
+{
+ "id": "hotend-fan-hysteresis",
+ "order": 123,
+ "title": "Hotend fan: hysteresis and no false fan alarm on reheat",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/fan.py": {
+   "stock_sha256": "b4246c628a939bfa59bbd96f35f2f9af5f7da25fef67abf7ee46f15f76821bc7",
+   "edits": [
+    [
+     "        self.head_name = config.get_name().split()[0]\r\n        # Read config\r\n",
+     "        self.head_name = config.get_name().split()[0]\r\n        self.is_q2_hotend = (\r\n            config.get_name().split() == ['heater_fan', 'hotend_fan']\r\n            and tuple(config.getlist('heater', ('extruder',))) == ('extruder',))\r\n        # Read config\r\n"
+    ],
+    [
+     "            if not extruder_target_temp > 0:\r\n                return self.reactor.NEVER\r\n",
+     "            if not extruder_target_temp > 0:\r\n                if self.is_q2_hotend:\r\n                    # Resume checking RPM on reheat even at unchanged PWM.\r\n                    self.last_rpm_time = 0\r\n                    return eventtime + 1.\r\n                return self.reactor.NEVER\r\n"
+    ],
+    [
+     "                    self.last_rpm_time = 0  \r\n                    self.rpm_error = 0       \r\n            else:\r\n",
+     "                    self.last_rpm_time = 0  \r\n                    # Keep a raised alarm until heater_fan handles the cutoff.\r\n                    if not (self.is_q2_hotend and self.rpm_error == 1):\r\n                        self.rpm_error = 0\r\n            else:\r\n"
+    ],
+    [
+     "            if(value == 0):\r\n                self.reactor.update_timer(self.rpm_watchdog_timer, self.reactor.NEVER)\r\n",
+     "            if(value == 0):\r\n                if self.is_q2_hotend:\r\n                    self.last_rpm_time = 0\r\n                self.reactor.update_timer(self.rpm_watchdog_timer, self.reactor.NEVER)\r\n"
+    ],
+    [
+     "            elif(value != 0 and self.last_fan_value == 0):\r\n                if self.head_name == 'heater_fan':\r\n                    extruder = self.printer.lookup_object('toolhead').get_extruder()\r\n",
+     "            elif(value != 0 and self.last_fan_value == 0):\r\n                if self.head_name == 'heater_fan' and not self.is_q2_hotend:\r\n                    extruder = self.printer.lookup_object('toolhead').get_extruder()\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/extras/heater_fan.py": {
+   "stock_sha256": "0aec0b81c04a415f06219310384ea1a393d82f86ae619ef8cf774824f5eabb01",
+   "edits": [
+    [
+     "import logging\r\n\r\n",
+     "import logging\r\nimport math\r\n\r\n"
+    ],
+    [
+     "        self.fan_speed = config.getfloat(\"fan_speed\", 1., minval=0., maxval=1.)\r\n        self.last_speed = 0.\r\n    def handle_ready(self):\r\n",
+     "        self.fan_speed = config.getfloat(\"fan_speed\", 1., minval=0., maxval=1.)\r\n        self.last_speed = None if self.fan.is_q2_hotend else 0.\r\n    def handle_ready(self):\r\n"
+    ],
+    [
+     "        speed = 0.\r\n        for heater in self.heaters:\r\n",
+     "        speed = 0.\r\n        threshold = self.heater_temp\r\n        if self.fan.is_q2_hotend and self.last_speed != 0.:\r\n            # On the first reading assume the hotend may still be cooling.\r\n            threshold -= 5.\r\n        for heater in self.heaters:\r\n"
+    ],
+    [
+     "            current_temp, target_temp = heater.get_temp(eventtime)\r\n            if target_temp or current_temp > self.heater_temp:\r\n                speed = self.fan_speed\r\n",
+     "            current_temp, target_temp = heater.get_temp(eventtime)\r\n            # The heater also returns zero when its temperature sample is stale.\r\n            unknown_temp = self.fan.is_q2_hotend and (\r\n                not math.isfinite(current_temp) or current_temp <= 0.)\r\n            if target_temp or unknown_temp or current_temp > threshold:\r\n                speed = self.fan_speed\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

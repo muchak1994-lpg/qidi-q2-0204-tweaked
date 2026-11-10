@@ -1,0 +1,19 @@
+{
+ "id": "timelapse-capture-recovery",
+ "order": 13,
+ "title": "Timelapse: a failed frame capture no longer stops the timelapse",
+ "files": {
+  "/home/qidi/moonraker/moonraker/components/timelapse.py": {
+   "stock_sha256": "4052feedf233cf881343db64a5545c2563bec43a7d88597ceb378c032b106a8f",
+   "edits": [
+    [
+     "    async def newframe(self) -> None:\r\n        # make sure webcamconfig is uptodate before grabbing a new frame\r\n        await self.getWebcamConfig()\r\n\r\n        options = \"\"\r\n        if self.wget_skip_cert:\r\n            options += \"--no-check-certificate \"\r\n\r\n        self.framecount += 1\r\n        framefile = \"frame\" + str(self.framecount).zfill(6) + \".jpg\"\r\n        cmd = \"wget \" + options + self.config['snapshoturl'] \\\r\n              + \" -O \" + self.temp_dir + framefile\r\n        self.lastframefile = framefile\r\n        logging.debug(f\"cmd: {cmd}\")\r\n\r\n        shell_cmd: SCMDComp = self.server.lookup_component('shell_command')\r\n        scmd = shell_cmd.build_shell_command(cmd, None)\r\n        try:\r\n            cmdstatus = await scmd.run(timeout=2., verbose=False)\r\n        except Exception:\r\n            logging.exception(f\"Error running cmd '{cmd}'\")\r\n\r\n        result = {'action': 'newframe'}\r\n        if cmdstatus:\r\n            result.update({\r\n                'frame': str(self.framecount),\r\n                'framefile': framefile,\r\n                'status': 'success'\r\n            })\r\n        else:\r\n            logging.info(f\"getting newframe failed: {cmd}\")\r\n            self.framecount -= 1\r\n            result.update({'status': 'error'})\r\n\r\n        self.notify_event(result)\r\n        self.takingframe = False\r\n\r\n",
+     "    async def newframe(self) -> None:\r\n        try:\r\n            # make sure webcamconfig is uptodate before grabbing a new frame\r\n            await self.getWebcamConfig()\r\n\r\n            options = \"\"\r\n            if self.wget_skip_cert:\r\n                options += \"--no-check-certificate \"\r\n\r\n            self.framecount += 1\r\n            framefile = \"frame\" + str(self.framecount).zfill(6) + \".jpg\"\r\n            cmd = \"wget \" + options + self.config['snapshoturl'] \\\r\n                  + \" -O \" + self.temp_dir + framefile\r\n            self.lastframefile = framefile\r\n            logging.debug(f\"cmd: {cmd}\")\r\n\r\n            cmdstatus = False\r\n            try:\r\n                shell_cmd: SCMDComp = self.server.lookup_component('shell_command')\r\n                scmd = shell_cmd.build_shell_command(cmd, None)\r\n                cmdstatus = await scmd.run(timeout=2., verbose=False)\r\n            except asyncio.CancelledError:\r\n                self.framecount -= 1\r\n                raise\r\n            except Exception:\r\n                logging.exception(f\"Error running cmd '{cmd}'\")\r\n\r\n            result = {'action': 'newframe'}\r\n            if cmdstatus:\r\n                result.update({\r\n                    'frame': str(self.framecount),\r\n                    'framefile': framefile,\r\n                    'status': 'success'\r\n                })\r\n            else:\r\n                logging.info(f\"getting newframe failed: {cmd}\")\r\n                self.framecount -= 1\r\n                result.update({'status': 'error'})\r\n\r\n            self.notify_event(result)\r\n        finally:\r\n            self.takingframe = False\r\n\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "moonraker"
+ ]
+}

@@ -1,0 +1,23 @@
+{
+ "id": "idle-timeout-drying",
+ "order": 8,
+ "title": "Idle timeout 300 s (turns heaters off, keeps chamber drying macros working)",
+ "files": {
+  "/home/qidi/printer_data/config/printer.cfg": {
+   "base": "printer",
+   "stock_sha256": "1dc68948238549a997d836e5993177900637597dec275d981e841f6dd291116b",
+   "edits": [
+    [
+     "[idle_timeout]\ntimeout: 43200            \ngcode:                   \n    M118 Pause Timeout: Turn off heaters \n    #PRINT_END              \n    M106 S0                \n    M104 S0               \n    M140 S0                \n    M141 S0                 \n    DISABLE_BOX_HEATER     \n    _KM_IDLE_TIMEOUT       \n\n\n",
+     "[idle_timeout]\ntimeout: 300            \ngcode:                   \n    {% if printer['pause_resume'].is_paused %}\n        M118 Pause timeout: turning off heaters\n    {% else %}\n        M118 Idle timeout: turning off heaters\n    {% endif %}\n    #PRINT_END              \n    M106 S0                \n    M104 S0               \n    M140 S0                \n    M141 S0                 \n    DISABLE_BOX_HEATER     \n    M84\n\n\n"
+    ]
+   ]
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2-drying-idle.cfg": {
+   "source": "files/q2-drying-idle.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

@@ -1,0 +1,19 @@
+{
+ "id": "emmc-info",
+ "order": 24,
+ "title": "Correct eMMC information in Fluidd",
+ "files": {
+  "/home/qidi/moonraker/moonraker/components/machine.py": {
+   "stock_sha256": "0d7c8e6a8783b7ba23e3727cc793732d4b2c1b0dce65fedfac11c87d28ded7b8",
+   "edits": [
+    [
+     "            return {}\r\n        try:\r\n",
+     "            return {}\r\n        # eMMC CID/CSD layouts differ from SD. Read kernel-decoded attributes.\r\n        device = cid_file.parent\r\n        try:\r\n            is_emmc = (device / \"type\").read_text().strip() == \"MMC\"\r\n        except OSError:\r\n            is_emmc = False\r\n        if is_emmc:\r\n            sd_info = {\r\n                'manufacturer': \"Unknown\", 'manufacturer_id': \"Unknown\",\r\n                'oem_id': \"Unknown\", 'product_name': \"Unknown\",\r\n                'product_revision': \"Unknown\", 'serial_number': \"Unknown\",\r\n                'manufacturer_date': \"Unknown\", 'capacity': \"Unknown\",\r\n                'total_bytes': 0\r\n            }\r\n            for key, attribute in (('product_name', 'name'),\r\n                                   ('manufacturer_date', 'date')):\r\n                try:\r\n                    value = (device / attribute).read_text().strip()\r\n                    if value:\r\n                        sd_info[key] = value\r\n                except OSError:\r\n                    pass\r\n            for key, attribute, width in (('manufacturer_id', 'manfid', 2),\r\n                                           ('oem_id', 'oemid', 4),\r\n                                           ('serial_number', 'serial', 8)):\r\n                try:\r\n                    value = int((device / attribute).read_text().strip(), 0)\r\n                    if value >= 0:\r\n                        sd_info[key] = f\"{value:0{width}x}\"\r\n                except (OSError, ValueError):\r\n                    pass\r\n            try:\r\n                revision = int((device / \"prv\").read_text().strip(), 0)\r\n                if 0 <= revision <= 255:\r\n                    sd_info['product_revision'] = f\"{revision >> 4}.{revision & 15}\"\r\n            except (OSError, ValueError):\r\n                pass\r\n            try:\r\n                # Linux block-device size is expressed in 512-byte sectors.\r\n                sectors = int((device.parent / \"size\").read_text().strip())\r\n                if sectors > 0:\r\n                    total_bytes = sectors * 512\r\n                    sd_info['total_bytes'] = total_bytes\r\n                    sd_info['capacity'] = f\"{total_bytes / (1024.0**3):.1f} GiB\"\r\n            except (OSError, ValueError):\r\n                pass\r\n            return sd_info\r\n        try:\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "moonraker"
+ ]
+}

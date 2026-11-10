@@ -1,0 +1,19 @@
+{
+ "id": "fuzzy-skin-extrusion",
+ "order": 32,
+ "title": "Fuzzy skin (extrusion mode): keep slicer E targets",
+ "files": {
+  "/home/qidi/klipper/klippy/toolhead.py": {
+   "stock_sha256": "70d5b4ba94bccdb90eb01b6d1743f3d833e42f798152ba47c98663ea188af04d",
+   "edits": [
+    [
+     "    def move(self, newpos, speed):\r\n        if not self.e_enable:\r\n            self._do_actual_move(newpos, speed)\r\n        \r\n        de = newpos[3] - self.commanded_pos[3]\r\n        \r\n        # 分支1：大幅度移动，直接执行，清空历史累积（避免溢出或压力提前干扰）\r\n        if de == 0 or abs(de) >= 1.0:\r\n            self.e_accumulator = 0.0\r\n            self._do_actual_move(newpos, speed)\r\n            return\r\n\r\n        # 分支2：极小量，仅累积\r\n        if abs(de) < self.e_d:\r\n            self.e_accumulator += de\r\n            if abs(self.e_accumulator) < self.e_d:\r\n                return\r\n\r\n        # 分支3：常规移动，合并累积量并执行\r\n        target_pos = list(newpos)\r\n        target_pos[3] += self.e_accumulator\r\n        self.e_accumulator = 0.0\r\n        \r\n        self._do_actual_move(target_pos, speed)\r\n\r\n",
+     "    def move(self, newpos, speed):\r\n        # Preserve slicer XYZE targets; do not re-accumulate absolute E positions.\r\n        self._do_actual_move(newpos, speed)\r\n\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ]
+}

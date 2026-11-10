@@ -1,0 +1,20 @@
+{
+ "id": "legacy-qidilink-cleanup",
+ "order": 16,
+ "title": "Old QIDILink / FRP remote services turned off",
+ "files": {},
+ "actions": [
+  [
+   "systemctl",
+   "disable",
+   "--now",
+   "QIDILink-client.service"
+  ],
+  [
+   "systemctl",
+   "disable",
+   "--now",
+   "frpc.service"
+  ]
+ ]
+}
