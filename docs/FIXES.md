@@ -34,7 +34,7 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `z-offset-persistence` | Temporary Z offsets set by QIDI's macros can be saved as if they were your Z offset. | Temporary offsets are marked and not saved. |
 | `save-variables-atomic` | A power cut while saving settings can leave an empty settings file; Klipper then may not start. | Writes a temporary file and renames it (atomic); identical content is not rewritten. |
 | `external-slot16-literal` | After loading from the external spool holder QIDI writes `slot16`, which the settings saver rejects. | Accepts that exact value. |
-| `ai-fixes` | Pausing, resuming or cancelling while the AI foreign-object check waits breaks the print state; AI messages have broken characters. | Commands are handled correctly during the check; text encoding fixed. The foreign-object check itself stays as QIDI made it (it can be switched off on the screen). |
+| `ai-fixes` | Pausing, resuming or cancelling while the AI foreign-object check waits breaks the print state; AI messages have broken characters. | Commands are handled correctly during the check; text encoding fixed. The foreign-object check itself stays as QIDI made it (it can be switched off on the screen); see *Camera AI* below. |
 | `console-english` | Some console messages are Chinese. | English messages. |
 
 ## Macros and configuration
@@ -76,6 +76,12 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `journal-retention` | **Off by default** (`--with journal-retention`): system log kept 7 days, up to 2 GB, for diagnostics. |
 
 ## Camera AI
+
+> **What "fixed" means here:** on stock 02.04 the camera AI does not work at all (its program is missing
+> libraries, and the print flow breaks around the check). These modules make the AI **work as a function**,
+> exactly the way QIDI designed it. They do **not** change or retrain QIDI's detection model. How well it
+> detects (spaghetti, foreign objects) depends on QIDI's model and on many conditions - light, camera
+> position, filament colour, the bed surface - and can vary from print to print.
 
 | Module | What changes |
 |---|---|

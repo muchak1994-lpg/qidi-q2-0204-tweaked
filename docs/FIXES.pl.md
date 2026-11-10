@@ -34,7 +34,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `z-offset-persistence` | Tymczasowe offsety Z ustawiane przez makra QIDI mogą zapisać się jak Twój offset Z. | Tymczasowe offsety są oznaczane i nie zapisują się. |
 | `save-variables-atomic` | Zanik prądu w trakcie zapisu ustawień może zostawić pusty plik ustawień; Klipper może potem nie wstać. | Zapis do pliku tymczasowego i podmiana (atomowo); identyczna treść nie jest przepisywana. |
 | `external-slot16-literal` | Po ładowaniu z zewnętrznej szpuli QIDI zapisuje `slot16`, czego zapis ustawień nie przyjmuje. | Przyjmuje dokładnie tę wartość. |
-| `ai-fixes` | Pauza, wznowienie lub anulowanie w trakcie czekania na kontrolę obcych obiektów AI psuje stan druku; komunikaty AI mają popsute znaki. | Komendy działają poprawnie w trakcie kontroli; kodowanie tekstu naprawione. Sama kontrola zostaje taka, jak ją zrobiło QIDI (można ją wyłączyć na ekranie). |
+| `ai-fixes` | Pauza, wznowienie lub anulowanie w trakcie czekania na kontrolę obcych obiektów AI psuje stan druku; komunikaty AI mają popsute znaki. | Komendy działają poprawnie w trakcie kontroli; kodowanie tekstu naprawione. Sama kontrola zostaje taka, jak ją zrobiło QIDI (można ją wyłączyć na ekranie); patrz *AI kamery* niżej. |
 | `console-english` | Część komunikatów w konsoli jest po chińsku. | Komunikaty po angielsku. |
 
 ## Makra i konfiguracja
@@ -76,6 +76,12 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `journal-retention` | **Domyślnie wyłączony** (`--with journal-retention`): logi systemowe 7 dni, do 2 GB, do diagnostyki. |
 
 ## AI kamery
+
+> **Co tu znaczy „naprawione”:** w fabrycznym 02.04 AI kamery w ogóle nie działa (programowi brakuje bibliotek,
+> a przebieg druku sypie się wokół kontroli). Te moduły sprawiają, że AI **działa jako funkcja**, dokładnie tak,
+> jak zaprojektowało je QIDI. **Nie** zmieniają ani nie douczają modelu wykrywania QIDI. To, jak dobrze wykrywa
+> (spaghetti, obce obiekty), zależy od modelu QIDI i od wielu warunków – światła, położenia kamery, koloru
+> filamentu, powierzchni stołu – i może się różnić od wydruku do wydruku.
 
 | Moduł | Co się zmienia |
 |---|---|
