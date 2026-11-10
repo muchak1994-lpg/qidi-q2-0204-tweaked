@@ -9,11 +9,23 @@
    "edits": [
     [
      "    G0 Z50 F600\n    G0 X260 Y5  F30000\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n",
-     "    G0 Z50 F600\n    G0 X260 Y260  F30000  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n"
+     "    G0 Z50 F600\n    G0 X260 Y260  F30000  # q2-park-rear-right: park at the rear, the camera sees the bed\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n"
     ],
     [
      "        {% endif %}\n        G1  X265 Y5 F7800\n    {% endif %}\n",
-     "        {% endif %}\n        G1  X260 Y260 F7800  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% endif %}\n"
+     "        {% endif %}\n        G1  X260 Y260 F7800  # q2-park-rear-right: park at the rear, the camera sees the bed\n    {% endif %}\n"
+    ]
+   ],
+   "previous": [
+    [
+     [
+      "    G0 Z50 F600\n    G0 X260 Y5  F30000\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n",
+      "    G0 Z50 F600\n    G0 X260 Y260  F30000  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% if printer.save_variables.variables.box_count >= 1 and printer[\"box_extras\"] and printer.save_variables.variables.enable_box == 1 %}\n"
+     ],
+     [
+      "        {% endif %}\n        G1  X265 Y5 F7800\n    {% endif %}\n",
+      "        {% endif %}\n        G1  X260 Y260 F7800  # q2-park-rear-right: postoj z tylu, kamera widzi plyte\n    {% endif %}\n"
+     ]
     ]
    ]
   }

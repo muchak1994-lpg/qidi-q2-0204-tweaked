@@ -35,6 +35,7 @@ import build  # noqa: E402
 import firmware  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
+VERSION = (REPO / "VERSION").read_text(encoding="utf-8").strip() if (REPO / "VERSION").is_file() else "dev"
 BACKUPS = REPO / "backups"
 SERVICES = {"klipper": "klipper.service", "moonraker": "moonraker.service",
             "algo_app": "algo_app.service", "qidi-client": "qidi-client.service"}
@@ -180,10 +181,38 @@ def apply_config_edits(data, mods, path, reverse=False):
     return data
 
 
+def strip_config_edits(data, mods, path):
+    """Take out the edits of every module, in its current or any earlier version.
+
+    A module whose edits are not found is treated as not installed; the forward
+    step afterwards proves that its original lines are really there."""
+    for m in reversed(mods):
+        spec = m["files"][path]
+        for edits in [spec.get("edits", [])] + spec.get("previous", []):
+            undo = [[new, old] for old, new in reversed(edits)]
+            try:
+                data = build.apply_edits(data, undo, "%s: %s" % (m["id"], path), any_eol=True)
+                break
+            except build.BuildError:
+                continue
+    return data
+
+
+def load_history():
+    path = build.MODULES / "LOCK-history.json"
+    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+
+
+OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community fixes, manual edits), put the "
+                   "official 01.01.02.04 back first - re-install it from USB, see docs/RECOVERY.md option 2 - "
+                   "and run the installer again.")
+
+
 def plan(p, selected, built=None):
     """[(path, new_bytes, kind, modules)] that must change on the printer."""
     files, owners = built or build.build(selected)
     index = firmware.load_index()["files"]
+    history = load_history()
     by_id = {m["id"]: m for m in selected}
     changes, problems = [], []
     shas = p.sha_many(sorted(files)) if hasattr(p, "sha_many") else {f: p.sha(f) for f in files}
@@ -195,15 +224,12 @@ def plan(p, selected, built=None):
                 problems.append("%s is missing" % path)
                 continue
             try:
-                new = apply_config_edits(current, mods, path)
+                new = apply_config_edits(strip_config_edits(current, mods, path), mods, path)
             except build.BuildError as exc:
-                try:
-                    apply_config_edits(current, mods, path, reverse=True)
-                    continue  # our edits are already there
-                except build.BuildError:
-                    problems.append(str(exc))
-                    continue
-            changes.append((path, new, "config", owners[path]))
+                problems.append(str(exc))
+                continue
+            if new != current:
+                changes.append((path, new, "config", owners[path]))
             continue
         new = files[path]
         current = shas[path]
@@ -213,8 +239,10 @@ def plan(p, selected, built=None):
             changes.append((path, new, "new", owners[path]))
         elif current == index.get(path, {}).get("sha256"):
             changes.append((path, new, "replace", owners[path]))
+        elif current in history.get(path, []):
+            changes.append((path, new, "upgrade", owners[path]))  # an earlier version of ours
         else:
-            problems.append("%s is neither the 02.04 original nor our version" % path)
+            problems.append("%s is neither the 02.04 original nor a version of ours" % path)
     for m in selected:
         g = m.get("generate")
         if g and g.get("kind") == "ethernet-mac":
@@ -224,7 +252,7 @@ def plan(p, selected, built=None):
                 changes.append((g["path"], new, "new" if current is None else "generated", [m["id"]]))
     if problems:
         raise InstallError("the printer is not in a state this installer knows (nothing was changed):\n  "
-                           + "\n  ".join(problems))
+                           + "\n  ".join(problems) + OTHER_MODS_HINT)
     return changes
 
 
@@ -275,7 +303,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     backup = backups / ("printer-%s-%s" % (host.replace(":", "_"), stamp))
     (backup / "files").mkdir(parents=True)
     index = firmware.load_index()["files"]
-    record = {"host": host, "time": stamp, "modules": [m["id"] for m in selected],
+    record = {"host": host, "time": stamp, "version": VERSION, "modules": [m["id"] for m in selected],
               "files": {}, "actions": [], "complete": False}
     for path, new, kind, mods in changes:
         entry = {"modules": mods, "kind": kind, "new_sha256": sha(new)}
@@ -364,6 +392,64 @@ def do_uninstall(p, backup):
     print("Uninstalled using", backup)
 
 
+def do_uninstall_stock(p, selected):
+    """Uninstall without a PC backup: put QIDI's originals from the official package back.
+
+    Only files that are a version of ours are touched; anything else is reported and left."""
+    files, owners = build.build(selected)
+    index = firmware.load_index()["files"]
+    history = load_history()
+    by_id = {m["id"]: m for m in selected}
+    ours = {path: {sha(data)} | set(history.get(path, []))
+            for path, data in files.items()}
+    for m in selected:
+        g = m.get("generate")
+        if g:
+            files[g["path"]] = None
+            owners[g["path"]] = [m["id"]]
+    shas = p.sha_many(sorted(files)) if hasattr(p, "sha_many") else {f: p.sha(f) for f in files}
+    left = []
+    for path in sorted(files):
+        mods = [by_id[mid] for mid in owners[path]]
+        current = shas.get(path)
+        if current is None:
+            continue
+        if any(m.get("files", {}).get(path, {}).get("base") == "printer" for m in mods):
+            data = p.read(path)
+            stripped = strip_config_edits(data, mods, path)
+            if stripped != data:
+                st = p.stat(path) or default_owner(path)
+                p.install(stripped, path, *st)
+                print("  restored:", path)
+            continue
+        if path in index:
+            if current == index[path]["sha256"]:
+                continue
+            if current in ours.get(path, set()):
+                st = p.stat(path) or default_owner(path)
+                p.install(firmware.extract(path), path, *st)
+                print("  original back:", path)
+            else:
+                left.append(path)
+        else:
+            if files[path] is None or current in ours.get(path, set()):
+                p.remove(path)
+                print("  removed:", path)
+            else:
+                left.append(path)
+    for m in reversed(selected):
+        for action in reversed(m.get("actions", [])):
+            undo = undo_action(action)
+            if undo:
+                p.action(undo, check=False)
+    p.action(["systemctl", "daemon-reload"], check=False)
+    for name in RESTART_ORDER:
+        p.restart(name)
+    for path in left:
+        print("  left alone (not ours):", path)
+    print("Uninstalled using the official 01.01.02.04 originals.")
+
+
 # ------------------------------------------------------------------ main
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Install QIDI Q2 02.04 Tweaked on the printer.")
@@ -375,17 +461,23 @@ def main(argv=None):
     ap.add_argument("--with", dest="extra", action="append", default=[],
                     help="also install an optional module that is off by default (e.g. journal-retention)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
+    ap.add_argument("--from-stock", action="store_true",
+                    help="uninstall without a PC backup, using the originals from the official 02.04 package")
     args = ap.parse_args(argv)
+    print("QIDI Q2 02.04 Tweaked", VERSION)
     password = getpass.getpass("SSH password for %s@%s: " % (args.user, args.host))
     p = None
     try:
         p = SSHPrinter(args.host, args.user, password, args.port)
         check_printer(p, require_idle=args.command != "plan")
         if args.command == "uninstall":
+            if args.from_stock:
+                do_uninstall_stock(p, select([], [m["id"] for m in build.load_modules()]))
+                return 0
             found = [Path(args.backup)] if args.backup else \
                 sorted(BACKUPS.glob("printer-%s-*" % args.host.replace(":", "_")))
             if not found:
-                raise InstallError("no backup for this printer in %s" % BACKUPS)
+                raise InstallError("no backup for this printer in %s - try: uninstall --from-stock" % BACKUPS)
             do_uninstall(p, found[-1])
             return 0
         selected = select(args.skip, args.extra)

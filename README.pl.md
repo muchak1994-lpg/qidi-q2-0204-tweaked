@@ -42,6 +42,11 @@ makra, poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące bibli
 
 ## Instalacja
 
+**Windows, najprościej:** kliknij dwa razy `install.bat`. Zapyta o adres IP drukarki i przejdzie przez pięć
+kroków poniżej, zatrzymując się przy pierwszym problemie. Hasło SSH wpiszesz kilka razy; nigdzie nie jest zapisywane.
+
+**Ręcznie** (dowolny system):
+
 ```
 py -m pip install -r requirements.txt          (raz: paramiko do SSH, capstone do budowy ekranu)
 py tools/firmware.py fetch                     (pobiera i sprawdza oficjalną paczkę 02.04)
@@ -65,7 +70,16 @@ py tools/install.py install --host IP_DRUKARKI (kopia na komputerze, potem insta
 py tools/install.py uninstall --host IP_DRUKARKI
 ```
 
-Wszystko wraca z kopii na komputerze; kalibracja zapisana w międzyczasie zostaje. Inne drogi powrotu (ponowne
+Wszystko wraca z kopii na komputerze; kalibracja zapisana w międzyczasie zostaje.
+Zgubiłeś folder `backups` albo zmieniłeś komputer? `py tools/install.py uninstall --from-stock --host IP_DRUKARKI`
+przywraca zamiast tego oryginały QIDI z oficjalnej paczki.
+
+**Inne modyfikacje na drukarce?** Instalator przyjmuje tylko pliki będące oryginałami QIDI 01.01.02.04 albo
+naszą wersją. Jeśli masz inne poprawki, najpierw wgraj 01.01.02.04 z pendrive'a
+([docs/RECOVERY.pl.md](docs/RECOVERY.pl.md), opcja 2), potem uruchom instalator.
+
+**Aktualizacja do nowszego wydania** tego projektu: pobierz je i uruchom `install` jeszcze raz – nasze
+wcześniejsze wersje plików są rozpoznawane i podmieniane (z nową kopią). Zmiany: [CHANGELOG.md](CHANGELOG.md). Inne drogi powrotu (ponowne
 wgranie 02.04 z pendrive'a, pełny reflash z właściwą kolejnością aktualizacji): [docs/RECOVERY.pl.md](docs/RECOVERY.pl.md).
 
 ## Profile OrcaSlicer

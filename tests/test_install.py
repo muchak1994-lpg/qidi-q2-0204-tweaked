@@ -120,6 +120,42 @@ class InstallTest(unittest.TestCase):
         # a non-state action runs only for a module whose files change
         self.assertEqual(install.pending_actions(self.p, mods, []), [])
 
+    def test_upgrade_from_an_earlier_version_of_ours(self):
+        fan = "/home/qidi/klipper/klippy/extras/fan.py"
+        cfg = "/home/qidi/printer_data/config/printer.cfg"
+        old_fan = b"speed = 1\r\nlimit = 2.5\r\n"  # what an earlier release installed
+        self.p.files[fan][0] = old_fan
+        self.p.files[cfg][0] = b"[idle_timeout]\ntimeout: 600\n\n[x]\n#*# mesh = 1\n"
+        mods = [dict(m) for m in MODS]
+        mods[1] = {"id": "idle", "order": 2, "restart": ["klipper"], "files": {cfg: {
+            "base": "printer", "edits": [["timeout: 43200\n", "timeout: 300\n"]],
+            "previous": [[["timeout: 43200\n", "timeout: 600\n"]]]}}}
+        built = build.build(mods, stock_reader=lambda p: STOCK[p])
+        saved = install.load_history
+        install.load_history = lambda: {fan: [hashlib.sha256(old_fan).hexdigest()]}
+        try:
+            changes = {c[0]: c for c in install.plan(self.p, mods, built=built)}
+        finally:
+            install.load_history = saved
+        self.assertEqual(changes[fan][2], "upgrade")
+        self.assertEqual(changes[cfg][1], b"[idle_timeout]\ntimeout: 300\n\n[x]\n#*# mesh = 1\n")
+
+    def test_uninstall_from_stock_without_backup(self):
+        changes = install.plan(self.p, MODS, built=self.built)
+        install.do_install(self.p, MODS, changes, "1.2.3.4", backups=self.tmp)
+        self.p.files["/home/qidi/klipper/klippy/extras/fan.py"]  # installed
+        saved = install.build.build
+        install.build.build = lambda sel: self.built
+        try:
+            install.do_uninstall_stock(self.p, MODS)
+        finally:
+            install.build.build = saved
+        self.assertEqual(self.p.read("/home/qidi/klipper/klippy/extras/fan.py"),
+                         STOCK["/home/qidi/klipper/klippy/extras/fan.py"])
+        self.assertEqual(self.p.read("/home/qidi/printer_data/config/printer.cfg"),
+                         b"[idle_timeout]\ntimeout: 43200\n\n[x]\n#*# mesh = 1\n")
+        self.assertIn(["chattr", "-i", "/home/qidi/download"], self.p.actions)
+
     def test_unknown_file_state_stops_before_any_change(self):
         self.p.files["/home/qidi/klipper/klippy/extras/fan.py"][0] = b"someone else's version\r\n"
         with self.assertRaises(install.InstallError):

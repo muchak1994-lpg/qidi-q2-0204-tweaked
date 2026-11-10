@@ -42,6 +42,11 @@ macros, Moonraker/Fluidd fixes, stable Ethernet MAC, and the missing camera-AI l
 
 ## Install
 
+**Windows, the easy way:** double-click `install.bat`. It asks for the printer's IP address and goes through
+the five steps below, stopping at the first problem. You type the SSH password a few times; it is never saved.
+
+**By hand** (any system):
+
 ```
 py -m pip install -r requirements.txt          (once: paramiko for SSH, capstone for the screen build)
 py tools/firmware.py fetch                     (downloads and checks the official 02.04 package)
@@ -65,7 +70,16 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 py tools/install.py uninstall --host PRINTER_IP
 ```
 
-Everything is put back from the PC backup; calibration saved since stays. Other ways back (re-install of
+Everything is put back from the PC backup; calibration saved since stays.
+Lost the `backups` folder or changed PC? `py tools/install.py uninstall --from-stock --host PRINTER_IP`
+puts QIDI's originals from the official package back instead.
+
+**Other modifications on the printer?** The installer only accepts files that are QIDI's 01.01.02.04 originals
+or a version of ours. If you installed other fixes, re-install 01.01.02.04 from USB first
+([docs/RECOVERY.md](docs/RECOVERY.md), option 2), then run the installer.
+
+**Updating to a newer release** of this project: download it and run `install` again - earlier versions of
+our files are recognised and replaced (with a new backup). Changes: [CHANGELOG.md](CHANGELOG.md). Other ways back (re-install of
 02.04 from USB, full reflash with the right update order): [docs/RECOVERY.md](docs/RECOVERY.md).
 
 ## OrcaSlicer profiles

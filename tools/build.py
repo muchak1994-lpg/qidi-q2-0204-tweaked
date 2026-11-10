@@ -175,8 +175,17 @@ def main(argv=None):
         print("  %s  %s  (%s)" % (result[path][:12], path, ", ".join(owners[path])))
     if not args.only:
         if args.update_lock:
+            # keep every earlier released result: the installer recognises them as "ours, older"
+            hist_path = MODULES / "LOCK-history.json"
+            history = json.loads(hist_path.read_text(encoding="utf-8")) if hist_path.is_file() else {}
+            if LOCK.is_file():
+                for path, digest in json.loads(LOCK.read_text(encoding="utf-8")).items():
+                    if result.get(path) != digest and digest not in history.setdefault(path, []):
+                        history[path].append(digest)
+            hist_path.write_text(json.dumps({k: v for k, v in sorted(history.items()) if v}, indent=1) + "\n",
+                                 encoding="utf-8")
             LOCK.write_text(json.dumps(result, indent=1, sort_keys=True) + "\n", encoding="utf-8")
-            print("LOCK.json updated")
+            print("LOCK.json updated (earlier results kept in LOCK-history.json)")
         elif LOCK.is_file():
             lock = json.loads(LOCK.read_text(encoding="utf-8"))
             if lock != result:
