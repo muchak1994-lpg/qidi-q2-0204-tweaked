@@ -8,6 +8,13 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 > **Stan: kandydat do wydania.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; instalator jest przetestowany na symulowanej drukarce i w trybie odczytu na prawdziwej. Ostatni test przed pierwszym wydaniem: pełna instalacja na świeżo zreflashowanej drukarce. Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
 
+## Co naprawia
+
+40 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła),
+poprawki Klippera (fuzzy skin, wentylator hotendu, grzałki Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne),
+makra, poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące biblioteki AI kamery.
+**Pełna lista z problemem, który rozwiązuje każdy moduł: [docs/FIXES.pl.md](docs/FIXES.pl.md).**
+
 ## Zasady
 
 - **Tylko 02.04.** Każda zmiana jest sprawdzana względem dokładnych plików 01.01.02.04 (SHA-256). Na innej wersji instalator odmawia działania.
