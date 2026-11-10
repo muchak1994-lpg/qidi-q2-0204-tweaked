@@ -20,7 +20,7 @@ Usage:
     python tools/orca_profiles.py uninstall --apply
 
 OrcaSlicer must be closed while installing or uninstalling.
-Standard library only, Python 3.8+.
+Standard library only, Python 3.9+.
 """
 import argparse
 import hashlib

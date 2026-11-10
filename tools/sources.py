@@ -9,7 +9,7 @@ it and the SHA-256 of the member. This tool downloads each package once into
 downloads/, checks both hashes and returns the files.
 
     python tools/sources.py fetch modules/ai-libraries/sources.json
-Standard library only, Python 3.8+.
+Standard library only, Python 3.9+.
 """
 import hashlib
 import io

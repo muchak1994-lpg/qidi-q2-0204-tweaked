@@ -18,7 +18,7 @@ files are compiled as a check. Nothing is sent to the printer here.
     python tools/build.py                 build all modules
     python tools/build.py --only 23-hotend-fan-hysteresis
     python tools/build.py --list
-Standard library only, Python 3.8+.
+Standard library only, Python 3.9+.
 """
 import argparse
 import hashlib

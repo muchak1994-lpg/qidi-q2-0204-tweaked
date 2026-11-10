@@ -7,7 +7,7 @@
   official package.
 - Clearer message when a printer has other modifications (what to do first).
 - `install.bat`: guided install for Windows (double-click).
-- `screen/README.md`, automatic offline tests on GitHub (Python 3.8 and 3.12), problem-report template.
+- `screen/README.md`, automatic offline tests on GitHub (Python 3.9 and 3.13), problem-report template.
 - Macro comments in English (park-rear-right).
 
 ## 0.9.0-rc1 - 2026-11-10

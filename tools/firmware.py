@@ -13,7 +13,7 @@ file starts from the original, taken from QIDI's own public package:
 file in it. Single files are extracted on demand by the other modules
 (`extract()` below), so nothing else is unpacked to your disk.
 
-Standard library only, Python 3.8+.
+Standard library only, Python 3.9+.
 """
 import argparse
 import hashlib

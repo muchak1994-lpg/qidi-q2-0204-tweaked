@@ -27,7 +27,7 @@ macros, Moonraker/Fluidd fixes, stable Ethernet MAC, and the missing camera-AI l
 ## Requirements
 
 - QIDI Q2 on firmware **01.01.02.04**, reachable on your local network.
-- A PC (Windows, macOS or Linux) with **Python 3.8 or newer** (on Windows: from python.org or the Microsoft Store; the `py` command works).
+- A PC (Windows, macOS or Linux) with **Python 3.9 or newer** (on Windows: from python.org or the Microsoft Store; the `py` command works).
 - For the profiles: OrcaSlicer with a QIDI Q2 printer added at least once.
 
 ## Before you start

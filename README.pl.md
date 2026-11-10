@@ -27,7 +27,7 @@ makra, poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące bibli
 ## Wymagania
 
 - QIDI Q2 z firmware **01.01.02.04**, widoczna w sieci lokalnej.
-- Komputer (Windows, macOS lub Linux) z **Pythonem 3.8 lub nowszym** (na Windows: z python.org lub Microsoft Store; działa polecenie `py`).
+- Komputer (Windows, macOS lub Linux) z **Pythonem 3.9 lub nowszym** (na Windows: z python.org lub Microsoft Store; działa polecenie `py`).
 - Do profili: OrcaSlicer, w której choć raz dodano drukarkę QIDI Q2.
 
 ## Zanim zaczniesz
