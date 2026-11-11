@@ -17,6 +17,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `update-check-off` | Okienko „nowy firmware” namawia do aktualizacji online, która na zawsze zastąpiłaby 02.04. | Wyłącza sprawdzanie aktualizacji (jeden bajt w programie ekranu). |
 | `firmware-download-guard` | Drukarka może w tle pobrać paczkę aktualizacji. | Folder pobierania tylko do odczytu (flaga immutable). Cofnięcie: `uninstall`. |
 | `dark-mode-light` | Wyłączenie światła w trakcie druku jest cofane przez ekran i wykrywanie spaghetti. | **Dark mode:** wyłączenie światła w trakcie druku = światło i wykrywanie spaghetti wyłączone do końca druku. Dotknięcie ekranu daje chwilowe światło; włączenie światła kończy tryb (wykrywanie wraca po 60 s). Przetestowane. |
+| `screen-drying-layout` | **Domyślnie wyłączony, jeszcze niesprawdzony na ekranie** (`--with screen-drying-layout`): na stronie suszenia czas oraz temperatury stołu i komory nachodzą na listę kroków (angielskie napisy łamią się na dwie linie). | Układa te trzy wartości w jednej linii pod krokami (jedenaście wartości położenia w programie ekranu). |
 
 ## Klipper (ruch, grzałki, czujniki)
 

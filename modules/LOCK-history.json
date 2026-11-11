@@ -15,5 +15,13 @@
  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": [
   "484cc166f813d1c499b905d14b41c3bcbfb2aec0c41d8f805091c9b22c8bcf0b",
   "6bd0d12c880abfd0c9df5166117fa4da74814d93c22bb3cf015d01ebcdeae634"
+ ],
+ "/home/qidi/QIDI_Client/bin/qidiclient": [
+  "08ef92701e3cabf57f82296250a9db4655c5d54ddc139f412e8ddf6ea813b46e",
+  "4eca6bf30adca34181a2f05f237877de3579210dbc9a28660efd0c283d0451c6"
+ ],
+ "/home/qidi/fix-fluidd-upload-print.sh": [
+  "84a19104a50aa82795981cb3d947a4ed328f71808811b9dcd8b38d2d8db73f4a",
+  "ba2249f2bbfba4633611a1c9e5fcd29a0e88f39cb635924c9cc12bc5bf55d4a2"
  ]
 }

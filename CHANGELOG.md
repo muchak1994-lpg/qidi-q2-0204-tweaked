@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- New optional module `screen-drying-layout` (off by default, not yet checked on a screen): drying page
+  values in one line instead of overlapping the step list.
 - New optional module `fluidd-drying-button` (off by default, not yet tested on a printer): a filament
   drying entry (left panel) and window in Fluidd, using the printer screen's own settings and commands.
 - New module `drying-skip-homing`: filament drying preparation homes only when needed (tested from the

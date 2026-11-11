@@ -1,0 +1,71 @@
+{
+ "id": "screen-drying-layout",
+ "order": 126,
+ "title": "Screen: drying page shows time, bed and chamber temperature in one line (they overlapped the step list)",
+ "files": {
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "byte_edits": [
+    [
+     1111476,
+     "02078052",
+     "02038052"
+    ],
+    [
+     1111480,
+     "810b8052",
+     "01198052"
+    ],
+    [
+     1111492,
+     "a3128052",
+     "23188052"
+    ],
+    [
+     1111496,
+     "02038052",
+     "22038052"
+    ],
+    [
+     1111544,
+     "c3028052",
+     "03008052"
+    ],
+    [
+     1111548,
+     "02008052",
+     "42078052"
+    ],
+    [
+     1111620,
+     "23018052",
+     "83008052"
+    ],
+    [
+     1111660,
+     "02008052",
+     "42108052"
+    ],
+    [
+     1111664,
+     "81008052",
+     "21008052"
+    ],
+    [
+     1111732,
+     "23018052",
+     "83008052"
+    ],
+    [
+     1111864,
+     "23018052",
+     "83008052"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "qidi-client"
+ ],
+ "default": false,
+ "note": "Off by default until it has been checked on a printer screen. Install with: --with screen-drying-layout. The edits change eleven position values in the drying page: the info block becomes 200x24 at (25,193) - aligned with the step check marks and one step gap below step 4; the bed and chamber values move to x=58 and x=130 on the same line as the time; label gaps 9 -> 4."
+}
