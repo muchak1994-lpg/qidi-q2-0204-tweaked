@@ -1,19 +1,29 @@
 {
  "id": "screen-drying-autoshow",
  "order": 127,
- "title": "Screen: wakes up and opens the drying page by itself when drying is started from somewhere else (for example from Fluidd), and wakes up when drying ends",
+ "title": "Screen: wakes up and opens the drying page by itself when drying is started from somewhere else (for example from Fluidd), wakes up when drying ends, and wakes up on the console message 'q2_wake_screen'",
  "files": {
   "/home/qidi/QIDI_Client/bin/qidiclient": {
    "byte_edits": [
     [
      2811092,
      "0c070054c9ca43b9a6eefff0c8ce43b9c6001f91471f80d2fa430591818d02b0e40315aa21a02091e0c30491050080d2230280d2a20580d2e9d300b9e8e300b9fa7f13a9e71b14a9cd09f89758d03bd5859240a91b0340917b230191",
-     "c1ca43b909d303d022094fb93f00026b8006005421090fb980d203f0008028918fcf01942f0000141f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d5"
+     "c1ca43b909d303d022094fb93f00026b8006005421090fb93f04007161000054c3ce43b9230d0fb980d203f0008028918bcf01942b0000141f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d51f2003d5"
+    ],
+    [
+     2816908,
+     "818d0290",
+     "e547e995"
     ],
     [
      90446368,
      "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
      "fd7bbea9fd030091f30b00f9f30300aa100000947f0600f1410100540ee51296a00000b4613efc9021e00991211b0d9680000034603efc9000601b9105de1296f30b40f9fd7bc2a8c0035fd600000000fd7bbea9fd030091f30b00f953c9fef073e2089160324839a001003460c9ffb0005042f92100805252851696000080d241fc17967f320839e01f8052516d1796603a40f921008052a3101896f30b40f9fd7bc2a8c0035fd6000000000000000000000000000000000000000000000000"
+    ],
+    [
+     90446624,
+     "000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+     "fd7bbfa9fd030091e00316aa0100009021c02d91020080d272140d961f0400b1a00000540000009000c02991010080d2f8811896e1bafed0fd7bc1a8c0035fd60000000000000000000000000000000071325f77616b655f73637265656e0000"
     ]
    ]
   }
@@ -21,5 +31,5 @@
  "restart": [
   "qidi-client"
  ],
- "note": "Where the screen program reads the drying state from the printer, a debug-log call is replaced by 10 instructions that react only when the state changes, and queue a callback on the program's own thread-safe GUI queue. The callback wakes a sleeping screen exactly like a touch does (backlight on, screen_state=1 so the chamber light follows, inactivity timer reset, so the screen goes to sleep again by itself later). When the new state is 'drying' it also opens 'Page_Filament_Drying', unless the drying page is already shown. Code: 41 instructions in the free part of .q2_queue_text; the last state is kept in a free slot of .q2_queue_state."
+ "note": "Where the screen program reads the drying state from the printer, a debug-log call is replaced by 14 instructions that react only when the state changes (and remember the planned end time), and queue a callback on the program's own thread-safe GUI queue. The callback wakes a sleeping screen exactly like a touch does (backlight on, screen_state=1 so the chamber light follows, inactivity timer reset, so the screen goes to sleep again by itself later). When the new state is 'drying' it also opens 'Page_Filament_Drying', unless the drying page is already shown. Where the screen reads console messages (before its '!! ' error check) one instruction calls 13 instructions that queue the same wake-up when a message contains 'q2_wake_screen' (sent by the Fluidd drying window's 'Lower the bed'). Code: 54 instructions in the free part of .q2_queue_text; the last state and end time are kept in free slots of .q2_queue_state."
 }

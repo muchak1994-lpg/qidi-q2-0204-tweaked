@@ -1,15 +1,10 @@
 {
  "id": "screen-drying-start-button",
  "order": 128,
- "title": "Screen: when drying ends (Stop on the screen, stop from Fluidd, time up), the screen shows the drying settings page and its Start button is enabled",
+ "title": "Screen: when drying ends, the drying page's Start button is enabled again, and a drying stopped early (from Fluidd) leaves the drying page like Stop on the screen",
  "files": {
   "/home/qidi/QIDI_Client/bin/qidiclient": {
    "byte_edits": [
-    [
-     1093712,
-     "ddae0214",
-     "44daef15"
-    ],
     [
      1108976,
      "7cc90794",
@@ -21,14 +16,9 @@
      "83c6ef95"
     ],
     [
-     1113924,
-     "209b0294",
-     "87c6ef95"
-    ],
-    [
      90446112,
      "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-     "690000f0208107f92efe17161f2003d5fd7bbfa9fd030091be381096600000f0008047f9400000b4c3261096fd7bc1a8c0035fd6000000000000000000000000fd7bbfa9fd03009197d4129642e51296a00000b4613efc9021601b91551b0d9680000034603efc9000601b9139de1296fd7bc1a8c0035fd600000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+     "690000f0208107f92efe17161f2003d5fd7bbea9fd030091f30b00f9bd381096600000f0008047f9400000b4c2261096000080d27f160d96690000f0210d8fb93f0d0fb921f000d11f0001eb2a02005441e51296e00100b4f30300aa613efc9021601b91531b0d96c0000034e00313aa613efc9021e009914e1b0d96a00000350000009000802791010080d261821896f30b40f9fd7bc2a8c0035fd600000000000000000000000000000000000000000000000000000000000000000000000079d41216000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     ]
    ]
   }
@@ -36,5 +26,5 @@
  "restart": [
   "qidi-client"
  ],
- "note": "The drying settings page keeps a pointer to its Start button (saved in a free slot of .q2_queue_state when the page is drawn). When the drying state changes to 'not drying', the Start button is re-evaluated with QIDI's own rule (disabled only while the printer is busy). Both ways QIDI leaves the drying page (the screen's Stop button and the 'drying ended' handler) call QIDI's own 'back' function first and then, if the screen did not land on Page_Filament_Drying (after a start from the screen 'back' leads to the home page), open Page_Filament_Drying, so the next filament can be dried right away. Code: 26 instructions in the free part of .q2_queue_text."
+ "note": "The drying settings page keeps a pointer to its Start button (saved in a free slot of .q2_queue_state when the page is drawn). When the drying state changes to 'not drying', the Start button is re-evaluated with QIDI's own rule (disabled only while the printer is busy). The code also checks the planned end time (saved by screen-drying-autoshow): if drying stopped more than a minute early, that is a stop from Fluidd or the console, and a screen that shows drying calls QIDI's own 'back' function (queued on the GUI queue), exactly what Stop on the screen does in stock firmware. A drying that ends because its time is up keeps QIDI's behaviour (drying settings page). Stop on the screen is unchanged. Code: 37 instructions in the free part of .q2_queue_text."
 }

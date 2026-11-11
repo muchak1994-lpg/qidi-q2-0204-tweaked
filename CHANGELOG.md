@@ -10,8 +10,10 @@
   In the Fluidd window Start stays grey with a hint until the bed is lowered, and Stop is grey when nothing
   is drying.
 - New module `screen-drying-start-button`: the screen's drying Start button no longer stays grey after a
-  screen restart during drying. However drying ends (Stop on the screen, stop from Fluidd, time up) the screen shows the drying settings
-  page, so the next filament can be dried right away (stock: Stop on the screen went to the home page).
+  screen restart during drying. A stop from Fluidd now does what Stop on the screen does (QIDI's "back"),
+  and a drying whose time is up still ends on the drying settings page, as in stock firmware.
+- Fluidd drying window: "Lower the bed" also wakes the printer screen and the chamber light (console line
+  `q2_wake_screen`), and the Start button is green.
 - `idle-timeout-drying`: the idle timeout is set once for the whole drying time instead of every 10 s, so the
   console is no longer flooded with "idle_timeout: Timeout set to 600.00 s".
 - New module `screen-drying-autoshow`: the screen wakes up and opens its drying page by itself

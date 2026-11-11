@@ -123,16 +123,17 @@
   function theme() {
     var app = document.querySelector('.v-application');
     var dark = !app || app.classList.contains('theme--dark');
-    var card = '', primary = '';
+    var card = '', primary = '', success = '';
     try {
       var c = document.querySelector('.v-card');
       if (c) card = getComputedStyle(c).backgroundColor;
       var p = document.querySelector('.v-application .primary, .v-btn.primary');
       if (p) primary = getComputedStyle(p).backgroundColor;
       if (!primary && app) primary = getComputedStyle(app).getPropertyValue('--v-primary-base').trim();
+      if (app) success = getComputedStyle(app).getPropertyValue('--v-success-base').trim();
     } catch (e) { /* ignore */ }
     if (!card || card === 'rgba(0, 0, 0, 0)') card = dark ? '#28282b' : '#ffffff';
-    return { dark: dark, card: card, primary: primary || '#2196f3' };
+    return { dark: dark, card: card, primary: primary || '#2196f3', success: success || '#4caf50' };
   }
   function css() {
     if (document.getElementById('q2-drying-css')) return;
@@ -211,7 +212,8 @@
     dlg.stop.disabled = !s || !s.ready || busyCmd || !s.drying;
     dlg.start.textContent = confirming && set.ok ? tr('confirm', { t: set.temp, h: set.hours }) : tr('start');
     dlg.start.className = 'q2d-btn ' + (confirming ? 'warn' : 'pri');
-    if (!confirming) dlg.start.style.background = theme().primary; else dlg.start.style.background = '';
+    // Start is green (Fluidd's own 'success' colour); the confirm step stays orange
+    if (!confirming) dlg.start.style.background = theme().success; else dlg.start.style.background = '';
     if (!busyCmd && !dlg.msg.dataset.keep) {
       if (s && !s.ready) message(tr('notready'), true);
       else if (s && s.printing) message(tr('busy'), true);
@@ -306,7 +308,11 @@
     [temp, hours].forEach(function (i) { i.addEventListener('input', function () { confirmUntil = 0; render(); }); });
     back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
     bClose.addEventListener('click', close);
-    bLower.addEventListener('click', function () { run('prepare_filament_dry', 'lowered'); });
+    // 'q2_wake_screen' wakes the printer screen (and the chamber light) like a touch - needs the
+    // screen-drying-autoshow module; without it the line is only a console message
+    bLower.addEventListener('click', function () {
+      run('RESPOND TYPE=command MSG=q2_wake_screen\nprepare_filament_dry', 'lowered');
+    });
     bStop.addEventListener('click', function () {
       run('SET_FILAMENT_DRY END_TIME=0 BED_TEMP=0 CHAMBER_TEMP=0', 'stopped');
     });
