@@ -18,8 +18,9 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `firmware-download-guard` | Drukarka może w tle pobrać paczkę aktualizacji. | Folder pobierania tylko do odczytu (flaga immutable). Cofnięcie: `uninstall`. |
 | `dark-mode-light` | Wyłączenie światła w trakcie druku jest cofane przez ekran i wykrywanie spaghetti. | **Dark mode:** wyłączenie światła w trakcie druku = światło i wykrywanie spaghetti wyłączone do końca druku. Dotknięcie ekranu daje chwilowe światło; włączenie światła kończy tryb (wykrywanie wraca po 60 s). Przetestowane. |
 | `screen-drying-layout` | Na stronie suszenia czas oraz temperatury stołu i komory nachodzą na listę kroków (angielskie napisy łamią się na dwie linie). | Układa te trzy wartości w jednej linii pod krokami (jedenaście wartości położenia w programie ekranu). Sprawdzone na ekranie. |
-| `screen-drying-start-button` | Po restarcie programu ekranu w trakcie suszenia przycisk Start na stronie suszenia zostaje szary (wyłączony) po końcu suszenia. | Po końcu suszenia przycisk Start jest sprawdzany ponownie regułą QIDI (wyłączony tylko wtedy, gdy drukarka jest zajęta). Jeśli ekran pokazuje wtedy suszenie (stop z Fluidda albo koniec czasu), wraca na stronę główną, jak po Stop na ekranie. Sprawdzone: restart w trakcie suszenia, stop z Fluidda, start i stop z ekranu. |
-| `screen-drying-autoshow` | Po starcie suszenia z Fluidda ekran zostaje na bieżącej stronie. | Ekran sam otwiera stronę suszenia (krok 4 z czasem, temperaturami i przyciskiem Stop). Sprawdzone: start z Fluidda, start z ekranu, wyjście ze strony, stop, restart ekranu w trakcie suszenia. |
+| `screen-drying-start-button` | Po restarcie programu ekranu w trakcie suszenia przycisk Start na stronie suszenia zostaje szary (wyłączony) po końcu suszenia. | Po końcu suszenia przycisk Start jest sprawdzany ponownie regułą QIDI (wyłączony tylko wtedy, gdy drukarka jest zajęta). Ekran zostaje na stronie suszenia, jak w oryginale. Sprawdzone: restart w trakcie suszenia, koniec suszenia, start i stop z ekranu. |
+| `screen-drying-countdown-roundup` | Pozostały czas suszenia jest zaokrąglany w dół: 5-minutowe suszenie zaczyna od 04min, a przez całą ostatnią minutę pokazuje 00min. | Zaokrąglanie w górę: 05min ... 01min; powyżej godziny pełne godziny w górę. Sprawdzone na ekranie (07min na starcie 7-minutowego suszenia, 05min, 01min). Po upływie czasu moduł suszenia QIDI potrafi wyłączyć się dopiero po kilku minutach; ekran pokazuje wtedy 00min. |
+| `screen-drying-autoshow` | Po starcie suszenia z Fluidda ekran zostaje na bieżącej stronie (i ciemny, jeśli spał). | Ekran budzi się jak po jednym dotknięciu (podświetlenie, światło w komorze, potem sam zasypia) i otwiera stronę suszenia. Budzi się też po końcu suszenia. Sprawdzone: start poleceniami Fluidda przy uśpionym ekranie, koniec suszenia przy uśpionym ekranie. |
 
 ## Klipper (ruch, grzałki, czujniki)
 
@@ -46,13 +47,12 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 
 | Moduł | Co się zmienia |
 |---|---|
-| `idle-timeout-drying` | Czas bezczynności 12 h → 5 min (grzałki off), osobne komunikaty „pauza” / „bezczynność”, silniki off; suszenie w komorze dalej działa. |
+| `idle-timeout-drying` | Czas bezczynności 12 h → 5 min (grzałki off), osobne komunikaty „pauza” / „bezczynność”, silniki off; suszenie w komorze dalej działa. Start suszenia odrzucany, jeśli stół nie jest opuszczony (Z ≥ 190); sygnał dźwiękowy (jak po końcu druku), gdy suszenie skończy się samo. |
 | `resume-after-heating` | Po pauzie przepłukanie czeka, aż dysza znów będzie gorąca. |
 | `park-rear-right` | Po druku lub zatrzymaniu głowica staje z tyłu po prawej, żeby kamera widziała stół. |
 | `external-filament-load-finish` | Po ładowaniu zewnętrznego filamentu: wentylator i grzałka off. |
 | `end-guard` | Grzałka komory i wentylatory off na koniec druku i po suszeniu. Przetestowane. |
 | `filament-wipe` | Dodatkowe makro przepłukania i wytarcia (`FILAMENT_WIPE`); nie zastępuje makra QIDI. |
-| `drying-skip-homing` | Przygotowanie suszenia filamentu (`prepare_filament_dry`, używane przez ekran i przez okno suszenia we Fluiddzie) bazuje osie tylko wtedy, gdy nie są zbazowane, a nie za każdym razem. Przetestowane z ekranu i z Fluidda. |
 | `screws-tilt` | Pomoc przy regulacji śrub stołu. |
 | `mcu-temperatures` | Przybliżone temperatury płyty głównej / elektroniki widoczne we Fluiddzie. |
 
@@ -68,7 +68,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `timelapse-capture-recovery` | Jedna nieudana klatka timelapse nie zatrzymuje całego timelapse. |
 | `fluidd-fixes` | Fluidd: nazwy plików i folderów ze spacjami / znakami specjalnymi, postęp wysyłania/pobierania osobno dla każdego pliku, przyciski działające w pauzie, temperatura SoC, zajętość dysku, rozsądny czas do końca na starcie druku, informacje o serwerze zachowane przy resecie Klippera, ukryte okna przy rozłączeniu. |
 | `send-and-print-guard` | Pilnuje, żeby „Upload & Print” we Fluiddzie działał (sprawdza przy starcie i co noc). |
-| `fluidd-drying-button` | Pozycja „Suszenie filamentu” na końcu lewego panelu nawigacji Fluidda (telefon i komputer). Otwiera okno z nastawami z ekranu drukarki (15 rodzajów filamentu, temperatura stołu do 100 °C, czas 1-24 h) i wysyła te same polecenia co ekran (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Plik programu Fluidda nie jest zmieniany. Przetestowane: opuszczenie stołu, start, pozostały czas, stop. |
+| `fluidd-drying-button` | Pozycja „Suszenie filamentu” na końcu lewego panelu nawigacji Fluidda (telefon i komputer). Otwiera okno z nastawami z ekranu drukarki (15 rodzajów filamentu, temperatura stołu do 100 °C, czas 1-24 h) i wysyła te same polecenia co ekran (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Plik programu Fluidda nie jest zmieniany. Start jest szary, dopóki stół nie jest opuszczony, Stop jest szary, gdy nic się nie suszy. Przetestowane: opuszczenie stołu, start, pozostały czas, stop. |
 
 ## System
 

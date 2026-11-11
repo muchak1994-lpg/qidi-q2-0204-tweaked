@@ -24,6 +24,7 @@
   // The screen accepts up to 120 C; the highest value in its own table is 90 C. This window stops at 100 C.
   var MIN_TEMP = 30, MAX_TEMP = 100;
   var MIN_HOURS = 1, MAX_HOURS = 24;   // the screen accepts 1..24
+  var LOWERED_Z = 190;                 // prepare_filament_dry lowers the bed to Z200
   var ICON = 'M6 2c-2 2.5 2 5 0 7.5s2 5 0 7.5h2c2-2.5-2-5 0-7.5s-2-5 0-7.5zM11 2c-2 2.5 2 5 0 7.5s2 5 0 7.5h2c2-2.5-2-5 0-7.5s-2-5 0-7.5zM16 2c-2 2.5 2 5 0 7.5s2 5 0 7.5h2c2-2.5-2-5 0-7.5s-2-5 0-7.5zM4 19h16v2H4z';
 
   var TEXT = {
@@ -31,7 +32,7 @@
       title: 'Filament drying', type: 'Filament', temp: 'Build plate (°C)',
       hours: 'Time (h)', chamber: 'Chamber', bed: 'Build plate',
       s1: 'Check that nothing lies on the build plate or on the bottom of the printer, and that the PEI plate is placed correctly.',
-      s2: 'Press "Lower the bed". The printer homes (if needed) and lowers the bed - the build plate must be EMPTY for this.',
+      s2: 'Press "Lower the bed". The printer homes and lowers the bed - the build plate must be EMPTY for this.',
       s3: 'Place the spool on the build plate and cover it with a lid printed from a high-temperature material (PA-CF, PC) or with a cardboard packaging box.',
       s4: 'Close the front door and the top cover.',
       s5: 'Press "Start drying". Do not leave a heating printer unattended.',
@@ -39,6 +40,7 @@
       idle: 'Drying is off', active: 'Drying is running', left: 'about {t} left',
       busy: 'A print is running or paused - drying cannot be started now.',
       notready: 'The printer is not ready (Klipper).', working: 'Working…', lowered: 'Bed lowered.',
+      notlowered: 'Lower the bed first (step 2) - Start is available once the bed is down.',
       started: 'Drying started.', stopped: 'Drying stopped.', failed: 'The printer refused: ',
       noapi: 'No connection to the printer.', range: 'Temperature {a}-{b} °C, time {c}-{d} h.'
     },
@@ -46,7 +48,7 @@
       title: 'Suszenie filamentu', type: 'Filament', temp: 'Stół (°C)',
       hours: 'Czas (h)', chamber: 'Komora', bed: 'Stół',
       s1: 'Sprawdź, czy na stole i na dnie drukarki nic nie leży i czy płyta PEI jest poprawnie założona.',
-      s2: 'Naciśnij „Opuść stół”. Drukarka zbazuje osie (jeśli trzeba) i opuści stół - stół musi być wtedy PUSTY.',
+      s2: 'Naciśnij „Opuść stół”. Drukarka zbazuje osie i opuści stół - stół musi być wtedy PUSTY.',
       s3: 'Połóż szpulę na stole i przykryj ją pokrywą wydrukowaną z materiału odpornego na temperaturę (PA-CF, PC) albo kartonowym pudełkiem.',
       s4: 'Zamknij drzwi i górną pokrywę.',
       s5: 'Naciśnij „Start suszenia”. Nie zostawiaj grzejącej drukarki bez nadzoru.',
@@ -54,6 +56,7 @@
       idle: 'Suszenie wyłączone', active: 'Suszenie trwa', left: 'zostało ok. {t}',
       busy: 'Trwa druk albo pauza - suszenia nie można teraz uruchomić.',
       notready: 'Drukarka nie jest gotowa (Klipper).', working: 'Pracuję…', lowered: 'Stół opuszczony.',
+      notlowered: 'Najpierw opuść stół (krok 2) - Start będzie dostępny, gdy stół będzie na dole.',
       started: 'Suszenie uruchomione.', stopped: 'Suszenie zatrzymane.', failed: 'Drukarka odmówiła: ',
       noapi: 'Brak połączenia z drukarką.', range: 'Temperatura {a}-{b} °C, czas {c}-{d} h.'
     }
@@ -92,7 +95,7 @@
   function gcode(script) { return api('POST', '/printer/gcode/script', { script: script }); }
   function readState() {
     return api('GET', '/printer/objects/query?webhooks&print_stats&pause_resume&virtual_sdcard' +
-      '&heater_bed&heater_generic%20chamber&multi_color_controller=drying').then(function (res) {
+      '&heater_bed&heater_generic%20chamber&multi_color_controller=drying&toolhead=position').then(function (res) {
       var s = (res && res.status) || {};
       var dry = ((s.multi_color_controller || {}).drying || {}).extra || {};
       var ps = ((s.print_stats || {}).state || '').toLowerCase();
@@ -101,7 +104,9 @@
         printing: ps === 'printing' || ps === 'paused' || !!(s.pause_resume || {}).is_paused ||
           !!(s.virtual_sdcard || {}).is_active,
         bed: s.heater_bed || {}, chamber: s['heater_generic chamber'] || {},
-        drying: Number(dry.dry_state || 0) === 1, endTime: Number(dry.end_time || 0)
+        drying: Number(dry.dry_state || 0) === 1, endTime: Number(dry.end_time || 0),
+        // same rule as the SET_FILAMENT_DRY macro: the bed counts as lowered at Z >= LOWERED_Z
+        lowered: Number((((s.toolhead || {}).position) || [])[2] || 0) >= LOWERED_Z
       };
     });
   }
@@ -202,8 +207,8 @@
     dlg.type.disabled = dlg.temp.disabled = dlg.hours.disabled = lock;
     var can = !!s && s.ready && !s.printing && !busyCmd;
     dlg.lower.disabled = !can || s.drying;
-    dlg.start.disabled = !can || s.drying || !set.ok;
-    dlg.stop.disabled = !s || !s.ready || busyCmd;
+    dlg.start.disabled = !can || s.drying || !set.ok || !s.lowered;
+    dlg.stop.disabled = !s || !s.ready || busyCmd || !s.drying;
     dlg.start.textContent = confirming && set.ok ? tr('confirm', { t: set.temp, h: set.hours }) : tr('start');
     dlg.start.className = 'q2d-btn ' + (confirming ? 'warn' : 'pri');
     if (!confirming) dlg.start.style.background = theme().primary; else dlg.start.style.background = '';
@@ -211,6 +216,7 @@
       if (s && !s.ready) message(tr('notready'), true);
       else if (s && s.printing) message(tr('busy'), true);
       else if (!set.ok) message(tr('range', { a: MIN_TEMP, b: MAX_TEMP, c: MIN_HOURS, d: MAX_HOURS }), true);
+      else if (s && !s.drying && !s.lowered) message(tr('notlowered'));
       else message('');
     }
   }

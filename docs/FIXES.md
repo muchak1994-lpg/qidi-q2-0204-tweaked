@@ -18,8 +18,9 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `firmware-download-guard` | The printer can download an update package in the background. | Makes the download folder read-only (immutable flag). Undo: `uninstall`. |
 | `dark-mode-light` | Turning the light off during a print is undone by the screen and by the spaghetti detection. | **Dark mode:** light off during a print = light and spaghetti detection off until the print ends. Tapping the screen gives temporary light; switching the light on ends dark mode (detection back after 60 s). Tested. |
 | `screen-drying-layout` | On the drying page the time, bed and chamber temperature overlap the step list (English texts wrap to two lines). | Puts the three values in one line under the steps (eleven position values in the screen program). Checked on the screen. |
-| `screen-drying-start-button` | After a restart of the screen program during drying, the drying page's Start button stays grey (disabled) when drying ends. | The Start button is re-checked when drying ends, with QIDI's own rule (disabled only while the printer is busy). If the screen shows drying when it ends (stopped from Fluidd or time is up), it returns to the home page, as after Stop on the screen. Checked: restart during drying, stop from Fluidd, start and stop from the screen. |
-| `screen-drying-autoshow` | When drying is started from Fluidd, the screen stays on its current page. | The screen opens its drying page (step 4 with time, temperatures and Stop) by itself. Checked: start from Fluidd, start from the screen, leaving the page, stop, screen restart during drying. |
+| `screen-drying-start-button` | After a restart of the screen program during drying, the drying page's Start button stays grey (disabled) when drying ends. | The Start button is re-checked when drying ends, with QIDI's own rule (disabled only while the printer is busy). The screen stays on the drying page, as in stock firmware. Checked: restart during drying, end of drying, start and stop from the screen. |
+| `screen-drying-countdown-roundup` | The drying time left is rounded down: a 5-minute drying starts at 04min and shows 00min for its whole last minute. | Rounded up: 05min ... 01min; above one hour whole hours rounded up. Checked on the screen (07min at start of a 7-minute drying, 05min, 01min). After the time is up QIDI's drying module can take up to a few minutes to switch off; the screen shows 00min meanwhile. |
+| `screen-drying-autoshow` | When drying is started from Fluidd, the screen stays on its current page (and dark if it was asleep). | The screen wakes up like after one touch (backlight, chamber light, then sleeps again by itself) and opens its drying page. It also wakes up when drying ends. Checked: start from Fluidd's commands with the screen asleep, end of drying with the screen asleep. |
 
 ## Klipper (motion, heaters, sensors)
 
@@ -46,13 +47,12 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 
 | Module | What changes |
 |---|---|
-| `idle-timeout-drying` | Idle timeout 12 h → 5 min (heaters off), separate "pause" / "idle" messages, motors off; chamber drying keeps working. |
+| `idle-timeout-drying` | Idle timeout 12 h → 5 min (heaters off), separate "pause" / "idle" messages, motors off; chamber drying keeps working. Drying start refused unless the bed is lowered (Z ≥ 190); a beep (like at print end) when drying finishes by itself. |
 | `resume-after-heating` | After a pause, the purge waits until the nozzle is hot again. |
 | `park-rear-right` | After a print or a stop the head parks at the rear right, so the camera sees the bed. |
 | `external-filament-load-finish` | After an external filament load: fan and heater off. |
 | `end-guard` | Chamber heater and fans off at the end of a print and when drying ends. Tested. |
 | `filament-wipe` | Extra purge-and-wipe macro (`FILAMENT_WIPE`); does not replace QIDI's own. |
-| `drying-skip-homing` | Filament drying preparation (`prepare_filament_dry`, used by the screen and by the Fluidd drying window) homes only when the axes are not homed yet, instead of every time. Tested from the screen and from Fluidd. |
 | `screws-tilt` | Bed screws tilt helper. |
 | `mcu-temperatures` | Approximate mainboard / electronics temperatures shown in Fluidd. |
 
@@ -68,7 +68,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `timelapse-capture-recovery` | One failed timelapse frame no longer stops the whole timelapse. |
 | `fluidd-fixes` | Fluidd: file and folder names with spaces/special characters, upload/download progress per file, controls usable while paused, SoC temperature, disk usage, sane ETA at print start, keeps server info on a Klipper reset, hides dialogs while disconnected. |
 | `send-and-print-guard` | Keeps Fluidd's "Upload & Print" working (checks at boot and nightly). |
-| `fluidd-drying-button` | A "Filament drying" entry at the end of Fluidd's left navigation panel (phone and computer). It opens a window with the printer screen's own settings (15 filament types, build plate temperature up to 100 °C, time 1-24 h) and sends the same commands as the screen (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Fluidd's own program file is not changed. Tested: lower the bed, start, time left, stop. |
+| `fluidd-drying-button` | A "Filament drying" entry at the end of Fluidd's left navigation panel (phone and computer). It opens a window with the printer screen's own settings (15 filament types, build plate temperature up to 100 °C, time 1-24 h) and sends the same commands as the screen (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Fluidd's own program file is not changed. Start stays grey until the bed is lowered, Stop is grey when nothing is drying. Tested: lower the bed, start, time left, stop. |
 
 ## System
 

@@ -1,0 +1,25 @@
+{
+ "id": "screen-drying-countdown-roundup",
+ "order": 129,
+ "title": "Screen: drying time left is rounded up (05min, 04min ... 01min instead of 04 ... 00)",
+ "files": {
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "byte_edits": [
+    [
+     1093568,
+     "a27896524234b272202040f9627e229b42fc60d36202020b427c0b13427c936b40020054",
+     "202040f9c7daef95c6980894090000141f2003d51f2003d51f2003d51f2003d51f2003d5"
+    ],
+    [
+     90446560,
+     "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+     "09c281527f02096bed0000546202090b420400514208c91a413efcf021a03a91c0035fd68907805262ee00114208c91a413efcf021c03a91c0035fd600000000"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "qidi-client"
+ ],
+ "note": "The drying countdown label was computed with floor division, so a 5-minute drying started at '04min' and showed '00min' for its whole last minute. The 9 instructions that compute the value now call a 15-instruction helper in the program's added code section: above one hour it shows hours rounded up ('02h' means up to 2 hours), from one hour down it shows minutes rounded up (60min ... 01min). The 'drying finished' check still uses the exact seconds."
+}
