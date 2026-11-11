@@ -10,7 +10,7 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 ## Co naprawia
 
-43 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła),
+44 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła),
 poprawki Klippera (fuzzy skin, wentylator hotendu, grzałki Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne),
 makra, poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące biblioteki AI kamery.
 **Pełna lista z problemem, który rozwiązuje każdy moduł: [docs/FIXES.pl.md](docs/FIXES.pl.md).**

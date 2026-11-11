@@ -18,6 +18,7 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `firmware-download-guard` | The printer can download an update package in the background. | Makes the download folder read-only (immutable flag). Undo: `uninstall`. |
 | `dark-mode-light` | Turning the light off during a print is undone by the screen and by the spaghetti detection. | **Dark mode:** light off during a print = light and spaghetti detection off until the print ends. Tapping the screen gives temporary light; switching the light on ends dark mode (detection back after 60 s). Tested. |
 | `screen-drying-layout` | On the drying page the time, bed and chamber temperature overlap the step list (English texts wrap to two lines). | Puts the three values in one line under the steps (eleven position values in the screen program). Checked on the screen. |
+| `screen-drying-autoshow` | **Off by default** (`--with screen-drying-autoshow`): when drying is started from Fluidd, the screen stays on its current page. | The screen opens its drying page (step 4 with time, temperatures and Stop) by itself. Checked: start from Fluidd, start from the screen, leaving the page, stop, screen restart during drying. |
 
 ## Klipper (motion, heaters, sensors)
 

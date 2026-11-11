@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- New optional module `screen-drying-autoshow` (off by default): the screen opens its drying page by itself
+  when drying is started from Fluidd.
 - New module `fluidd-drying-button`: a "Filament drying" entry in Fluidd's left panel and a window with the
   printer screen's own settings and commands (tested: lower the bed, start, time left, stop).
 - New module `screen-drying-layout`: on the screen's drying page the time and temperatures are shown in one

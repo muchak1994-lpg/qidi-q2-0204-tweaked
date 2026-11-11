@@ -18,6 +18,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `firmware-download-guard` | Drukarka może w tle pobrać paczkę aktualizacji. | Folder pobierania tylko do odczytu (flaga immutable). Cofnięcie: `uninstall`. |
 | `dark-mode-light` | Wyłączenie światła w trakcie druku jest cofane przez ekran i wykrywanie spaghetti. | **Dark mode:** wyłączenie światła w trakcie druku = światło i wykrywanie spaghetti wyłączone do końca druku. Dotknięcie ekranu daje chwilowe światło; włączenie światła kończy tryb (wykrywanie wraca po 60 s). Przetestowane. |
 | `screen-drying-layout` | Na stronie suszenia czas oraz temperatury stołu i komory nachodzą na listę kroków (angielskie napisy łamią się na dwie linie). | Układa te trzy wartości w jednej linii pod krokami (jedenaście wartości położenia w programie ekranu). Sprawdzone na ekranie. |
+| `screen-drying-autoshow` | **Domyślnie wyłączony** (`--with screen-drying-autoshow`): po starcie suszenia z Fluidda ekran zostaje na bieżącej stronie. | Ekran sam otwiera stronę suszenia (krok 4 z czasem, temperaturami i przyciskiem Stop). Sprawdzone: start z Fluidda, start z ekranu, wyjście ze strony, stop, restart ekranu w trakcie suszenia. |
 
 ## Klipper (ruch, grzałki, czujniki)
 
