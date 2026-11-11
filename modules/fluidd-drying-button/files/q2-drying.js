@@ -153,7 +153,9 @@
       '.q2d-foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:8px 18px 16px}' +
       '.q2d-btn{border:0;border-radius:4px;padding:9px 12px;font-size:14px;font-weight:500;letter-spacing:.01em;white-space:nowrap;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)}' +
       '.q2d-btn.err{margin-right:auto}' +
-      '.q2d-tip{position:fixed;z-index:3001;pointer-events:none;background:#0a0a0ae6;opacity:.9;color:#fff;border-radius:4px;font-size:14px;line-height:22px;padding:5px 16px;white-space:nowrap;transform:translateY(-50%)}' +
+      '.q2d-tip{position:fixed;z-index:3001;pointer-events:none;background:#0a0a0ae6;opacity:0;color:#fff;border-radius:4px;font-size:14px;line-height:22px;padding:5px 16px;white-space:nowrap;transform:translateY(-50%) scale(0);transition:opacity .3s cubic-bezier(.25,.8,.5,1),transform .3s cubic-bezier(.25,.8,.5,1)}' +
+      '.q2d-tip.on{opacity:.9;transform:translateY(-50%) scale(1)}' +
+      '.q2d-tip.off{opacity:0;transform:translateY(-50%) scale(1)}' +
       '.q2d-btn.pri{color:#fff}.q2d-btn.warn{background:#fb8c00;color:#fff}.q2d-btn.err{background:#ff5252;color:#fff}' +
       '.q2d-btn:disabled{opacity:.4;cursor:default}';
     document.head.appendChild(s);
@@ -325,10 +327,19 @@
   var BTN_ID = 'q2-drying-nav', pending = false;
 
   var tip = null;
-  function hideTip() { if (tip) tip.remove(); tip = null; }
+  function hideTip() {
+    // fade out like Fluidd's own tooltips, then remove
+    var t = tip;
+    tip = null;
+    if (!t) return;
+    t.classList.remove('on');
+    t.classList.add('off');
+    setTimeout(function () { t.remove(); }, 300);
+  }
   function showTip(a) {
     hideTip();
     if (a.querySelector('.v-list-item__title') && a.getBoundingClientRect().width > 120) return;  // text is visible
+    if (window.matchMedia && window.matchMedia('(hover: none)').matches) return;               // touch screen: Fluidd shows none
     css();
     var r = a.getBoundingClientRect();
     tip = el('div', 'q2d-tip', tr('title'));
@@ -336,6 +347,9 @@
     tip.style.left = (r.right + 10) + 'px';
     tip.style.top = (r.top + r.height / 2) + 'px';
     document.body.appendChild(tip);
+    var t = tip;
+    void t.offsetWidth;                       // start from scale(0), then grow like Fluidd's tooltips
+    t.classList.add('on');
   }
   function makeItem(src) {
     var a = src.cloneNode(true);
