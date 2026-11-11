@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- New optional module `fluidd-drying-button` (off by default, not yet tested on a printer): a filament
+  drying entry (left panel) and window in Fluidd, using the printer screen's own settings and commands.
+- New module `drying-skip-homing`: filament drying preparation homes only when needed (tested from the
+  screen and from Fluidd).
+
 ## 0.9.0-rc2 - 2026-11-10
 - Installer recognises earlier versions of its own files (`modules/LOCK-history.json`, `previous` edits
   for configuration files) and upgrades them instead of refusing.

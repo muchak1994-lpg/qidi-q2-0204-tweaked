@@ -49,6 +49,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `external-filament-load-finish` | Po ładowaniu zewnętrznego filamentu: wentylator i grzałka off. |
 | `end-guard` | Grzałka komory i wentylatory off na koniec druku i po suszeniu. Przetestowane. |
 | `filament-wipe` | Dodatkowe makro przepłukania i wytarcia (`FILAMENT_WIPE`); nie zastępuje makra QIDI. |
+| `drying-skip-homing` | Przygotowanie suszenia filamentu (`prepare_filament_dry`, używane przez ekran i przez okno suszenia we Fluiddzie) bazuje osie tylko wtedy, gdy nie są zbazowane, a nie za każdym razem. Przetestowane z ekranu i z Fluidda. |
 | `screws-tilt` | Pomoc przy regulacji śrub stołu. |
 | `mcu-temperatures` | Przybliżone temperatury płyty głównej / elektroniki widoczne we Fluiddzie. |
 
@@ -64,6 +65,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `timelapse-capture-recovery` | Jedna nieudana klatka timelapse nie zatrzymuje całego timelapse. |
 | `fluidd-fixes` | Fluidd: nazwy plików i folderów ze spacjami / znakami specjalnymi, postęp wysyłania/pobierania osobno dla każdego pliku, przyciski działające w pauzie, temperatura SoC, zajętość dysku, rozsądny czas do końca na starcie druku, informacje o serwerze zachowane przy resecie Klippera, ukryte okna przy rozłączeniu. |
 | `send-and-print-guard` | Pilnuje, żeby „Upload & Print” we Fluiddzie działał (sprawdza przy starcie i co noc). |
+| `fluidd-drying-button` | **Domyślnie wyłączony, jeszcze nietestowany na drukarce** (`--with fluidd-drying-button`): pozycja „Suszenie filamentu” na końcu lewego panelu nawigacji Fluidda (telefon i komputer). Otwiera okno z nastawami z ekranu drukarki (15 rodzajów filamentu, temperatura stołu do 100 °C, czas 1-24 h) i wysyła te same polecenia co ekran (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Plik programu Fluidda nie jest zmieniany. |
 
 ## System
 

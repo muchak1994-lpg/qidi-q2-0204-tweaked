@@ -49,6 +49,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `external-filament-load-finish` | After an external filament load: fan and heater off. |
 | `end-guard` | Chamber heater and fans off at the end of a print and when drying ends. Tested. |
 | `filament-wipe` | Extra purge-and-wipe macro (`FILAMENT_WIPE`); does not replace QIDI's own. |
+| `drying-skip-homing` | Filament drying preparation (`prepare_filament_dry`, used by the screen and by the Fluidd drying window) homes only when the axes are not homed yet, instead of every time. Tested from the screen and from Fluidd. |
 | `screws-tilt` | Bed screws tilt helper. |
 | `mcu-temperatures` | Approximate mainboard / electronics temperatures shown in Fluidd. |
 
@@ -64,6 +65,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `timelapse-capture-recovery` | One failed timelapse frame no longer stops the whole timelapse. |
 | `fluidd-fixes` | Fluidd: file and folder names with spaces/special characters, upload/download progress per file, controls usable while paused, SoC temperature, disk usage, sane ETA at print start, keeps server info on a Klipper reset, hides dialogs while disconnected. |
 | `send-and-print-guard` | Keeps Fluidd's "Upload & Print" working (checks at boot and nightly). |
+| `fluidd-drying-button` | **Off by default, not yet tested on a printer** (`--with fluidd-drying-button`): a "Filament drying" entry at the end of Fluidd's left navigation panel (phone and computer). It opens a window with the printer screen's own settings (15 filament types, build plate temperature up to 100 °C, time 1-24 h) and sends the same commands as the screen (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Fluidd's own program file is not changed. |
 
 ## System
 

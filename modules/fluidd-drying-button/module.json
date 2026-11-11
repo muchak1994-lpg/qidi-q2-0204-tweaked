@@ -1,0 +1,21 @@
+{
+ "id": "fluidd-drying-button",
+ "order": 124,
+ "title": "Fluidd: filament drying entry in the left navigation panel (same settings and commands as the printer screen)",
+ "files": {
+  "/home/qidi/fluidd/assets/q2-drying.js": {
+   "source": "files/q2-drying.js"
+  },
+  "/home/qidi/fluidd/index.html": {
+   "edits": [
+    [
+     "<script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>",
+     "<script src=\"./assets/q2-drying.js?v=5\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
+    ]
+   ]
+  }
+ },
+ "restart": [],
+ "default": false,
+ "note": "Off by default until it has been tested on a printer. Install with: --with fluidd-drying-button"
+}
