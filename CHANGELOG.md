@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- `idle-timeout-drying`: the idle timeout is set once for the whole drying time instead of every 10 s, so the
+  console is no longer flooded with "idle_timeout: Timeout set to 600.00 s".
 - New optional module `screen-drying-autoshow` (off by default): the screen opens its drying page by itself
   when drying is started from Fluidd.
 - New module `fluidd-drying-button`: a "Filament drying" entry in Fluidd's left panel and a window with the
