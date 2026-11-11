@@ -16,6 +16,5 @@
  "restart": [
   "qidi-client"
  ],
- "default": false,
- "note": "Off by default. Install with: --with screen-drying-autoshow. Where the screen program reads the drying state from the printer, a debug-log call is replaced by 23 instructions: when the state is 'drying', the page 'Page_Filament_Drying' is opened through the program's own thread-safe GUI queue, unless the drying page is already shown."
+ "note": "Where the screen program reads the drying state from the printer, a debug-log call is replaced by 23 instructions: when the state is 'drying', the page 'Page_Filament_Drying' is opened through the program's own thread-safe GUI queue, unless the drying page is already shown."
 }
