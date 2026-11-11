@@ -1,24 +1,24 @@
 {
  "id": "screen-drying-start-button",
  "order": 128,
- "title": "Screen: the drying page's Start button is enabled again when drying ends (it stayed grey after a screen restart during drying)",
+ "title": "Screen: when drying ends, the drying page's Start button is enabled again, and a screen that shows drying returns to the home page",
  "files": {
   "/home/qidi/QIDI_Client/bin/qidiclient": {
    "byte_edits": [
     [
      1108976,
      "7cc90794",
-     "58cbef95"
+     "4ccbef95"
     ],
     [
      1113892,
      "43ffff97",
-     "7fc6ef95"
+     "83c6ef95"
     ],
     [
      90446112,
-     "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
-     "fd7bbfa9fd030091c2381096600000f0008047f9400000b4c7261096fd7bc1a8c0035fd6000000000000000000000000690000f0208107f922fe171600000000"
+     "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+     "690000f0208107f92efe17161f2003d5fd7bbea9fd030091f30b00f9bd381096600000f0008047f9400000b4c226109649e51296e00100b4f30300aa613efc9021601b915b1b0d96c0000034e00313aa613efc9021e00991561b0d96a00000350000009000702691010080d269821896f30b40f9fd7bc2a8c0035fd6003efcf000602e9133de1216000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
     ]
    ]
   }
@@ -26,5 +26,5 @@
  "restart": [
   "qidi-client"
  ],
- "note": "The drying settings page keeps a pointer to its Start button (saved in a free slot of .q2_queue_state when the page is drawn). When the drying state changes to 'not drying', the screen program re-evaluates that button with its own rule (disabled only while the printer is busy). Code: 12 instructions in the free part of .q2_queue_text."
+ "note": "The drying settings page keeps a pointer to its Start button (saved in a free slot of .q2_queue_state when the page is drawn). When the drying state changes to 'not drying', the Start button is re-evaluated with QIDI's own rule (disabled only while the printer is busy), and if the screen is on a drying page it switches to Page_Home (queued on the GUI queue), as it does after Stop on the screen. Code: 35 instructions in the free part of .q2_queue_text."
 }

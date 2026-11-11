@@ -2,7 +2,7 @@
 
 ## Unreleased
 - New module `screen-drying-start-button`: the screen's drying Start button no longer stays grey after a
-  screen restart during drying.
+  screen restart during drying, and a screen that shows drying returns to the home page when drying ends.
 - `idle-timeout-drying`: the idle timeout is set once for the whole drying time instead of every 10 s, so the
   console is no longer flooded with "idle_timeout: Timeout set to 600.00 s".
 - New module `screen-drying-autoshow`: the screen opens its drying page by itself

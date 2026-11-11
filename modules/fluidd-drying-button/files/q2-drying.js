@@ -153,7 +153,7 @@
       '.q2d-foot{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:8px 18px 16px}' +
       '.q2d-btn{border:0;border-radius:4px;padding:9px 12px;font-size:14px;font-weight:500;letter-spacing:.01em;white-space:nowrap;cursor:pointer;color:inherit;background:rgba(128,128,128,.25)}' +
       '.q2d-btn.err{margin-right:auto}' +
-      '.q2d-tip{position:fixed;z-index:3001;pointer-events:none;background:rgba(97,97,97,.9);color:#fff;border-radius:4px;font-size:14px;line-height:22px;padding:5px 16px;white-space:nowrap;transform:translateY(-50%)}' +
+      '.q2d-tip{position:fixed;z-index:3001;pointer-events:none;background:#0a0a0ae6;opacity:.9;color:#fff;border-radius:4px;font-size:14px;line-height:22px;padding:5px 16px;white-space:nowrap;transform:translateY(-50%)}' +
       '.q2d-btn.pri{color:#fff}.q2d-btn.warn{background:#fb8c00;color:#fff}.q2d-btn.err{background:#ff5252;color:#fff}' +
       '.q2d-btn:disabled{opacity:.4;cursor:default}';
     document.head.appendChild(s);
