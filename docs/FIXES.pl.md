@@ -17,7 +17,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `update-check-off` | Okienko „nowy firmware” namawia do aktualizacji online, która na zawsze zastąpiłaby 02.04. | Wyłącza sprawdzanie aktualizacji (jeden bajt w programie ekranu). |
 | `firmware-download-guard` | Drukarka może w tle pobrać paczkę aktualizacji. | Folder pobierania tylko do odczytu (flaga immutable). Cofnięcie: `uninstall`. |
 | `dark-mode-light` | Wyłączenie światła w trakcie druku jest cofane przez ekran i wykrywanie spaghetti. | **Dark mode:** wyłączenie światła w trakcie druku = światło i wykrywanie spaghetti wyłączone do końca druku. Dotknięcie ekranu daje chwilowe światło; włączenie światła kończy tryb (wykrywanie wraca po 60 s). Przetestowane. |
-| `screen-drying-layout` | **Domyślnie wyłączony, jeszcze niesprawdzony na ekranie** (`--with screen-drying-layout`): na stronie suszenia czas oraz temperatury stołu i komory nachodzą na listę kroków (angielskie napisy łamią się na dwie linie). | Układa te trzy wartości w jednej linii pod krokami (jedenaście wartości położenia w programie ekranu). |
+| `screen-drying-layout` | Na stronie suszenia czas oraz temperatury stołu i komory nachodzą na listę kroków (angielskie napisy łamią się na dwie linie). | Układa te trzy wartości w jednej linii pod krokami (jedenaście wartości położenia w programie ekranu). Sprawdzone na ekranie. |
 
 ## Klipper (ruch, grzałki, czujniki)
 
@@ -66,7 +66,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `timelapse-capture-recovery` | Jedna nieudana klatka timelapse nie zatrzymuje całego timelapse. |
 | `fluidd-fixes` | Fluidd: nazwy plików i folderów ze spacjami / znakami specjalnymi, postęp wysyłania/pobierania osobno dla każdego pliku, przyciski działające w pauzie, temperatura SoC, zajętość dysku, rozsądny czas do końca na starcie druku, informacje o serwerze zachowane przy resecie Klippera, ukryte okna przy rozłączeniu. |
 | `send-and-print-guard` | Pilnuje, żeby „Upload & Print” we Fluiddzie działał (sprawdza przy starcie i co noc). |
-| `fluidd-drying-button` | **Domyślnie wyłączony, jeszcze nietestowany na drukarce** (`--with fluidd-drying-button`): pozycja „Suszenie filamentu” na końcu lewego panelu nawigacji Fluidda (telefon i komputer). Otwiera okno z nastawami z ekranu drukarki (15 rodzajów filamentu, temperatura stołu do 100 °C, czas 1-24 h) i wysyła te same polecenia co ekran (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Plik programu Fluidda nie jest zmieniany. |
+| `fluidd-drying-button` | Pozycja „Suszenie filamentu” na końcu lewego panelu nawigacji Fluidda (telefon i komputer). Otwiera okno z nastawami z ekranu drukarki (15 rodzajów filamentu, temperatura stołu do 100 °C, czas 1-24 h) i wysyła te same polecenia co ekran (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Plik programu Fluidda nie jest zmieniany. Przetestowane: opuszczenie stołu, start, pozostały czas, stop. |
 
 ## System
 

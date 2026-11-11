@@ -15,7 +15,5 @@
    ]
   }
  },
- "restart": [],
- "default": false,
- "note": "Off by default until it has been tested on a printer. Install with: --with fluidd-drying-button"
+ "restart": []
 }

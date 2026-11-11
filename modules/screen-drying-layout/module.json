@@ -66,6 +66,5 @@
  "restart": [
   "qidi-client"
  ],
- "default": false,
- "note": "Off by default until it has been checked on a printer screen. Install with: --with screen-drying-layout. The edits change eleven position values in the drying page: the info block becomes 200x24 at (25,193) - aligned with the step check marks and one step gap below step 4; the bed and chamber values move to x=58 and x=130 on the same line as the time; label gaps 9 -> 4."
+ "note": "The edits change eleven position values in the drying page: the info block becomes 200x24 at (25,193) - aligned with the step check marks and one step gap below step 4; the bed and chamber values move to x=58 and x=130 on the same line as the time; label gaps 9 -> 4."
 }
