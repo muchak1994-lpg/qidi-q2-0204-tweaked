@@ -199,8 +199,15 @@ def strip_config_edits(data, mods, path):
 
 
 def load_history():
+    """Every result this project ever produced for a file: earlier releases (LOCK-history.json) and the
+    current result with all modules (LOCK.json). The latter matters when a printer has an optional module
+    and the installer now runs without it."""
     path = build.MODULES / "LOCK-history.json"
-    return json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    history = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+    if build.LOCK.is_file():
+        for name, digest in json.loads(build.LOCK.read_text(encoding="utf-8")).items():
+            history.setdefault(name, []).append(digest)
+    return history
 
 
 OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community fixes, manual edits), put the "
