@@ -1,0 +1,25 @@
+{
+ "id": "z-home-guard",
+ "order": 116,
+ "title": "'Home Z' on its own only with the nozzle over the build plate (X and Y homed)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "[homing_override]\naxes:xy\ngcode: \n\n    M204 S10000\n    M220 S100\n",
+     "[homing_override]\naxes:xyz\ngcode: \n    # q2-z-home-guard: 'G28 Z' on its own (no X, no Y) homes Z with the nozzle as the probe right\n    # where the head stands. It is refused unless X and Y are homed and the nozzle is over the build\n    # plate: X 0 to under 271, Y 5 to under 271 (PEI edges measured on a Q2 at about X-6, X278,\n    # Y-1 and Y276, so at least 5 mm of plate around the nozzle). The head is never moved for it;\n    # Home All (G28) is unchanged and still centres the head first.\n    {% set q2_zg_x_min = 0 %}\n    {% set q2_zg_x_lim = 271 %}\n    {% set q2_zg_y_min = 5 %}\n    {% set q2_zg_y_lim = 271 %}\n    {% if 'Z' in params and 'X' not in params and 'Y' not in params %}\n        {% set q2_zg_pos = printer.toolhead.position %}\n        {% if 'x' not in printer.toolhead.homed_axes or 'y' not in printer.toolhead.homed_axes %}\n            { action_raise_error(\"Home X and Y first (or use Home All) - Z is homed with the nozzle as the probe, so the nozzle must be known to be over the build plate\") }\n        {% elif q2_zg_pos.x < q2_zg_x_min or q2_zg_pos.x >= q2_zg_x_lim or q2_zg_pos.y < q2_zg_y_min or q2_zg_pos.y >= q2_zg_y_lim %}\n            { action_raise_error(\"The nozzle is not over the build plate (X\" ~ (q2_zg_pos.x|round(1)) ~ \" Y\" ~ (q2_zg_pos.y|round(1)) ~ \", allowed X \" ~ q2_zg_x_min ~ \" to under \" ~ q2_zg_x_lim ~ \", Y \" ~ q2_zg_y_min ~ \" to under \" ~ q2_zg_y_lim ~ \") - move it over the plate or use Home All before homing Z\") }\n        {% endif %}\n        G28 Z\n    {% else %}\n\n    M204 S10000\n    M220 S100\n"
+    ],
+    [
+     "        G1 Z20 F600\n    {% endif %}\n    M204 S10000   \n    G90\n",
+     "        G1 Z20 F600\n    {% endif %}\n    M204 S10000   \n    G90\n    {% endif %}\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "The Q2 homes Z with the nozzle itself as the probe. QIDI's homing_override covers only X and Y, so 'G28 Z' on its own (Fluidd's 'Home Z' button, QIDI Studio's device page, the console) homed Z wherever the head stood - also over the purge bin or the plate edge, where the nozzle has nothing to touch. homing_override now also takes 'G28 Z' alone (axes: xyz) and refuses it unless X and Y are homed and the nozzle is over the build plate (X 0 to under 271, Y 5 to under 271: at least 5 mm inside the PEI edges measured on a Q2); otherwise it runs the plain Z homing exactly as before. The head is never moved for it. Home All (G28) and every QIDI macro are unchanged: Home All still centres the head before homing Z, and the screen's plate calibration (M4030) homes Z at X240 Y32, inside the allowed area. This is the behaviour of Marlin 1.0's Z_SAFE_HOMING for 'G28 Z' ('Home X/Y before Z', 'Z probe out. bed'). A wrapper macro named G28 cannot be used: QIDI's Home All calls 'G28 Z' inside homing_override, and Klipper refuses a macro that calls itself."
+}

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- New module `z-home-guard`: "Home Z" on its own (`G28 Z` from Fluidd, QIDI Studio or the console) is refused
+  unless X and Y are homed and the nozzle is over the build plate - the Q2 homes Z with the nozzle as the
+  probe, and QIDI's own safety (head to the plate centre first) covers only Home All. The head is never moved;
+  Home All, printing and QIDI's macros are unchanged.
 - Every drying end now lands on the screen's drying settings page: time up (as in stock firmware), Stop on
   the screen and a stop from Fluidd or the console (before: Stop led to the Function list). A Stop usually
   means something is not as you wanted - filament, temperature or time to change - so the settings are the
