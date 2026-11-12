@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- A second drying start while a drying runs is refused (console `SET_FILAMENT_DRY`, `prepare_filament_dry`):
+  it restarted the drying behind the screen's back, so the screen showed no drying although it ran, and
+  `prepare_filament_dry` would home and move the bed during drying. Stop first, then start again - as on
+  the screen.
 - New module `screen-gradient-cache-off`: the screen's drying Start button no longer stays drawn grey after
   a drying ends. The screen's graphics library (LVGL 8.3) reused a cached colour gradient that was keyed by
   memory address and size only, so the grey (disabled) look could stick to the enabled button. Same in stock

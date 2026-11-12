@@ -48,7 +48,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 
 | Module | What changes |
 |---|---|
-| `idle-timeout-drying` | Idle timeout 12 h → 5 min (heaters off), separate "pause" / "idle" messages, motors off; chamber drying keeps working. Drying start refused unless the bed is lowered (Z ≥ 190) and while the printer is busy (print, pause, moves, a running task); a stop is passed to QIDI only while drying runs, so it cannot switch the heaters off during a print; `prepare_filament_dry` refused while busy; a beep (like at print end) when drying finishes by itself. |
+| `idle-timeout-drying` | Idle timeout 12 h → 5 min (heaters off), separate "pause" / "idle" messages, motors off; chamber drying keeps working. Drying start refused unless the bed is lowered (Z ≥ 190) and while the printer is busy (print, pause, moves, a running task); a stop is passed to QIDI only while drying runs, so it cannot switch the heaters off during a print; a second start and `prepare_filament_dry` refused while a drying already runs (stop first); `prepare_filament_dry` refused while busy; a beep (like at print end) when drying finishes by itself. |
 | `resume-after-heating` | After a pause, the purge waits until the nozzle is hot again. |
 | `park-rear-right` | After a print or a stop the head parks at the rear right, so the camera sees the bed. |
 | `external-filament-load-finish` | After an external filament load: fan and heater off. |

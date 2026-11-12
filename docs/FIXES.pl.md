@@ -48,7 +48,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 
 | Moduł | Co się zmienia |
 |---|---|
-| `idle-timeout-drying` | Czas bezczynności 12 h → 5 min (grzałki off), osobne komunikaty „pauza” / „bezczynność”, silniki off; suszenie w komorze dalej działa. Start suszenia odrzucany, jeśli stół nie jest opuszczony (Z ≥ 190) i gdy drukarka jest zajęta (druk, pauza, ruch, trwające zadanie); stop trafia do QIDI tylko w trakcie suszenia, więc nie wyłączy grzałek w trakcie druku; `prepare_filament_dry` odrzucane, gdy drukarka jest zajęta; sygnał dźwiękowy (jak po końcu druku), gdy suszenie skończy się samo. |
+| `idle-timeout-drying` | Czas bezczynności 12 h → 5 min (grzałki off), osobne komunikaty „pauza” / „bezczynność”, silniki off; suszenie w komorze dalej działa. Start suszenia odrzucany, jeśli stół nie jest opuszczony (Z ≥ 190) i gdy drukarka jest zajęta (druk, pauza, ruch, trwające zadanie); stop trafia do QIDI tylko w trakcie suszenia, więc nie wyłączy grzałek w trakcie druku; drugi start i `prepare_filament_dry` odrzucane, gdy suszenie już trwa (najpierw stop); `prepare_filament_dry` odrzucane, gdy drukarka jest zajęta; sygnał dźwiękowy (jak po końcu druku), gdy suszenie skończy się samo. |
 | `resume-after-heating` | Po pauzie przepłukanie czeka, aż dysza znów będzie gorąca. |
 | `park-rear-right` | Po druku lub zatrzymaniu głowica staje z tyłu po prawej, żeby kamera widziała stół. |
 | `external-filament-load-finish` | Po ładowaniu zewnętrznego filamentu: wentylator i grzałka off. |

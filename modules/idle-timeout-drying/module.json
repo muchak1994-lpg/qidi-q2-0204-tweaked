@@ -21,7 +21,15 @@
    "edits": [
     [
      "[gcode_macro prepare_filament_dry]\ngcode = \n    G28\n    G1 Y260 F12000\n",
-     "[gcode_macro prepare_filament_dry]\ngcode = \n    {% if printer.pause_resume.is_paused or printer.virtual_sdcard.is_active or printer.idle_timeout.state == \"Printing\" %}\n        { action_raise_error(\"The printer is busy (print, pause or another task) - filament drying preparation is not available now\") }\n    {% endif %}\n    G28\n    G1 Y260 F12000\n"
+     "[gcode_macro prepare_filament_dry]\ngcode = \n    {% if printer.pause_resume.is_paused or printer.virtual_sdcard.is_active or printer.idle_timeout.state == \"Printing\" %}\n        { action_raise_error(\"The printer is busy (print, pause or another task) - filament drying preparation is not available now\") }\n    {% endif %}\n    {% if printer.multi_color_controller.drying.get('extra', {}).get('dry_state', 0)|int == 1 %}\n        { action_raise_error(\"Filament drying is already running - stop it first\") }\n    {% endif %}\n    G28\n    G1 Y260 F12000\n"
+    ]
+   ],
+   "previous": [
+    [
+     [
+      "[gcode_macro prepare_filament_dry]\ngcode = \n    G28\n    G1 Y260 F12000\n",
+      "[gcode_macro prepare_filament_dry]\ngcode = \n    {% if printer.pause_resume.is_paused or printer.virtual_sdcard.is_active or printer.idle_timeout.state == \"Printing\" %}\n        { action_raise_error(\"The printer is busy (print, pause or another task) - filament drying preparation is not available now\") }\n    {% endif %}\n    G28\n    G1 Y260 F12000\n"
+     ]
     ]
    ]
   }
