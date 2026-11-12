@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- Drying is locked while the printer is busy, like on the screen: the
+  Fluidd drying entry shows an in-page notice instead of the window during a print, pause, calibration,
+  homing or any running task; `SET_FILAMENT_DRY` and `prepare_filament_dry` refuse to start in that state
+  (Klipper's idle_timeout state "Printing"). A drying stop is passed to QIDI only while drying runs, so a
+  stop typed during a print can no longer switch the bed and chamber heaters off. A drying started from
+  Fluidd opens the screen's drying page through the Function page, so QIDI's "back" after Stop always
+  leads to the Function list, as after a start from the screen.
 - New module `screen-drying-countdown-roundup`: the screen's drying time left is rounded up (a 5-minute
   drying shows 05min, 04min ... 01min instead of 04min ... 00min; above one hour whole hours rounded up).
 - Drying end: the printer beeps like at the end of a print (`idle-timeout-drying`), and the screen wakes up

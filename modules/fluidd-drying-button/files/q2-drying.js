@@ -39,6 +39,7 @@
       lower: 'Lower the bed', start: 'Start drying', confirm: 'Confirm: {t} °C, {h} h', stop: 'Stop drying', close: 'Close',
       idle: 'Drying is off', active: 'Drying is running', left: 'about {t} left',
       busy: 'A print is running or paused - drying cannot be started now.',
+      busyAny: 'The printer is busy (print, calibration or another task) - filament drying is not available now.', ok: 'OK',
       notready: 'The printer is not ready (Klipper).', working: 'Working…', lowered: 'Bed lowered.',
       notlowered: 'Lower the bed first (step 2) - Start is available once the bed is down.',
       started: 'Drying started.', stopped: 'Drying stopped.', failed: 'The printer refused: ',
@@ -55,6 +56,7 @@
       lower: 'Opuść stół', start: 'Start suszenia', confirm: 'Potwierdź: {t} °C, {h} h', stop: 'Zatrzymaj suszenie', close: 'Zamknij',
       idle: 'Suszenie wyłączone', active: 'Suszenie trwa', left: 'zostało ok. {t}',
       busy: 'Trwa druk albo pauza - suszenia nie można teraz uruchomić.',
+      busyAny: 'Drukarka jest zajęta (druk, kalibracja albo inne zadanie) - suszenie filamentu jest teraz niedostępne.', ok: 'OK',
       notready: 'Drukarka nie jest gotowa (Klipper).', working: 'Pracuję…', lowered: 'Stół opuszczony.',
       notlowered: 'Najpierw opuść stół (krok 2) - Start będzie dostępny, gdy stół będzie na dole.',
       started: 'Suszenie uruchomione.', stopped: 'Suszenie zatrzymane.', failed: 'Drukarka odmówiła: ',
@@ -95,7 +97,7 @@
   function gcode(script) { return api('POST', '/printer/gcode/script', { script: script }); }
   function readState() {
     return api('GET', '/printer/objects/query?webhooks&print_stats&pause_resume&virtual_sdcard' +
-      '&heater_bed&heater_generic%20chamber&multi_color_controller=drying&toolhead=position').then(function (res) {
+      '&heater_bed&heater_generic%20chamber&multi_color_controller=drying&toolhead=position&idle_timeout=state').then(function (res) {
       var s = (res && res.status) || {};
       var dry = ((s.multi_color_controller || {}).drying || {}).extra || {};
       var ps = ((s.print_stats || {}).state || '').toLowerCase();
@@ -103,6 +105,9 @@
         ready: (s.webhooks || {}).state === 'ready',
         printing: ps === 'printing' || ps === 'paused' || !!(s.pause_resume || {}).is_paused ||
           !!(s.virtual_sdcard || {}).is_active,
+        // Klipper reports 'Printing' while moves or a macro run, also without a print (homing,
+        // calibration, bed mesh ...) - the same rule as the drying macros
+        busy: ((s.idle_timeout || {}).state || '') === 'Printing',
         bed: s.heater_bed || {}, chamber: s['heater_generic chamber'] || {},
         drying: Number(dry.dry_state || 0) === 1, endTime: Number(dry.end_time || 0),
         // same rule as the SET_FILAMENT_DRY macro: the bed counts as lowered at Z >= LOWERED_Z
@@ -206,7 +211,7 @@
     }
     var lock = !!s && s.drying;
     dlg.type.disabled = dlg.temp.disabled = dlg.hours.disabled = lock;
-    var can = !!s && s.ready && !s.printing && !busyCmd;
+    var can = !!s && s.ready && !s.printing && !s.busy && !busyCmd;
     dlg.lower.disabled = !can || s.drying;
     dlg.start.disabled = !can || s.drying || !set.ok || !s.lowered;
     dlg.stop.disabled = !s || !s.ready || busyCmd || !s.drying;
@@ -217,6 +222,7 @@
     if (!busyCmd && !dlg.msg.dataset.keep) {
       if (s && !s.ready) message(tr('notready'), true);
       else if (s && s.printing) message(tr('busy'), true);
+      else if (s && s.busy && !s.drying) message(tr('busyAny'), true);
       else if (!set.ok) message(tr('range', { a: MIN_TEMP, b: MAX_TEMP, c: MIN_HOURS, d: MAX_HOURS }), true);
       else if (s && !s.drying && !s.lowered) message(tr('notlowered'));
       else message('');
@@ -246,6 +252,51 @@
     document.removeEventListener('keydown', onKey, true);
   }
   function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
+
+  // Like the printer screen: while the printer is busy (print, pause, calibration, homing,
+  // any running macro) drying cannot be entered - a small in-page notice instead of the window.
+  // A running drying always opens the window (time left, Stop).
+  var notice = null;
+  function closeNotice() {
+    if (notice) notice.remove();
+    notice = null;
+    document.removeEventListener('keydown', onNoticeKey, true);
+  }
+  function onNoticeKey(e) { if (e.key === 'Escape' || e.key === 'Enter') { e.stopPropagation(); closeNotice(); } }
+  function showNotice(text) {
+    if (notice || dlg) return;
+    css();
+    var th = theme();
+    var back = el('div', 'q2d-back'), card = el('div', 'q2d-card');
+    card.style.background = th.card;
+    card.style.color = th.dark ? '#fff' : 'rgba(0,0,0,.87)';
+    card.setAttribute('role', 'alertdialog');
+    card.setAttribute('aria-label', tr('title'));
+    card.appendChild(el('div', 'q2d-head', tr('title')));
+    var body = el('div', 'q2d-body');
+    body.appendChild(el('div', 'q2d-status', text));
+    card.appendChild(body);
+    var foot = el('div', 'q2d-foot');
+    var ok = el('button', 'q2d-btn pri', tr('ok'));
+    ok.type = 'button';
+    ok.style.background = th.primary;
+    ok.addEventListener('click', closeNotice);
+    foot.appendChild(ok);
+    card.appendChild(foot);
+    back.appendChild(card);
+    back.addEventListener('mousedown', function (e) { if (e.target === back) closeNotice(); });
+    document.body.appendChild(back);
+    document.addEventListener('keydown', onNoticeKey, true);
+    notice = back;
+    ok.focus();
+  }
+  function entry() {
+    if (dlg || notice) return;
+    readState().then(function (s) {
+      if (s && s.ready && !s.drying && (s.printing || s.busy)) showNotice(tr('busyAny'));
+      else open();
+    }, function () { open(); });
+  }
 
   function open() {
     if (dlg) return;
@@ -377,9 +428,9 @@
     if (p) p.setAttribute('d', ICON);
     var t = a.querySelector('.v-list-item__title');
     if (t) t.textContent = ' ' + tr('title') + ' ';
-    a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); open(); });
+    a.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); entry(); });
     a.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); entry(); }
     });
     // the same kind of label Fluidd shows next to its own entries when the pointer is over them
     a.addEventListener('mouseenter', function () { showTip(a); });
@@ -409,5 +460,5 @@
   if (document.body) startWatching();
   else document.addEventListener('DOMContentLoaded', startWatching);
 
-  window.q2Drying = { open: open, close: close };
+  window.q2Drying = { open: open, close: close, entry: entry };
 })();

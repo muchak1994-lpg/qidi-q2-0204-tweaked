@@ -15,6 +15,15 @@
   },
   "/home/qidi/printer_data/config/klipper-macros-qd/q2-drying-idle.cfg": {
    "source": "files/q2-drying-idle.cfg"
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "edits": [
+    [
+     "[gcode_macro prepare_filament_dry]\ngcode = \n    G28\n    G1 Y260 F12000\n",
+     "[gcode_macro prepare_filament_dry]\ngcode = \n    {% if printer.pause_resume.is_paused or printer.virtual_sdcard.is_active or printer.idle_timeout.state == \"Printing\" %}\n        { action_raise_error(\"The printer is busy (print, pause or another task) - filament drying preparation is not available now\") }\n    {% endif %}\n    G28\n    G1 Y260 F12000\n"
+    ]
+   ]
   }
  },
  "restart": [
