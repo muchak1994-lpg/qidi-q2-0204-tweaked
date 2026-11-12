@@ -42,6 +42,10 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `external-slot16-literal` | After loading from the external spool holder QIDI writes `slot16`, which the settings saver rejects. | Accepts that exact value. |
 | `ai-fixes` | Pausing, resuming or cancelling while the AI foreign-object check waits breaks the print state; AI messages have broken characters. | Commands are handled correctly during the check; text encoding fixed. The foreign-object check itself stays as QIDI made it (it can be switched off on the screen); see *Camera AI* below. |
 | `console-english` | Some console messages are Chinese. | English messages. |
+| `mcu-restart-shutdown` | When a board restarts on its own (e.g. a QIDI Box losing power), Klipper's shutdown code fails with an error instead of stopping cleanly. | One missing default parameter (Klipper 9ce631e8). |
+| `homing-trsync` | Homing across two boards (the Q2 homes Z with the nozzle sensor on the toolhead board): the setup messages could be scheduled too late, and an earlier timeout could be sent to the board. | Two upstream fixes (Klipper 8e6e467e, 29d4ec2d). |
+| `heater-comm-loss-message` | On a lost board connection a heater error can be reported before the real cause. | 7 s instead of 5 s before a heater's temperature counts as stale (Klipper 46912431). |
+| `serialqueue-clock-margin` | Messages scheduled far ahead have no margin against a 31-bit clock overflow on the boards. | Wider margin (Klipper 867d73f0). |
 
 ## Macros and configuration
 

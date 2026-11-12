@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Four small fixes from upstream Klipper (QIDI's Klipper is upstream from August 2024), each checked to be
+  missing in 02.04: `mcu-restart-shutdown` (a board that restarts on its own, e.g. a QIDI Box losing power,
+  now stops Klipper cleanly - the shutdown code itself failed with an error), `homing-trsync` (two timing
+  fixes for homing across two boards, as the Q2 does for Z with the nozzle sensor), `heater-comm-loss-message`
+  (a lost board is reported as lost instead of first as a heater error) and `serialqueue-clock-margin`
+  (wider margin against a 31-bit clock overflow).
 - New module `load-temp-memory` (QIDI_Q2 #26): a filament loaded after a hotter material (e.g. PLA after
   PETG) no longer has to push the old material out at its own, too low temperature (crackling, ground or
   broken filament). The printer remembers the temperature of the material in the nozzle (load, unload, print);

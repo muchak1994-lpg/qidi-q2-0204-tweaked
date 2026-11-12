@@ -1,0 +1,20 @@
+{
+ "id": "mcu-restart-shutdown",
+ "order": 131,
+ "title": "MCU spontaneous restart: clean shutdown instead of an error in the shutdown code (Klipper 9ce631e8)",
+ "files": {
+  "/home/qidi/klipper/klippy/klippy.py": {
+   "stock_sha256": "3742d57e81accaba5570a0c93ab31d600735e87bf4bd0e4c892c81280e0c9d1f",
+   "edits": [
+    [
+     "    def invoke_async_shutdown(self, msg, details):\r\n",
+     "    def invoke_async_shutdown(self, msg, details={}):\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "mcu.py calls invoke_async_shutdown() with one argument when an MCU restarts on its own (e.g. a QIDI Box or the toolhead board losing power); 02.04's signature requires two, so the shutdown itself failed with a TypeError. Upstream fix by Kevin O'Connor (2024-12-02)."
+}

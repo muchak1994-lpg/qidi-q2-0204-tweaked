@@ -59,6 +59,15 @@
   "1007ef8c32bb988286da46e9445652fb31e0d1a74c6ffcf60b9f46c3801df518",
   "c4339365931f51267b6a06d16d08d5788a1b407b761f786300a846de72d423de"
  ],
+ "/home/qidi/klipper/klippy/chelper/serialqueue.c": [
+  "3c6397a157f68a17f969608aa7d6ffd76f5d20db84eb61e1f894636505392746"
+ ],
+ "/home/qidi/klipper/klippy/extras/heaters.py": [
+  "55303a73fa734e7b890ff53d269d21bb4f3e06768f7053d992419cffa9ffa9a8"
+ ],
+ "/home/qidi/klipper/klippy/mcu.py": [
+  "13d9c23da7df7d61cf23c145a987cfaaf07bbd8b98f14febad399158a4809600"
+ ],
  "/home/qidi/moonraker/moonraker/components/klippy_connection.py": [
   "6e38de5d78fe0c33d56c7d731c05be3dd51c883f710c341e92e43fbc654682d8"
  ],

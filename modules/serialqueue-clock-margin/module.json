@@ -1,0 +1,20 @@
+{
+ "id": "serialqueue-clock-margin",
+ "order": 134,
+ "title": "Serial queue: wider margin against 31-bit clock overflow (Klipper 867d73f0)",
+ "files": {
+  "/home/qidi/klipper/klippy/chelper/serialqueue.c": {
+   "stock_sha256": "f55ddc3bf58d0696f0c36dafb52f3cc997f00e105737c14e0bacdde83256abce",
+   "edits": [
+    [
+     "        if (qm->min_clock + (1LL<<31) < qm->req_clock\r\n            && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)\r\n            qm->min_clock = qm->req_clock - (1LL<<31);\r\n",
+     "        if (qm->min_clock + (3LL<<29) < qm->req_clock\r\n            && qm->req_clock != BACKGROUND_PRIORITY_CLOCK)\r\n            // Avoid mcu clock comparison 31-bit overflow issues\r\n            qm->min_clock = qm->req_clock - (3LL<<29);\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "Messages scheduled far ahead are held to (3<<29) ticks before their deadline instead of (1<<31), leaving a grace period against 31-bit clock comparison overflow on the boards. Upstream by Kevin O'Connor (2025-12-14)."
+}

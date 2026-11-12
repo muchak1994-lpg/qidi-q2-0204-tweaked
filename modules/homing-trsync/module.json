@@ -1,0 +1,33 @@
+{
+ "id": "homing-trsync",
+ "order": 132,
+ "title": "Homing with two boards (Z by the nozzle sensor): trsync timing fixes (Klipper 8e6e467e, 29d4ec2d)",
+ "files": {
+  "/home/qidi/klipper/klippy/mcu.py": {
+   "stock_sha256": "4fd7a69b8db493e3d83f891b9783c131e2742f0c42dce760429c6414833965ab",
+   "edits": [
+    [
+     "        self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,\r\n                                     self.REASON_COMMS_TIMEOUT],\r\n                                    reqclock=report_clock)\r\n",
+     "        self._trsync_start_cmd.send([self._oid, report_clock, report_ticks,\r\n                                     self.REASON_COMMS_TIMEOUT], reqclock=clock)\r\n"
+    ],
+    [
+     "        self._trsync_set_timeout_cmd.send([self._oid, expire_clock],\r\n                                          reqclock=expire_clock)\r\n",
+     "        self._trsync_set_timeout_cmd.send([self._oid, expire_clock],\r\n                                          reqclock=clock)\r\n"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/chelper/trdispatch.c": {
+   "stock_sha256": "023dffc29959ccab3527d2d67b85f3ad7ad158b753823491bff25a549559ac7c",
+   "edits": [
+    [
+     "        if ((int64_t)(expire - m->expire_clock) >= m->min_extend_ticks) {\r\n",
+     "        if (expire >= m->expire_clock + m->min_extend_ticks) {\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "The Q2 homes Z with the nozzle sensor on the toolhead board while the Z motors are on the mainboard, so homing uses Klipper's multi-board trsync. mcu.py: the trsync setup messages use the same reqclock as the endstop start (Kevin O'Connor, 2025-12-14). trdispatch.c: an unsigned comparison let an earlier expire time be sent to the board (2026-11-11). Klipper rebuilds its C helper itself after the change."
+}

@@ -42,6 +42,10 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `external-slot16-literal` | Po ładowaniu z zewnętrznej szpuli QIDI zapisuje `slot16`, czego zapis ustawień nie przyjmuje. | Przyjmuje dokładnie tę wartość. |
 | `ai-fixes` | Pauza, wznowienie lub anulowanie w trakcie czekania na kontrolę obcych obiektów AI psuje stan druku; komunikaty AI mają popsute znaki. | Komendy działają poprawnie w trakcie kontroli; kodowanie tekstu naprawione. Sama kontrola zostaje taka, jak ją zrobiło QIDI (można ją wyłączyć na ekranie); patrz *AI kamery* niżej. |
 | `console-english` | Część komunikatów w konsoli jest po chińsku. | Komunikaty po angielsku. |
+| `mcu-restart-shutdown` | Gdy płytka sama się zrestartuje (np. Box QIDI straci zasilanie), kod zatrzymania Klippera wywraca się błędem zamiast bezpiecznie zatrzymać drukarkę. | Brakujący domyślny parametr (Klipper 9ce631e8). |
+| `homing-trsync` | Bazowanie z dwiema płytkami (Q2 bazuje Z czujnikiem w dyszy na płytce głowicy): komunikaty konfiguracji mogły iść za późno, a do płytki mógł trafić krótszy limit czasu. | Dwie poprawki z Klippera (8e6e467e, 29d4ec2d). |
+| `heater-comm-loss-message` | Przy utracie połączenia z płytką najpierw może pojawić się błąd grzałki zamiast prawdziwej przyczyny. | 7 s zamiast 5 s, zanim odczyt temperatury uznawany jest za nieaktualny (Klipper 46912431). |
+| `serialqueue-clock-margin` | Komunikaty planowane daleko naprzód nie mają zapasu na przepełnienie 31-bitowego licznika zegara płytek. | Większy zapas (Klipper 867d73f0). |
 
 ## Makra i konfiguracja
 

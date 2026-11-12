@@ -1,0 +1,20 @@
+{
+ "id": "heater-comm-loss-message",
+ "order": 133,
+ "title": "Lost board connection reported as such, not as a heater error first (Klipper 46912431)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/heaters.py": {
+   "stock_sha256": "aeb8130c23437d680a8a02e3d3f579babbbf25294b1a64d12660086141dd8d00",
+   "edits": [
+    [
+     "    def get_temp(self, eventtime):\r\n        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 5.\r\n        with self.lock:\r\n            if self.last_temp_time < print_time:\r\n",
+     "    def get_temp(self, eventtime):\r\n        # q2: 7 s as Klipper upstream (was 5 s) - a lost board is reported as lost first\r\n        print_time = self.mcu_pwm.get_mcu().estimated_print_time(eventtime) - 7.\r\n        with self.lock:\r\n            if self.last_temp_time < print_time:\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "A heater keeps its last temperature for 7 s instead of 5 s without new readings, so on a full board communication loss (e.g. a QIDI Box unplugged) Klipper reports the lost board before verify_heater reports a heating error. Upstream by Kevin O'Connor (2025-07-19)."
+}
