@@ -119,10 +119,23 @@ class SSHPrinter:
         self._run("rm -f %s" % shlex.quote(path), sudo=True)
 
     def action(self, argv, check=True):
+        if argv[0] == "moonraker-db":
+            # ["moonraker-db", namespace, key, JSON value]: one entry of Moonraker's database
+            body = json.dumps({"namespace": argv[1], "key": argv[2], "value": json.loads(argv[3])})
+            self._run("curl -sf -X POST -H 'Content-Type: application/json' -d %s "
+                      "http://127.0.0.1:7125/server/database/item >/dev/null" % shlex.quote(body), check=check)
+            return
         self._run(" ".join(shlex.quote(a) for a in argv), sudo=True, check=check)
 
     def needs(self, argv):
         """False when a state-type action is already in effect (so it is skipped)."""
+        if argv[0] == "moonraker-db":
+            out = self._run("curl -s 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s' || true"
+                            % (argv[1], argv[2])).decode()
+            try:
+                return json.loads(out)["result"]["value"] != json.loads(argv[3])
+            except (ValueError, KeyError, TypeError):
+                return True
         if argv[:2] == ["chattr", "+i"]:
             out = self._run("lsattr -d %s 2>/dev/null || true" % shlex.quote(argv[2]), sudo=True).decode()
             return not out.strip() or "i" not in out.split()[0]
@@ -286,17 +299,22 @@ def default_owner(path):
 STATE_ACTIONS = (("chattr", "+i"), ("systemctl", "enable"), ("systemctl", "disable"))
 
 
+def is_state_action(action):
+    """Lock a folder, enable/disable a service, or set a Moonraker database entry."""
+    return tuple(action[:2]) in STATE_ACTIONS or action[0] == "moonraker-db"
+
+
 def pending_actions(p, selected, changes):
     """[(module, action)] that still have to run.
 
-    State actions (lock a folder, enable/disable a service) run only when not
-    already in effect; other actions (daemon-reload, restart a service) only for
+    State actions (lock a folder, enable/disable a service, set a Moonraker
+    database entry) run only when not already in effect; other actions (daemon-reload, restart a service) only for
     modules whose files change in this run."""
     touched = {mid for _, _, _, mods in changes for mid in mods}
     out = []
     for m in selected:
         for action in m.get("actions", []):
-            if tuple(action[:2]) in STATE_ACTIONS:
+            if is_state_action(action):
                 if p.needs(action):
                     out.append((m["id"], action))
             elif m["id"] in touched:

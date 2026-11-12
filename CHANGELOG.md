@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- New module `fluidd-z-like-screen`: Fluidd's Z arrows now mirror the printer's screen - down moves the
+  bed down, up moves it up (before, Fluidd's down arrow raised the bed towards the nozzle). The installer
+  sets Fluidd's Z direction setting on the printer (new installer action: one Moonraker database entry,
+  set only when different).
 - New module `z-home-guard`: "Home Z" on its own (`G28 Z` from Fluidd, QIDI Studio or the console) is refused
   unless X and Y are homed and the nozzle is over the build plate - the Q2 homes Z with the nozzle as the
   probe, and QIDI's own safety (head to the plate centre first) covers only Home All. The head is never moved;

@@ -120,6 +120,15 @@ class InstallTest(unittest.TestCase):
         # a non-state action runs only for a module whose files change
         self.assertEqual(install.pending_actions(self.p, mods, []), [])
 
+    def test_moonraker_db_entry_is_a_state_action(self):
+        act = ["moonraker-db", "fluidd", "uiSettings.general.axis.z.inverted", "false"]
+        mods = [{"id": "fz", "order": 5, "files": {}, "actions": [act]}]
+        self.assertTrue(install.is_state_action(act))
+        self.assertEqual(install.pending_actions(self.p, mods, []), [("fz", act)])  # no file change needed
+        self.p.action(act)
+        self.assertEqual(install.pending_actions(self.p, mods, []), [])  # already set -> skipped
+        self.assertIsNone(install.undo_action(act))  # uninstall leaves the Fluidd setting alone
+
     def test_upgrade_from_an_earlier_version_of_ours(self):
         fan = "/home/qidi/klipper/klippy/extras/fan.py"
         cfg = "/home/qidi/printer_data/config/printer.cfg"
