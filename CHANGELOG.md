@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- New module `z-home-random-point`: Home All homes Z at a random point within 10 mm of the plate centre instead
+  of always the same spot, spreading the nozzle-probe wear on the PEI (only with a fresh bed mesh before every
+  print, G29 k=1, QIDI's default).
 - New module `moonraker-box-status-merge`: Moonraker keeps the BOX and drying status complete - nested updates
   from QIDI's Klipper are merged instead of replacing whole sub-objects (QIDI's own fix from 03.02; affects the
   QIDI app's 30-second refresh and Moonraker's status diffs).

@@ -1,0 +1,21 @@
+{
+ "id": "z-home-random-point",
+ "order": 120,
+ "title": "Home All: Z homed at a random point within 10 mm of the plate centre (spreads nozzle-probe wear on the PEI)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "        G1 X{printer['gcode_macro PRINTER_PARAM'].max_x_position/2} Y{printer['gcode_macro PRINTER_PARAM'].max_y_position/2} F7800\n",
+     "        # q2-z-home-random-point: Z is homed by pressing the nozzle on the plate; a random point within\n        # 10 mm of the centre spreads that wear (PEI). Only with a fresh bed mesh before every print\n        # (G29 k=1, QIDI's default); with a saved mesh (k=0) the centre stays fixed so the mesh fits.\n        {% set q2_rp = 10 if printer['gcode_macro G29'].k|int == 1 else 0 %}\n        G1 X{printer['gcode_macro PRINTER_PARAM'].max_x_position/2 + (range(-q2_rp, q2_rp + 1)|random)} Y{printer['gcode_macro PRINTER_PARAM'].max_y_position/2 + (range(-q2_rp, q2_rp + 1)|random)} F7800\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "The Q2 homes Z by pressing the nozzle on the plate, and QIDI's Home All always does it at the plate centre (X135 Y135) - several times per print - which wears the PEI at the one spot where most prints sit (shiny/worn coating, a low spot, less repeatable probing). Home All now moves to a random point within 10 mm of the centre (whole mm, X125-145 Y125-145) before homing Z, as suggested in the qidi-community Q2 wiki. Only when the bed mesh is measured fresh before every print (G29 k=1, QIDI's default): the mesh is then measured from the same homing, so the first layer is unaffected. With a saved mesh (k=0) the centre stays fixed, because a saved mesh refers to the Z zero found at the centre (on the measured printer up to about 0.04 mm difference 10 mm away). 'Home Z' alone still homes where the head stands (z-home-guard)."
+}
