@@ -269,6 +269,7 @@
     var th = theme();
     var back = el('div', 'q2d-back'), card = el('div', 'q2d-card');
     card.style.background = th.card;
+    try { back.style.fontFamily = getComputedStyle(document.querySelector('.v-application') || document.body).fontFamily; } catch (e) { /* ignore */ }
     card.style.color = th.dark ? '#fff' : 'rgba(0,0,0,.87)';
     card.setAttribute('role', 'alertdialog');
     card.setAttribute('aria-label', tr('title'));
