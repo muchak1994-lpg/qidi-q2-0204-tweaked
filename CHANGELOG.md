@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- New module `load-temp-memory` (QIDI_Q2 #26): a filament loaded after a hotter material (e.g. PLA after
+  PETG) no longer has to push the old material out at its own, too low temperature (crackling, ground or
+  broken filament). The printer remembers the temperature of the material in the nozzle (load, unload, print);
+  the push runs at the higher of the two temperatures, the flush after it at the new filament's temperature.
+  Unload uses the higher temperature as well. Nothing hotter remembered: as in QIDI's macros.
 - New module `box-fan-threshold` (QIDI_Q2 #25): the QIDI Box heater fan threshold (Box temperature above
   which the two heater fans run while the Box is not heating; QIDI: 35 C) can be set with
   `SET_BOX_FAN_TEMP TEMP=40` and is kept across restarts. A change in box.cfg never lasted: the screen

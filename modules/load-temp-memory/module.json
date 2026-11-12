@@ -1,0 +1,56 @@
+{
+ "id": "load-temp-memory",
+ "order": 125,
+ "title": "Filament load after a hotter material: old material pushed out at its own temperature (QIDI_Q2 #26)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "    {% set Polar_cooler = printer.save_variables.variables.enable_polar_cooler|default(0) %}\n",
+     "    {% set Polar_cooler = printer.save_variables.variables.enable_polar_cooler|default(0) %}\n    _REMEMBER_FILA_TEMP SET={hotendtemp}  # q2-load-temp-memory: this print's material\n"
+    ],
+    [
+     "[gcode_macro PRINT_END]\ngcode:\n    M400\n",
+     "[gcode_macro PRINT_END]\ngcode:\n    _REMEMBER_FILA_TEMP  # q2-load-temp-memory: the last material's temperature\n    M400\n"
+    ],
+    [
+     "rename_existing: BASE_CANCEL_PRINT\ngcode:\n",
+     "rename_existing: BASE_CANCEL_PRINT\ngcode:\n    _REMEMBER_FILA_TEMP  # q2-load-temp-memory: the last material's temperature\n"
+    ],
+    [
+     "[gcode_macro M604]\ngcode:\n    DISABLE_ALL_SENSOR\n    {% set hotendtemp = params.S|default(250)|int %}\n    {% set mode = params.T|default(0)|int %}\n",
+     "[gcode_macro M604]\ngcode:\n    DISABLE_ALL_SENSOR\n    {% set mode = params.T|default(0)|int %}\n    # q2-load-temp-memory (QIDI_Q2 #26): the material left in the nozzle is pushed out at its own\n    # temperature when it is hotter than the new filament (e.g. PETG before PLA). Heating (T0) and\n    # the push (T1) use the higher of the two; the flush (T2) runs at the new filament's temperature.\n    {% set q2_new = params.S|default(250)|int %}\n    {% set q2_old = [printer.save_variables.variables.q2_fila_temp|default(0)|int, 350]|min %}\n    {% set q2_hot = [q2_new, q2_old]|max %}\n    {% set hotendtemp = q2_new if mode == 2 else q2_hot %}\n"
+    ],
+    [
+     "    {% elif mode ==1 %}      #尝试挤入\n        G92 E0\n",
+     "    {% elif mode ==1 %}      #尝试挤入\n        {% if q2_hot > q2_new %}\n            M118 Old material is pushed out at {q2_hot} C\n            M109 S{q2_hot}\n        {% endif %}\n        G92 E0\n"
+    ],
+    [
+     "        SET_PRINT_SUB_STATUS SUB_STATUS=clean_filamenting\n        MOVE_TO_TRASH\n        M109 S{hotendtemp}\n",
+     "        SET_PRINT_SUB_STATUS SUB_STATUS=clean_filamenting\n        MOVE_TO_TRASH\n        {% if q2_hot > q2_new %}\n            M104 S{q2_new}\n            TEMPERATURE_WAIT SENSOR=extruder MINIMUM={q2_new}\n        {% else %}\n            M109 S{hotendtemp}\n        {% endif %}\n"
+    ],
+    [
+     "        M400\n        M106 S0\n        M104 S0\n        SET_PRINT_MAIN_STATUS MAIN_STATUS=ready\n",
+     "        M400\n        M106 S0\n        M104 S0\n        _REMEMBER_FILA_TEMP SET={q2_new}\n        SET_PRINT_MAIN_STATUS MAIN_STATUS=ready\n"
+    ],
+    [
+     "[gcode_macro M603]\ndescription: filament unlode\ngcode:\n    SET_PRINT_MAIN_STATUS MAIN_STATUS=filament_unload_7\n    DISABLE_ALL_SENSOR\n    {% set hotendtemp = params.S|default(250)|int %}\n",
+     "[gcode_macro M603]\ndescription: filament unlode\ngcode:\n    SET_PRINT_MAIN_STATUS MAIN_STATUS=filament_unload_7\n    DISABLE_ALL_SENSOR\n    # q2-load-temp-memory (QIDI_Q2 #26): unload at the old material's temperature if it is higher\n    {% set q2_old = [printer.save_variables.variables.q2_fila_temp|default(0)|int, 350]|min %}\n    {% set hotendtemp = [params.S|default(250)|int, q2_old]|max %}\n"
+    ],
+    [
+     "    M118 Unload finish\n",
+     "    _REMEMBER_FILA_TEMP SET={hotendtemp}\n    M118 Unload finish\n"
+    ]
+   ]
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_fila_temp.cfg": {
+   "source": "files/q2_fila_temp.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "The screen sends M604 T1 S<t> (push 80 mm) and M604 T2 S<t> (flush 80 mm) with the temperature of the filament set for the external spool; M603 S<t> unloads. The temperature of the material in the nozzle is kept in saved_variables.cfg (q2_fila_temp): set by a load, an unload, PRINT_START (HOTEND) and PRINT_END / CANCEL_PRINT (extruder target if >= 170). Heating and the push use max(new, old) (old capped at 350 C); the flush starts at the new temperature without waiting for the nozzle to cool. With nothing hotter remembered every step is as in QIDI's macro. QIDI Box tool changes inside a print are QIDI's closed code and not changed."
+}
