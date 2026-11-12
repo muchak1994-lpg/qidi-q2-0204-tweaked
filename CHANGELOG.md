@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- New module `box-fan-threshold` (QIDI_Q2 #25): the QIDI Box heater fan threshold (Box temperature above
+  which the two heater fans run while the Box is not heating; QIDI: 35 C) can be set with
+  `SET_BOX_FAN_TEMP TEMP=40` and is kept across restarts. A change in box.cfg never lasted: the screen
+  program writes its own box.cfg template over the file at every start (also in 03.02). The value is kept in
+  saved_variables.cfg; QIDI's files are not changed.
 - New module `z-home-random-point`: Home All homes Z at a random point within 10 mm of the plate centre instead
   of always the same spot, spreading the nozzle-probe wear on the PEI (only with a fresh bed mesh before every
   print, G29 k=1, QIDI's default).

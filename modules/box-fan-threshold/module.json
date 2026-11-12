@@ -1,0 +1,17 @@
+{
+ "id": "box-fan-threshold",
+ "order": 121,
+ "title": "QIDI Box: heater fan threshold of your own that survives the screen rewriting box.cfg (QIDI_Q2 #25)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/q2_box_fans.py": {
+   "source": "files/q2_box_fans.py"
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_box_fans.cfg": {
+   "source": "files/q2_box_fans.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "The screen program owns box.cfg: at every start it builds the file again from a template inside the program (heater_temp_box_heater_fan_0/1: 35) and, when the file on disk differs, writes the template over it and restarts Klipper (log line 初始化写入并重启 Klipper). Same in 03.02. The threshold is therefore kept in saved_variables.cfg (box_fan_temp) and applied to every box_heater_fan object when Klipper connects. QIDI's files are not changed. Tested on a printer without a Box (command, saving, Klipper start); the fan objects themselves are tested offline with stand-ins - no Box available."
+}
