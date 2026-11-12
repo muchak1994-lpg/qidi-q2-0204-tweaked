@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Every drying end now lands on the screen's drying settings page: time up (as in stock firmware), Stop on
+  the screen and a stop from Fluidd or the console (before: Stop led to the Function list). A Stop usually
+  means something is not as you wanted - filament, temperature or time to change - so the settings are the
+  useful place to land, not the Function list; "back" from there still leads to the Function list and home.
 - A second drying start while a drying runs is refused (console `SET_FILAMENT_DRY`, `prepare_filament_dry`):
   it restarted the drying behind the screen's back, so the screen showed no drying although it ran, and
   `prepare_filament_dry` would home and move the bed during drying. Stop first, then start again - as on
@@ -14,7 +18,7 @@
   homing or any running task; `SET_FILAMENT_DRY` and `prepare_filament_dry` refuse to start in that state
   (Klipper's idle_timeout state "Printing"). A drying stop is passed to QIDI only while drying runs, so a
   stop typed during a print can no longer switch the bed and chamber heaters off. A drying started from
-  Fluidd opens the screen's drying page through the Function page, so QIDI's "back" after Stop always
+  Fluidd opens the screen's drying page through the Function page, so "back" from the drying page
   leads to the Function list, as after a start from the screen.
 - New module `screen-drying-countdown-roundup`: the screen's drying time left is rounded up (a 5-minute
   drying shows 05min, 04min ... 01min instead of 04min ... 00min; above one hour whole hours rounded up).
@@ -25,8 +29,7 @@
   In the Fluidd window Start stays grey with a hint until the bed is lowered, and Stop is grey when nothing
   is drying.
 - New module `screen-drying-start-button`: the screen's drying Start button no longer stays grey after a
-  screen restart during drying. A stop from Fluidd now does what Stop on the screen does (QIDI's "back"),
-  and a drying whose time is up still ends on the drying settings page, as in stock firmware.
+  screen restart during drying.
 - Fluidd drying window: "Lower the bed" also wakes the printer screen and the chamber light (console line
   `q2_wake_screen`), and the Start button is green.
 - `idle-timeout-drying`: the idle timeout is set once for the whole drying time instead of every 10 s, so the
