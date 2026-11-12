@@ -1,0 +1,11 @@
+{
+ "id": "dns-fallback-global",
+ "order": 118,
+ "title": "Network: fallback DNS 1.1.1.1 and 8.8.8.8 instead of Chinese public DNS (as QIDI 03.02)",
+ "files": {},
+ "generate": {
+  "path": "/etc/dhcpcd.exit-hook",
+  "kind": "dns-fallback"
+ },
+ "note": "02.04's package scripts write a network hook that builds /etc/resolv.conf from the DNS your router gives, the router itself and then the Chinese public DNS 114.114.114.114 and 223.5.5.5 (first three kept). With a typical home router (one DNS) a Chinese DNS ends up in the list as a fallback. QIDI's 03.02 international package uses 1.1.1.1 and 8.8.8.8 instead; this module changes only that one line of the hook on the printer. Takes effect at the next network connect or DHCP renewal (or a reboot). Uninstall puts QIDI's line back."
+}

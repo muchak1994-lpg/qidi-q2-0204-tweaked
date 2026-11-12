@@ -1,8 +1,13 @@
 # Changelog
 
 ## Unreleased
+- New module `dns-fallback-global`: the printer's fallback DNS are 1.1.1.1 and 8.8.8.8, as in QIDI's 03.02
+  international package, instead of the Chinese public DNS 114.114.114.114 and 223.5.5.5 that 02.04's network
+  hook adds (one line of QIDI's hook changed; installer: new generated-file kind that edits that line and puts it
+  back on uninstall, also without a PC backup).
 - New module `fluidd-z-like-screen`: Fluidd's Z arrows now mirror the printer's screen - down moves the
-  bed down, up moves it up (before, Fluidd's down arrow raised the bed towards the nozzle). The installer
+  bed down, up moves it up (before, with QIDI's factory setting, Fluidd's down arrow raised the bed towards the
+  nozzle). The installer
   sets Fluidd's Z direction setting on the printer (new installer action: one Moonraker database entry,
   set only when different).
 - New module `z-home-guard`: "Home Z" on its own (`G28 Z` from Fluidd, QIDI Studio or the console) is refused

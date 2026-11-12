@@ -270,6 +270,13 @@ def plan(p, selected, built=None):
             current = p.sha(g["path"])
             if current != sha(new):
                 changes.append((g["path"], new, "new" if current is None else "generated", [m["id"]]))
+        if g and g.get("kind") == "dns-fallback":
+            current = p.read(g["path"])
+            new = dns_fallback_file(current) if current is not None else None
+            if new is None:
+                print("  left alone (not QIDI's 02.04 network hook):", g["path"])
+            elif new != current:
+                changes.append((g["path"], new, "generated", [m["id"]]))
     if problems:
         raise InstallError("the printer is not in a state this installer knows (nothing was changed):\n  "
                            + "\n  ".join(problems) + OTHER_MODS_HINT)
@@ -288,6 +295,26 @@ def ethernet_mac_file(p):
             "NamePolicy=keep kernel database onboard slot path\n"
             "AlternativeNamesPolicy=database onboard slot path\nMACAddressPolicy=none\n"
             "MACAddress=%s\n" % mac).encode()
+
+
+DNS_HOOK = "/etc/dhcpcd.exit-hook"
+DNS_QIDI = b'RAW_DNS_LIST="${RAW_DNS_LIST}114.114.114.114\\n8.8.8.8\\n223.5.5.5\\n"'
+DNS_OURS = (b'RAW_DNS_LIST="${RAW_DNS_LIST}1.1.1.1\\n8.8.8.8\\n"'
+            b'  # q2-0204-tweaked: global fallback DNS as in QIDI 03.02 (was 114.114.114.114 and 223.5.5.5)')
+
+
+def dns_fallback_file(data, reverse=False):
+    """QIDI's network hook with the fallback DNS of QIDI 03.02 (international): 1.1.1.1 and 8.8.8.8.
+
+    02.04 writes the hook from its package scripts with the Chinese public DNS 114.114.114.114 and
+    223.5.5.5 as fallbacks. Only that one line changes; anything else in the file stays as it is.
+    Returns None when the line is not there (a hook this installer does not know: left alone)."""
+    old, new = (DNS_OURS, DNS_QIDI) if reverse else (DNS_QIDI, DNS_OURS)
+    if data.count(old) == 1:
+        return data.replace(old, new)
+    if data.count(new) == 1:
+        return data
+    return None
 
 
 def default_owner(path):
@@ -429,7 +456,13 @@ def do_uninstall_stock(p, selected):
             for path, data in files.items()}
     for m in selected:
         g = m.get("generate")
-        if g:
+        if g and g.get("kind") == "dns-fallback":  # QIDI's own file: put its line back, never remove it
+            data = p.read(g["path"])
+            old = dns_fallback_file(data, reverse=True) if data is not None else None
+            if old is not None and old != data:
+                p.install(old, g["path"], *(p.stat(g["path"]) or default_owner(g["path"])))
+                print("  restored:", g["path"])
+        elif g:
             files[g["path"]] = None
             owners[g["path"]] = [m["id"]]
     shas = p.sha_many(sorted(files)) if hasattr(p, "sha_many") else {f: p.sha(f) for f in files}

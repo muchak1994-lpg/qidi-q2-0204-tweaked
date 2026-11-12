@@ -194,6 +194,34 @@ class InstallTest(unittest.TestCase):
         finally:
             install.build.load_modules = saved
 
+    def test_dns_fallback_hook_changes_one_line_and_comes_back(self):
+        hook = b"#!/bin/sh\nA=1\n    " + install.DNS_QIDI + b"\nB=2\n"
+        self.p.files["/etc/dhcpcd.exit-hook"] = [hook, "root", "root", "755"]
+        mods = [{"id": "dns", "order": 9, "files": {},
+                 "generate": {"path": "/etc/dhcpcd.exit-hook", "kind": "dns-fallback"}}]
+        built = build.build(mods, stock_reader=lambda p: STOCK[p])
+        changes = install.plan(self.p, mods, built=built)
+        self.assertEqual([(c[0], c[2]) for c in changes], [("/etc/dhcpcd.exit-hook", "generated")])
+        backup = install.do_install(self.p, mods, changes, "1.2.3.4", backups=self.tmp)
+        new = self.p.read("/etc/dhcpcd.exit-hook")
+        self.assertEqual(new, hook.replace(install.DNS_QIDI, install.DNS_OURS))
+        self.assertEqual(self.p.files["/etc/dhcpcd.exit-hook"][1:], ["root", "root", "755"])
+        self.assertEqual(install.plan(self.p, mods, built=built), [])  # second run: nothing
+        install.do_uninstall(self.p, backup)
+        self.assertEqual(self.p.read("/etc/dhcpcd.exit-hook"), hook)
+        # without a PC backup: QIDI's line is put back, the file is never removed
+        install.do_install(self.p, mods, install.plan(self.p, mods, built=built), "1.2.3.4", backups=self.tmp / "b2")
+        saved = install.build.build
+        install.build.build = lambda sel: built
+        try:
+            install.do_uninstall_stock(self.p, mods)
+        finally:
+            install.build.build = saved
+        self.assertEqual(self.p.read("/etc/dhcpcd.exit-hook"), hook)
+        # a hook this installer does not know is left alone
+        self.p.files["/etc/dhcpcd.exit-hook"][0] = b"#!/bin/sh\nmy own\n"
+        self.assertEqual(install.plan(self.p, mods, built=built), [])
+
     def test_ethernet_mac_matches_qidi_script(self):
         data = install.ethernet_mac_file(self.p)
         digest = hashlib.md5(b"abc\n").hexdigest()
