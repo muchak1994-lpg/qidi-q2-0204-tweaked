@@ -1,0 +1,20 @@
+{
+ "id": "screen-gradient-cache-off",
+ "order": 130,
+ "title": "Screen: colour gradients are always drawn fresh (no stale grey Start button after drying)",
+ "files": {
+  "/home/qidi/QIDI_Client/bin/qidiclient": {
+   "byte_edits": [
+    [
+     3508592,
+     "008080d2",
+     "000080d2"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "qidi-client"
+ ],
+ "note": "The screen's graphics library (LVGL 8.3) keeps the last drawn colour gradient in a 1 KiB cache keyed only by the memory address of the draw descriptor and the size, not by the colours. When the drying Start button is drawn disabled (grey) and then enabled again with the same address and size, the cached grey gradient is reused and the enabled button stays grey (58,58,58) until another gradient replaces the cache entry. Same in stock firmware. The one instruction that sets the default cache size (0x400) at the first gradient draw now sets 0: every gradient is computed for its draw and freed afterwards (LVGL's own documented workaround, LV_GRAD_CACHE_DEF_SIZE 0)."
+}

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- New module `screen-gradient-cache-off`: the screen's drying Start button no longer stays drawn grey after
+  a drying ends. The screen's graphics library (LVGL 8.3) reused a cached colour gradient that was keyed by
+  memory address and size only, so the grey (disabled) look could stick to the enabled button. Same in stock
+  firmware. The gradient cache is now off (LVGL's own workaround).
 - Drying is locked while the printer is busy, like on the screen: the
   Fluidd drying entry shows an in-page notice instead of the window during a print, pause, calibration,
   homing or any running task; `SET_FILAMENT_DRY` and `prepare_filament_dry` refuse to start in that state
