@@ -32,6 +32,7 @@
  "/home/qidi/moonraker/moonraker/components/file_manager/file_manager.py": "09b617e23b4fef43a37fedbe63ffc53551a4605ebbc2242d6a3bb4f2580dd66f",
  "/home/qidi/moonraker/moonraker/components/file_manager/metadata.py": "c4daf890dc45136ae0fbb928223c51b2d081522502387041a111e8aa501b22c9",
  "/home/qidi/moonraker/moonraker/components/klippy_apis.py": "b7cf6bc1738fe401a221109ee7c27de02f93a41c283bafca33f32a3fbeeb3d94",
+ "/home/qidi/moonraker/moonraker/components/klippy_connection.py": "6e38de5d78fe0c33d56c7d731c05be3dd51c883f710c341e92e43fbc654682d8",
  "/home/qidi/moonraker/moonraker/components/machine.py": "a2f7f088932b62316e119be899f25a872515e9e8600b9d7248703ee5a835819c",
  "/home/qidi/moonraker/moonraker/components/timelapse.py": "3e35bc05ad9ea5ceb9749e5b3c8c394f056d9a7447c68d78b020ab371aab414e",
  "/home/qidi/printer_data/config/klipper-macros-qd/filament_wipe.cfg": "1d4a3c3c3244c4f6ed3f7ccfe719fcedfe3387fc22a216cdfa82bdf3d98aecb8",

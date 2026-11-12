@@ -1,6 +1,9 @@
 # Changelog
 
 ## Unreleased
+- New module `moonraker-box-status-merge`: Moonraker keeps the BOX and drying status complete - nested updates
+  from QIDI's Klipper are merged instead of replacing whole sub-objects (QIDI's own fix from 03.02; affects the
+  QIDI app's 30-second refresh and Moonraker's status diffs).
 - New module `dns-fallback-global`: the printer's fallback DNS are 1.1.1.1 and 8.8.8.8, as in QIDI's 03.02
   international package, instead of the Chinese public DNS 114.114.114.114 and 223.5.5.5 that 02.04's network
   hook adds (one line of QIDI's hook changed; installer: new generated-file kind that edits that line and puts it

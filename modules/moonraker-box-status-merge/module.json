@@ -1,0 +1,28 @@
+{
+ "id": "moonraker-box-status-merge",
+ "order": 119,
+ "title": "Moonraker: BOX and drying status kept complete (nested updates merged, as QIDI 03.02)",
+ "files": {
+  "/home/qidi/moonraker/moonraker/components/klippy_connection.py": {
+   "stock_sha256": "26727ec854b7e1eac6fe0dee92e5639b7dcf2feac26e3dadf6593896612ad10e",
+   "edits": [
+    [
+     "import getpass\r\nimport asyncio\r\n",
+     "import getpass\r\nimport asyncio\r\nimport copy\r\n"
+    ],
+    [
+     "    def _process_gcode_response(self, response: str) -> None:\r\n        self.server.send_event(\"server:gcode_response\", response)\r\n\r\n    def _process_status_update(\r\n",
+     "    def _process_gcode_response(self, response: str) -> None:\r\n        self.server.send_event(\"server:gcode_response\", response)\r\n\r\n    def _q2_deep_merge(self, target: Dict[str, Any], source: Dict[str, Any]) -> None:\r\n        # q2-0204-tweaked (from QIDI 03.02): QIDI's Klipper sends only the changed nested\r\n        # parts of multi_color_controller (BOX, drying); merge them in instead of replacing\r\n        for key, value in source.items():\r\n            if key in target and isinstance(target[key], dict) and isinstance(value, dict):\r\n                self._q2_deep_merge(target[key], value)\r\n            else:\r\n                target[key] = copy.deepcopy(value)\r\n\r\n    def _process_status_update(\r\n"
+    ],
+    [
+     "            self.subscription_cache.setdefault(field, {}).update(item)\r\n",
+     "            if field not in self.subscription_cache:\r\n                self.subscription_cache[field] = copy.deepcopy(item)\r\n            else:\r\n                self._q2_deep_merge(self.subscription_cache[field], item)\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "moonraker"
+ ],
+ "note": "QIDI's Klipper sends only the changed nested parts of multi_color_controller (the BOX and filament drying: e.g. only drying.extra.dry_state), while Moonraker 02.04 merged status updates one level deep, so its status cache lost the other nested fields (e.g. the drying end time, BOX slot data). The cache feeds the QIDI app's 30-second full refresh over the cloud and Moonraker's own status diffs for new connections. Updates are now merged recursively - QIDI's own fix from 03.02 (the rest of 03.02's change, moving the 30-second refresh into the closed MQTT module, is not taken). Fluidd and the drying window read Klipper directly and were not affected."
+}
