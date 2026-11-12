@@ -172,7 +172,8 @@
     document.head.appendChild(s);
   }
   function fmtLeft(sec) {
-    var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    // whole minutes rounded up, like the printer screen (never "11 h 60 min")
+    var total = Math.max(0, Math.ceil(sec / 60)), h = Math.floor(total / 60), m = total % 60;
     return (h ? h + ' h ' : '') + m + ' min';
   }
   function num(v) { return typeof v === 'number' && isFinite(v) ? v.toFixed(0) : '-'; }
