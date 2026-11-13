@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Fix in `print-cache-protection`: a print started from the screen's "recently printed" entry (the file with
+  the clock icon, the copy in the print cache) was refused and the screen stayed on "Preparing to print... 10%".
+  The screen starts that entry as `/.cache/<name>` without copying; the module took only names relative to the
+  G-code directory. Such a start now prints the file from the print cache, as QIDI's code does, and full paths
+  are taken again, but only inside the G-code directory and the print cache. The log now shows what the screen
+  asked for, and a refused start names the file. Tested on the printer.
 - Uninstall puts Fluidd's Z direction setting (`fluidd-z-like-screen`) back to the value it had before the install
   (`--from-stock`: QIDI's factory value); before, uninstall left it changed.
 - Docs: module count, release status and credits (Klipper, Valve-Oil, n3oney, AFSFigueiredo, ValitovTimur,

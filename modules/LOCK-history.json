@@ -68,6 +68,11 @@
  "/home/qidi/klipper/klippy/mcu.py": [
   "13d9c23da7df7d61cf23c145a987cfaaf07bbd8b98f14febad399158a4809600"
  ],
+ "/home/qidi/moonraker/moonraker/components/klippy_apis.py": [
+  "b7cf6bc1738fe401a221109ee7c27de02f93a41c283bafca33f32a3fbeeb3d94",
+  "7d4eb230c600066f1fec08000e07d212e1823961325b8e50892fa09af633096f",
+  "64090f3144d71c4ccc78afbf5caf85e33cac8c950f70353ab824faca1d95096d"
+ ],
  "/home/qidi/moonraker/moonraker/components/klippy_connection.py": [
   "6e38de5d78fe0c33d56c7d731c05be3dd51c883f710c341e92e43fbc654682d8"
  ],
