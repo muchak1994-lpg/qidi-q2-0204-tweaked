@@ -108,9 +108,16 @@ Profile **nie zawierają adresu drukarki ani klucza API** — połączenie ustaw
 
 ## Licencja i źródła
 
-Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Część poprawek to przeniesione poprawki z
-[Klippera](https://github.com/Klipper3d/klipper) (Kevin O'Connor i współautorzy, GPL-3.0) albo ta sama poprawka co w
-[Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) (thelegendtubaguy, GPL-3.0); każda jest wskazana w
-[docs/FIXES.pl.md](docs/FIXES.pl.md). Pliki w `orca-profiles/` pochodzą od profili QIDI dołączonych do OrcaSlicer — zobacz [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
+Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Źródło każdej poprawki jest wskazane w
+[docs/FIXES.pl.md](docs/FIXES.pl.md). Podziękowania dla:
+
+- [Klipper](https://github.com/Klipper3d/klipper) - Kevin O'Connor i współautorzy (GPL-3.0): kilka przeniesionych poprawek.
+- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): poprawka powtórzeń pomiaru, taka sama jak u nich dla Max 4 / Plus 5.
+- [n3oney](https://github.com/qidi-community/q2-wiki/tree/main/content/randomize-probing) (wiki Q2 qidi-community): pomysł losowego punktu bazowania Z, żeby rozłożyć zużycie płyty.
+- AFSFigueiredo ([QIDI #34](https://github.com/QIDITECH/QIDI_Q2/issues/34)): poprawka podtrzymania grzałek Boxa, przetestowana na ponad 8000 zmian filamentu.
+- ValitovTimur ([QIDI #23](https://github.com/QIDITECH/QIDI_Q2/issues/23)): analiza błędu „Min or 0” grzałki Boxa i poprawka, którą wdraża `box-fixes`.
+- ololonly ([QIDI #25](https://github.com/QIDITECH/QIDI_Q2/issues/25)): zgłoszenie i analiza, z których powstał `box-fan-threshold`.
+- QIDI: kolejka druku, zapasowe DNS i scalanie statusu w Moonrakerze pochodzą z własnego firmware QIDI 01.01.03.02.
+- Zbudowane razem z **Claude** (asystent AI firmy Anthropic), który analizował kod QIDI, napisał i przetestował większość zmian razem z autorem na jego drukarce. Pliki w `orca-profiles/` pochodzą od profili QIDI dołączonych do OrcaSlicer — zobacz [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
 
 QIDI, QIDI Q2 i powiązane nazwy są znakami towarowymi ich właścicieli i służą tu tylko do wskazania, dla jakiej drukarki jest ten projekt.

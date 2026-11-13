@@ -108,9 +108,16 @@ The profiles contain **no printer address or API key** — set the connection in
 
 ## License and credits
 
-The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Some fixes are backports from
-[Klipper](https://github.com/Klipper3d/klipper) (Kevin O'Connor and contributors, GPL-3.0) or the same fix as in
-[Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) (thelegendtubaguy, GPL-3.0); each one is named in
-[docs/FIXES.md](docs/FIXES.md). The files in `orca-profiles/` are derived from the QIDI profiles bundled with OrcaSlicer; see [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
+The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Each fix's source is named in
+[docs/FIXES.md](docs/FIXES.md). Thanks to:
+
+- [Klipper](https://github.com/Klipper3d/klipper) - Kevin O'Connor and contributors (GPL-3.0): several upstream fixes backported.
+- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): the probe retry fix, same as theirs for the Max 4 / Plus 5.
+- [n3oney](https://github.com/qidi-community/q2-wiki/tree/main/content/randomize-probing) (qidi-community Q2 wiki): the idea of a random Z homing point to spread the wear on the plate.
+- AFSFigueiredo ([QIDI #34](https://github.com/QIDITECH/QIDI_Q2/issues/34)): the Box heater keep-alive fix, tested on 8000+ tool changes.
+- ValitovTimur ([QIDI #23](https://github.com/QIDITECH/QIDI_Q2/issues/23)): the analysis of the Box heater "Min or 0" bug and the fix that `box-fixes` implements.
+- ololonly ([QIDI #25](https://github.com/QIDITECH/QIDI_Q2/issues/25)): the report and analysis that led to `box-fan-threshold`.
+- QIDI: the print queue, the fallback DNS and the Moonraker status merge are taken from QIDI's own 01.01.03.02.
+- Built together with **Claude** (Anthropic's AI assistant), which analysed QIDI's code, wrote and tested most of the changes with the author on his printer. The files in `orca-profiles/` are derived from the QIDI profiles bundled with OrcaSlicer; see [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
 
 QIDI, QIDI Q2 and related names are trademarks of their owners and are used here only to say which printer this project is for.
