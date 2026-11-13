@@ -1,0 +1,20 @@
+{
+ "id": "probe-retry-fix",
+ "order": 135,
+ "title": "Probe retries: limited as configured, load cell re-zeroed after the nozzle lifts (bed mesh, Z tilt)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/probe.py": {
+   "stock_sha256": "4a670665d3c98cba44fb5ce57bad6abafbc4eb3a2cf02203630535da5dbc2da5",
+   "edits": [
+    [
+     "                gcmd.respond_info(\"Probe samples exceed tolerance. Retrying...\")\r\n                retries += 1\r\n                # 超过两次直接清零\r\n                if(retries == 1):\r\n                    self.mcu_probe.home_zero()\r\n                    retries = 0 \r\n                positions = []\r\n            # Retract\r\n            if len(positions) < sample_count:\r\n                toolhead.manual_move(\r\n                    probexy + [pos[2] + params['sample_retract_dist']],\r\n                    params['lift_speed'])\r\n",
+     "                gcmd.respond_info(\"Probe samples exceed tolerance. Retrying...\")\r\n                # q2-probe-retry-fix: the retry count is no longer reset (a point whose samples\r\n                # never agree failed only after samples_tolerance_retries tries, not never), and\r\n                # the load cell is re-zeroed after the nozzle has lifted off the bed, as before\r\n                # every point - QIDI zeroed it with the nozzle still pressed on the bed.\r\n                retries += 1\r\n                positions = []\r\n            # Retract\r\n            if len(positions) < sample_count:\r\n                toolhead.manual_move(\r\n                    probexy + [pos[2] + params['sample_retract_dist']],\r\n                    params['lift_speed'])\r\n                if not positions:\r\n                    toolhead.wait_moves()\r\n                    toolhead.dwell(0.05)\r\n                    self.mcu_probe.home_zero()\r\n                    toolhead.dwell(0.05)\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "When a point's two samples differ by more than samples_tolerance (0.02 mm), QIDI's run_probe() re-zeroed the nozzle load cell right after the probe, with the nozzle still pressed on the bed, and reset the retry count, so a point that never agreed was probed forever. On this printer's logs the samples after such a zero triggered in the air (z=2.92, then 5.92) and cost a second retry. Same fix as Valve-Oil (thelegendtubaguy, GPL-3.0) for the Max 4 and Plus 5."
+}

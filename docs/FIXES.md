@@ -46,6 +46,7 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `homing-trsync` | Homing across two boards (the Q2 homes Z with the nozzle sensor on the toolhead board): the setup messages could be scheduled too late, and an earlier timeout could be sent to the board. | Two upstream fixes (Klipper 8e6e467e, 29d4ec2d). |
 | `heater-comm-loss-message` | On a lost board connection a heater error can be reported before the real cause. | 7 s instead of 5 s before a heater's temperature counts as stale (Klipper 46912431). |
 | `serialqueue-clock-margin` | Messages scheduled far ahead have no margin against a 31-bit clock overflow on the boards. | Wider margin (Klipper 867d73f0). |
+| `probe-retry-fix` | When a probe point's two samples disagree (bed mesh, Z tilt), the nozzle load cell is re-zeroed with the nozzle still pressed on the bed - the next samples trigger in the air - and the retry count starts over, so a point that never agrees is probed forever and print start hangs. | Re-zero after the nozzle lifts, as before every point; at most `samples_tolerance_retries` retries, then an error. Same fix as Valve-Oil (Max 4, Plus 5). |
 
 ## Macros and configuration
 

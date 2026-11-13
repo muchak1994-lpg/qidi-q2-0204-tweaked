@@ -46,6 +46,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `homing-trsync` | Bazowanie z dwiema płytkami (Q2 bazuje Z czujnikiem w dyszy na płytce głowicy): komunikaty konfiguracji mogły iść za późno, a do płytki mógł trafić krótszy limit czasu. | Dwie poprawki z Klippera (8e6e467e, 29d4ec2d). |
 | `heater-comm-loss-message` | Przy utracie połączenia z płytką najpierw może pojawić się błąd grzałki zamiast prawdziwej przyczyny. | 7 s zamiast 5 s, zanim odczyt temperatury uznawany jest za nieaktualny (Klipper 46912431). |
 | `serialqueue-clock-margin` | Komunikaty planowane daleko naprzód nie mają zapasu na przepełnienie 31-bitowego licznika zegara płytek. | Większy zapas (Klipper 867d73f0). |
+| `probe-retry-fix` | Gdy dwa pomiary punktu (siatka, Z tilt) się nie zgadzają, czujnik w dyszy jest zerowany, gdy dysza jeszcze naciska na stół - kolejne pomiary wyzwalają się w powietrzu - a licznik prób zaczyna od nowa, więc punkt, który się nigdy nie zgodzi, jest mierzony w nieskończoność i start druku wisi. | Zerowanie po uniesieniu dyszy, jak przed każdym punktem; najwyżej `samples_tolerance_retries` prób, potem błąd. Ta sama poprawka co w Valve-Oil (Max 4, Plus 5). |
 
 ## Makra i konfiguracja
 

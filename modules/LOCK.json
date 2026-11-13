@@ -21,6 +21,7 @@
  "/home/qidi/klipper/klippy/extras/heater_fan.py": "babad1e85fe79e03cb349a4fc19759d834ff34c8de46f59e9897443d497f3828",
  "/home/qidi/klipper/klippy/extras/heaters.py": "869a0671e3ab953fd665b62b3f9e58d03c95acc59a79232965aee76235806ba2",
  "/home/qidi/klipper/klippy/extras/pause_resume.py": "1e2fcb1a5b63c3c4e7ce783f5aa7a443ef1f0730fc0b919a8a1703c6e96954f7",
+ "/home/qidi/klipper/klippy/extras/probe.py": "c62cc9f2dd9baba6d605a6be4b6b6d4aa0cbb48049410956a717f8266a1bb670",
  "/home/qidi/klipper/klippy/extras/q2_box_fans.py": "a69185283dd622a71dcee0471df6074ee0f4a0ca698db391123c1514e57e33f7",
  "/home/qidi/klipper/klippy/extras/save_variables.py": "170033f780637a03fbf2cfa22b846304b92458b01e4537b5b272bd305d408683",
  "/home/qidi/klipper/klippy/extras/smart_output_pin.py": "065a5a31032a6aa4e4532cc1ce0003f81ccff541d3a162ea396fc7ce5b9bc88a",

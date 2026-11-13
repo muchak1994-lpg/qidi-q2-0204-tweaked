@@ -1,6 +1,11 @@
 # Changelog
 
 ## Unreleased
+- New module `probe-retry-fix`: when a probe point's two samples disagree, QIDI re-zeroed the nozzle load cell
+  while the nozzle was still pressed on the bed (the next samples then triggered in the air, 2.9 and 5.9 mm in
+  this printer's logs) and reset the retry count, so a point that never agreed was probed forever and print
+  start hung. The load cell is now re-zeroed after the nozzle lifts, and a point fails after
+  `samples_tolerance_retries` tries. Same fix as Valve-Oil for the Max 4 and Plus 5.
 - Four small fixes from upstream Klipper (QIDI's Klipper is upstream from August 2024), each checked to be
   missing in 02.04: `mcu-restart-shutdown` (a board that restarts on its own, e.g. a QIDI Box losing power,
   now stops Klipper cleanly - the shutdown code itself failed with an error), `homing-trsync` (two timing
