@@ -6,20 +6,22 @@ Community fixes and small improvements for the **QIDI Q2** 3D printer running fi
 
 > **Unofficial project.** Not affiliated with, endorsed by or supported by QIDI Technology. You use it at your own risk. Keep the official firmware package at hand so you can always go back to stock.
 
-> **Status: release candidate.** All modules build from the official packages and match a tested printer byte for byte; the installer has been tested against a simulated printer and read-only against a real one. A full install on a freshly reflashed printer is the last test before the first release. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: release candidate.** All modules build from the official packages and match a tested printer byte for byte; every module has been installed (and upgraded) with this installer on the author's printer, and the installer is also tested offline against a simulated printer. A full install on a freshly reflashed printer is the last test before the first release. See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it fixes
 
-45 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light),
-Klipper fixes (fuzzy skin, hotend fan, QIDI Box heaters, MCU errors, safe settings saving and more),
-macros, Moonraker/Fluidd fixes, stable Ethernet MAC, and the missing camera-AI libraries.
+58 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light,
+filament drying fixes), Klipper fixes (bed mesh probe retries, homing, fuzzy skin, hotend fan, QIDI Box heaters
+and fan threshold, MCU errors, safe settings saving and more, several from upstream Klipper), macros (Z homing
+guard, load temperature after a hotter filament, drying from Fluidd), Moonraker/Fluidd fixes, stable Ethernet MAC,
+and the missing camera-AI libraries.
 **Full list with the problem each one solves: [docs/FIXES.md](docs/FIXES.md).**
 
 ## Principles
 
 - **02.04 only.** Every change is checked against the exact 01.01.02.04 files (SHA-256). On any other version the installer refuses to run.
 - **Firmware updates stay blocked.** The fixes are made for 02.04; an automatic update would silently replace them. Blocking updates is part of the package, not an option.
-- **No QIDI code in this repository.** The installer downloads the official 01.01.02.04 package from QIDI's public server, checks its checksum, and applies the changes on your PC.
+- **No QIDI files in this repository** (only the short lines our changes replace). The installer downloads the official 01.01.02.04 package from QIDI's public server, checks its checksum, and applies the changes on your PC.
 - **Backups on your PC, nothing left on the printer.** Before any change the original printer files are saved on your computer, so every module can be undone. Temporary files on the printer are removed after installation.
 - **Add, never replace — on your PC too.** The OrcaSlicer profiles are added next to yours; a profile you already have is never overwritten.
 - **Network security is your responsibility.** Keep the printer on a trusted network; do not expose it to the internet.
@@ -104,8 +106,11 @@ On macOS/Linux use `python3` instead of `py`. If you are logged in to an Orca ac
 
 The profiles contain **no printer address or API key** — set the connection in OrcaSlicer yourself (pencil icon next to the printer → Connection).
 
-## License
+## License and credits
 
-The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). The files in `orca-profiles/` are derived from the QIDI profiles bundled with OrcaSlicer; see [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
+The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Some fixes are backports from
+[Klipper](https://github.com/Klipper3d/klipper) (Kevin O'Connor and contributors, GPL-3.0) or the same fix as in
+[Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) (thelegendtubaguy, GPL-3.0); each one is named in
+[docs/FIXES.md](docs/FIXES.md). The files in `orca-profiles/` are derived from the QIDI profiles bundled with OrcaSlicer; see [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
 
 QIDI, QIDI Q2 and related names are trademarks of their owners and are used here only to say which printer this project is for.

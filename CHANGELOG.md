@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Uninstall puts Fluidd's Z direction setting (`fluidd-z-like-screen`) back to the value it had before the install
+  (`--from-stock`: QIDI's factory value); before, uninstall left it changed.
+- Docs: module count, release status and credits (Klipper, Valve-Oil) updated; rows of the fixes list moved to
+  the right sections; Valve-Oil's Max 4 / Plus 5 Box fixes that the Q2's older code does not need are listed.
 - New module `probe-retry-fix`: when a probe point's two samples disagree, QIDI re-zeroed the nozzle load cell
   while the nozzle was still pressed on the bed (the next samples then triggered in the air, 2.9 and 5.9 mm in
   this printer's logs) and reset the retry count, so a point that never agreed was probed forever and print

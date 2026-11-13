@@ -120,22 +120,27 @@ class SSHPrinter:
 
     def action(self, argv, check=True):
         if argv[0] == "moonraker-db":
-            # ["moonraker-db", namespace, key, JSON value]: one entry of Moonraker's database
+            # ["moonraker-db", namespace, key, JSON value(, JSON value on uninstall)]: one Moonraker database entry
             body = json.dumps({"namespace": argv[1], "key": argv[2], "value": json.loads(argv[3])})
             self._run("curl -sf -X POST -H 'Content-Type: application/json' -d %s "
                       "http://127.0.0.1:7125/server/database/item >/dev/null" % shlex.quote(body), check=check)
             return
         self._run(" ".join(shlex.quote(a) for a in argv), sudo=True, check=check)
 
+    def db_value(self, namespace, key):
+        """The JSON text of one Moonraker database entry, or None when it is not set."""
+        out = self._run("curl -s 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s' || true"
+                        % (namespace, key)).decode()
+        try:
+            return json.dumps(json.loads(out)["result"]["value"])
+        except (ValueError, KeyError, TypeError):
+            return None
+
     def needs(self, argv):
         """False when a state-type action is already in effect (so it is skipped)."""
         if argv[0] == "moonraker-db":
-            out = self._run("curl -s 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s' || true"
-                            % (argv[1], argv[2])).decode()
-            try:
-                return json.loads(out)["result"]["value"] != json.loads(argv[3])
-            except (ValueError, KeyError, TypeError):
-                return True
+            current = self.db_value(argv[1], argv[2])
+            return current is None or json.loads(current) != json.loads(argv[3])
         if argv[:2] == ["chattr", "+i"]:
             out = self._run("lsattr -d %s 2>/dev/null || true" % shlex.quote(argv[2]), sudo=True).decode()
             return not out.strip() or "i" not in out.split()[0]
@@ -383,7 +388,11 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
         if actions is None:
             actions = pending_actions(p, selected, changes)
         for mid, action in actions:
-            p.action(action)
+            if action[0] == "moonraker-db" and hasattr(p, "db_value"):
+                before = p.db_value(action[1], action[2])  # put back exactly this on uninstall
+                if before is not None:
+                    action = action[:4] + [before]
+            p.action(action[:4] if action[0] == "moonraker-db" else action)
             record["actions"].append(action)
             save()
             print("Done:", " ".join(action))
@@ -401,6 +410,9 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
 
 
 def undo_action(action):
+    if action[0] == "moonraker-db":
+        # optional 5th element: the value to put back on uninstall (QIDI's factory value)
+        return action[:3] + [action[4]] if len(action) > 4 else None
     for key, fn in UNDO_ACTIONS.items():
         if tuple(action[:2]) == key:
             return fn(action)

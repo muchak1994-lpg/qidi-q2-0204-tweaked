@@ -6,20 +6,22 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 > **Projekt nieoficjalny.** Niezwiązany z QIDI Technology, nieautoryzowany i niewspierany przez QIDI. Używasz na własne ryzyko. Miej pod ręką oficjalną paczkę firmware, żeby zawsze móc wrócić do wersji fabrycznej.
 
-> **Stan: kandydat do wydania.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; instalator jest przetestowany na symulowanej drukarce i w trybie odczytu na prawdziwej. Ostatni test przed pierwszym wydaniem: pełna instalacja na świeżo zreflashowanej drukarce. Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Stan: kandydat do wydania.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; każdy moduł został zainstalowany (i zaktualizowany) tym instalatorem na drukarce autora, a instalator jest też testowany bez drukarki, na symulowanej drukarce. Ostatni test przed pierwszym wydaniem: pełna instalacja na świeżo zreflashowanej drukarce. Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Co naprawia
 
-45 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła),
-poprawki Klippera (fuzzy skin, wentylator hotendu, grzałki Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne),
-makra, poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące biblioteki AI kamery.
+58 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
+poprawki suszenia filamentu), poprawki Klippera (powtórzenia pomiaru siatki, bazowanie, fuzzy skin, wentylator
+hotendu, grzałki i próg wentylatorów Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne, kilka z oficjalnego
+Klippera), makra (strażnik bazowania Z, temperatura ładowania po cieplejszym filamencie, suszenie z Fluidda),
+poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące biblioteki AI kamery.
 **Pełna lista z problemem, który rozwiązuje każdy moduł: [docs/FIXES.pl.md](docs/FIXES.pl.md).**
 
 ## Zasady
 
 - **Tylko 02.04.** Każda zmiana jest sprawdzana względem dokładnych plików 01.01.02.04 (SHA-256). Na innej wersji instalator odmawia działania.
 - **Aktualizacje firmware zostają zablokowane.** Poprawki są robione pod 02.04; automatyczna aktualizacja po cichu by je zastąpiła. Blokada jest częścią paczki, a nie opcją.
-- **W repozytorium nie ma kodu QIDI.** Instalator sam pobiera oficjalną paczkę 01.01.02.04 z publicznego serwera QIDI, sprawdza jej sumę kontrolną i nanosi zmiany na Twoim komputerze.
+- **W repozytorium nie ma plików QIDI** (tylko krótkie linijki, które nasze zmiany zastępują). Instalator sam pobiera oficjalną paczkę 01.01.02.04 z publicznego serwera QIDI, sprawdza jej sumę kontrolną i nanosi zmiany na Twoim komputerze.
 - **Kopie na komputerze, na drukarce nic po nas nie zostaje.** Przed każdą zmianą oryginalne pliki drukarki są zapisywane na Twoim komputerze, więc każdy moduł da się cofnąć. Pliki tymczasowe na drukarce są usuwane po instalacji.
 - **Dodajemy, nigdy nie podmieniamy — także na komputerze.** Profile OrcaSlicer są dodawane obok Twoich; profil, który już masz, nigdy nie zostaje nadpisany.
 - **Bezpieczeństwo sieci jest po Twojej stronie.** Trzymaj drukarkę w zaufanej sieci, nie wystawiaj jej do internetu.
@@ -104,8 +106,11 @@ Na macOS/Linux zamiast `py` wpisz `python3`. Jeśli jesteś zalogowany do konta 
 
 Profile **nie zawierają adresu drukarki ani klucza API** — połączenie ustaw sam w OrcaSlicer (ołówek przy drukarce → Połączenie).
 
-## Licencja
+## Licencja i źródła
 
-Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Pliki w `orca-profiles/` pochodzą od profili QIDI dołączonych do OrcaSlicer — zobacz [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
+Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Część poprawek to przeniesione poprawki z
+[Klippera](https://github.com/Klipper3d/klipper) (Kevin O'Connor i współautorzy, GPL-3.0) albo ta sama poprawka co w
+[Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) (thelegendtubaguy, GPL-3.0); każda jest wskazana w
+[docs/FIXES.pl.md](docs/FIXES.pl.md). Pliki w `orca-profiles/` pochodzą od profili QIDI dołączonych do OrcaSlicer — zobacz [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
 
 QIDI, QIDI Q2 i powiązane nazwy są znakami towarowymi ich właścicieli i służą tu tylko do wskazania, dla jakiej drukarki jest ten projekt.

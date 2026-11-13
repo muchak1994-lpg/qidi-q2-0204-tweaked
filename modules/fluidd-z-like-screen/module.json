@@ -8,8 +8,9 @@
    "moonraker-db",
    "fluidd",
    "uiSettings.general.axis.z.inverted",
-   "false"
+   "false",
+   "true"
   ]
  ],
- "note": "Mirrors the printer's screen: the down arrow moves the bed down, the up arrow moves it up. With Fluidd's 'Invert Z' setting switched on (QIDI's factory setting) the down arrow of the Fluidd QIDI ships moved the bed UP towards the nozzle. The installer sets that setting to off (Fluidd's own default) in Fluidd's settings on the printer, so it applies in every browser and in QIDI Studio's device page; reload an open Fluidd page once. X and Y already match the screen and are not touched. You can still change it in Fluidd's settings; the next install sets it back. Uninstall leaves it as it is (it is a Fluidd setting, not a QIDI file)."
+ "note": "Mirrors the printer's screen: the down arrow moves the bed down, the up arrow moves it up. With Fluidd's 'Invert Z' setting switched on (QIDI's factory setting) the down arrow of the Fluidd QIDI ships moved the bed UP towards the nozzle. The installer sets that setting to off (Fluidd's own default) in Fluidd's settings on the printer, so it applies in every browser and in QIDI Studio's device page; reload an open Fluidd page once. X and Y already match the screen and are not touched. You can still change it in Fluidd's settings; the next install sets it back. Uninstall leaves it as it is (it is a Fluidd setting, not a QIDI file). Uninstall puts QIDI's factory value (true) back."
 }

@@ -28,6 +28,7 @@ class FakePrinter:
         self.files = {p: [d, "qidi", "netdev", "644"] for p, d in files.items()}
         self.state, self.actions, self.restarts = state, [], []
         self.firmware_0204 = True
+        self.db = {}
 
     def sha(self, path):
         if path == "/home/qidi/update/firmware_manifest.json":
@@ -48,11 +49,18 @@ class FakePrinter:
 
     def action(self, argv, check=True):
         self.actions.append(argv)
+        if argv[0] == "moonraker-db":
+            self.db[(argv[1], argv[2])] = argv[3]
+
+    def db_value(self, namespace, key):
+        return self.db.get((namespace, key))
 
     def restart(self, name):
         self.restarts.append(name)
 
     def needs(self, argv):
+        if argv[0] == "moonraker-db":
+            return self.db.get((argv[1], argv[2])) != argv[3]
         return argv not in self.actions
 
     def http_json(self, url):
@@ -127,7 +135,19 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(install.pending_actions(self.p, mods, []), [("fz", act)])  # no file change needed
         self.p.action(act)
         self.assertEqual(install.pending_actions(self.p, mods, []), [])  # already set -> skipped
-        self.assertIsNone(install.undo_action(act))  # uninstall leaves the Fluidd setting alone
+        self.assertIsNone(install.undo_action(act))  # no value to put back -> left alone
+        factory = act + ["true"]  # a module may name QIDI's factory value (used by uninstall --from-stock)
+        self.assertEqual(install.undo_action(factory), act[:3] + ["true"])
+
+    def test_moonraker_db_entry_comes_back_on_uninstall(self):
+        key = ("fluidd", "uiSettings.general.axis.z.inverted")
+        act = ["moonraker-db", key[0], key[1], "false", "true"]  # "true": QIDI's factory value
+        mods = [{"id": "fz", "order": 5, "files": {}, "actions": [act]}]
+        self.p.db[key] = '"mine"'  # whatever the user had before the install
+        backup = install.do_install(self.p, mods, [], "1.2.3.4", backups=self.tmp)
+        self.assertEqual(self.p.db[key], "false")
+        install.do_uninstall(self.p, backup)
+        self.assertEqual(self.p.db[key], '"mine"')  # exactly the earlier value, not the factory one
 
     def test_upgrade_from_an_earlier_version_of_ours(self):
         fan = "/home/qidi/klipper/klippy/extras/fan.py"
