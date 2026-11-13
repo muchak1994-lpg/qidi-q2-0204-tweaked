@@ -118,6 +118,7 @@ The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Each 
 - ValitovTimur ([QIDI #23](https://github.com/QIDITECH/QIDI_Q2/issues/23)): the analysis of the Box heater "Min or 0" bug and the fix that `box-fixes` implements.
 - ololonly ([QIDI #25](https://github.com/QIDITECH/QIDI_Q2/issues/25)): the report and analysis that led to `box-fan-threshold`.
 - QIDI: the print queue, the fallback DNS and the Moonraker status merge are taken from QIDI's own 01.01.03.02.
+- Earlier work by **Codex** (OpenAI's AI assistant, known around here as "Stefan"), which built the first modules and fixes with the author.
 - Built together with **Claude** (Anthropic's AI assistant), which analysed QIDI's code, wrote and tested most of the changes with the author on his printer. The files in `orca-profiles/` are derived from the QIDI profiles bundled with OrcaSlicer; see [orca-profiles/NOTICE.md](orca-profiles/NOTICE.md).
 
 QIDI, QIDI Q2 and related names are trademarks of their owners and are used here only to say which printer this project is for.
