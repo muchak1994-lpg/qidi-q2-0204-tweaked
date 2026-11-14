@@ -6,7 +6,7 @@ Community fixes and small improvements for the **QIDI Q2** 3D printer running fi
 
 > **Unofficial project.** Not affiliated with, endorsed by or supported by QIDI Technology. You use it at your own risk. Keep the official firmware package at hand so you can always go back to stock.
 
-> **Status: release candidate.** All modules build from the official packages and match a tested printer byte for byte; every module has been installed (and upgraded) with this installer on the author's printer, and the installer is also tested offline against a simulated printer. A full install on a freshly reflashed printer is the last test before the first release. See [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Status: 1.0.0, first release.** All modules build from the official packages and match a tested printer byte for byte; every module has been installed (and upgraded) with this installer on the author's printer, the installer is tested offline against a simulated printer, and a full install was done on a freshly reflashed printer (14.11.2026). See [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## What it fixes
 

@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.0.0 - 2026-11-14
+First release. Tested with a full reflash (eMMC by USB-C, USB updates 1.1.1 -> 02.01 -> 02.04) and an install
+from a fresh copy of the project on 14.11.2026.
+
 - Installer: on a freshly flashed printer the folder `/home/qidi/download` does not exist yet, so locking it
   (`firmware-download-guard`) stopped the install half-way - files on the printer, services not restarted.
   The folder is now made before it is locked. Found in the reflash test on 14.11.2026.

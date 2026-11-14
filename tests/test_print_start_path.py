@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """print-cache-protection: which print-start file names are taken (QIDI's screen sends full paths).
 
 Run:  python tests/test_print_start_path.py

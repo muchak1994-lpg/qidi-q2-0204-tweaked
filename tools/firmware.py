@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """QIDI Q2 02.04 Tweaked - the official 01.01.02.04 firmware package.
 
 The project does not ship any QIDI file. Every module that changes a printer

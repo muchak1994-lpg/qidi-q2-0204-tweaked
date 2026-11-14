@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """QIDI Q2 02.04 Tweaked - third-party files from their public origin.
 
 Some modules need files that are not in QIDI's package (the camera AI is

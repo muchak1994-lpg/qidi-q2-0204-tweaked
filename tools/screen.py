@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """QIDI Q2 02.04 Tweaked - rebuild the screen program on the PC.
 
 The screen program (/home/qidi/QIDI_Client/bin/qidiclient) is QIDI's closed
