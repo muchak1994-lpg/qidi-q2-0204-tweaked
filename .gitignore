@@ -1,5 +1,6 @@
 # PC-side backups and downloads made by the installer — never commit them
 backups/
+logs/
 downloads/
 work/
 __pycache__/

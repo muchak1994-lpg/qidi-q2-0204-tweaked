@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- Installer: on a freshly flashed printer the folder `/home/qidi/download` does not exist yet, so locking it
+  (`firmware-download-guard`) stopped the install half-way - files on the printer, services not restarted.
+  The folder is now made before it is locked. Found in the reflash test on 14.11.2026.
+- Installer: everything it prints also goes to `logs/<command>-<time>.txt` in the project folder (no password
+  in it), so an error is not lost when the window closes. If an install stops after files were written, it now
+  says so plainly: run it again or restart the printer before printing.
 - Fix in `print-cache-protection`: a print started from the screen's "recently printed" entry (the file with
   the clock icon, the copy in the print cache) was refused and the screen stayed on "Preparing to print... 10%".
   The screen starts that entry as `/.cache/<name>` without copying; the module took only names relative to the

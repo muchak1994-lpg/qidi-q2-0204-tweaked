@@ -125,6 +125,11 @@ class SSHPrinter:
             self._run("curl -sf -X POST -H 'Content-Type: application/json' -d %s "
                       "http://127.0.0.1:7125/server/database/item >/dev/null" % shlex.quote(body), check=check)
             return
+        if argv[:2] == ["chattr", "+i"]:
+            # a freshly flashed printer has no /home/qidi/download yet: make it, then lock it
+            self._run("mkdir -p %s && chattr +i %s" % (shlex.quote(argv[2]), shlex.quote(argv[2])),
+                      sudo=True, check=check)
+            return
         self._run(" ".join(shlex.quote(a) for a in argv), sudo=True, check=check)
 
     def db_value(self, namespace, key):
@@ -405,6 +410,10 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
         record["complete"] = True
     finally:
         save()
+        if not record["complete"] and any(e.get("installed") for e in record["files"].values()):
+            print("NOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
+                  "Do not print yet: run the installer again (it continues where it stopped), or turn the\n"
+                  "printer off and on. Backup of this run: %s" % backup)
     print("Done.")
     return backup
 
@@ -521,6 +530,39 @@ def do_uninstall_stock(p, selected):
 
 
 # ------------------------------------------------------------------ main
+LOGS = REPO / "logs"
+
+
+class _Tee(io.TextIOBase):
+    """Everything printed also goes to a log file, so a message survives a closed window."""
+    def __init__(self, stream, log):
+        self.stream, self.log = stream, log
+
+    def write(self, text):
+        self.stream.write(text)
+        try:
+            self.log.write(text)
+            self.log.flush()
+        except (OSError, ValueError):
+            pass
+        return len(text)
+
+    def flush(self):
+        self.stream.flush()
+
+
+def _start_log(command):
+    try:
+        LOGS.mkdir(exist_ok=True)
+        path = LOGS / ("%s-%s.txt" % (command, time.strftime("%Y%m%d-%H%M%S")))
+        log = open(path, "w", encoding="utf-8")
+    except OSError:
+        return None
+    sys.stdout = _Tee(sys.stdout, log)
+    sys.stderr = _Tee(sys.stderr, log)
+    return path
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description="Install QIDI Q2 02.04 Tweaked on the printer.")
     ap.add_argument("command", choices=("plan", "install", "uninstall"))
@@ -534,7 +576,10 @@ def main(argv=None):
     ap.add_argument("--from-stock", action="store_true",
                     help="uninstall without a PC backup, using the originals from the official 02.04 package")
     args = ap.parse_args(argv)
+    log_path = _start_log(args.command) if argv is None else None
     print("QIDI Q2 02.04 Tweaked", VERSION)
+    if log_path:
+        print("Log (no password in it):", log_path)
     password = getpass.getpass("SSH password for %s@%s: " % (args.user, args.host))
     p = None
     try:
@@ -567,6 +612,11 @@ def main(argv=None):
         return 0
     except (InstallError, build.BuildError) as exc:
         print("STOPPED:", exc)
+        return 1
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        print("STOPPED: unexpected error (details above and in the log).")
         return 1
     finally:
         if p is not None:

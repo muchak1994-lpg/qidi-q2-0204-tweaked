@@ -249,5 +249,23 @@ class InstallTest(unittest.TestCase):
                       data)
 
 
+class SSHActionTest(unittest.TestCase):
+    """Commands the real printer gets for module actions."""
+    def run_action(self, argv):
+        p = install.SSHPrinter.__new__(install.SSHPrinter)
+        sent = []
+        p._run = lambda command, sudo=False, check=True: sent.append((command, sudo))
+        p.action(argv)
+        return sent
+
+    def test_lock_makes_the_folder_first(self):  # fresh 02.04 has no /home/qidi/download (14.11.2026)
+        self.assertEqual(self.run_action(["chattr", "+i", "/home/qidi/download"]),
+                         [("mkdir -p /home/qidi/download && chattr +i /home/qidi/download", True)])
+
+    def test_other_actions_unchanged(self):
+        self.assertEqual(self.run_action(["systemctl", "disable", "--now", "frpc.service"]),
+                         [("systemctl disable --now frpc.service", True)])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
