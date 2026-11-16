@@ -71,8 +71,10 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 QIDI's cloud does not serve printers on 02.04, so the QIDI app cannot reach the printer from outside your home.
 At the end of the install the installer offers **Tailscale** (free, by tailscale.com): Fluidd, OrcaSlicer
 uploads and the camera from anywhere, privately - only devices logged in to your own Tailscale account can
-reach the printer. Answer Enter (yes) or `n`. The official build is downloaded on the PC and checked by
-SHA-256; it uses about 40 MB of the printer's memory. The installer can show the login link right away, or you
+reach the printer. Answer Enter (yes) or `n`. The official build of a version pinned in this project is downloaded on the PC and
+checked by SHA-256; it uses about 40 MB of the printer's memory. Moonraker is told to trust Tailscale addresses
+(like the home network), otherwise Fluidd and OrcaSlicer would get error 401. The login link is shown in the
+window only, never in the log - do not share it. The installer can show the login link right away, or you
 log in later (run the installer again, or over SSH: `sudo tailscale up --accept-dns=false --hostname=qidi-q2`).
 `--tailscale yes|no` answers the question in advance. Uninstall removes Tailscale if the installer added it.
 
@@ -82,7 +84,8 @@ log in later (run the installer again, or over SSH: `sudo tailscale up --accept-
 py tools/install.py uninstall --host PRINTER_IP
 ```
 
-Everything is put back from the PC backup; calibration saved since stays.
+Everything is put back from the PC backups (all runs of the installer for that printer, so keep the whole
+`backups` folder, and run updates from the same project folder); calibration saved since stays.
 Lost the `backups` folder or changed PC? `py tools/install.py uninstall --from-stock --host PRINTER_IP`
 puts QIDI's originals from the official package back instead.
 

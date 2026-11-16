@@ -16,5 +16,5 @@
  "restart": [
   "klipper"
  ],
- "note": "Backport of the Valve-Oil (thelegendtubaguy) status-update optimizations to QIDI's 02.04 Klipper. Subscriptions skip an object whose get_status() returned the very same dict as last time, and QIDI's deep comparison (Box/drying objects) runs only when the value differs. One-shot queries still get the full answer. Reviewed: the messages sent are the same as before (an identical dict compared equal anyway), Klipper only does less work. Restarts Klipper."
+ "note": "Backport of the Valve-Oil (thelegendtubaguy) status-update optimizations to QIDI's 02.04 Klipper. Subscriptions skip an object whose get_status() returned the very same dict as last time (it compared equal to itself before, so nothing was sent anyway), and QIDI's deep comparison (Box/drying objects) runs only when the value differs. One-shot queries still get the full answer. The messages sent are the same as before (audit 16.11.2026); Klipper only does less work. Restarts Klipper."
 }

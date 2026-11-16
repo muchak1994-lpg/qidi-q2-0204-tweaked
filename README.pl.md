@@ -71,8 +71,9 @@ py tools/install.py install --host IP_DRUKARKI (kopia na komputerze, potem insta
 Chmura QIDI nie obsługuje drukarek na 02.04, więc aplikacja QIDI nie połączy się z drukarką spoza domu.
 Na końcu instalacji instalator proponuje **Tailscale** (darmowy, tailscale.com): Fluidd, wysyłanie z OrcaSlicera
 i kamera z każdego miejsca, prywatnie - drukarkę widzą tylko urządzenia zalogowane na Twoje konto Tailscale.
-Enter (tak) albo `n`. Oficjalna wersja jest pobierana na komputer i sprawdzana sumą SHA-256; zajmuje ok. 40 MB
-pamięci drukarki. Instalator może od razu pokazać link do logowania albo zalogujesz się później (uruchom
+Enter (tak) albo `n`. Instalator pobiera na komputer oficjalną wersję przypiętą w projekcie i sprawdza jej sumę SHA-256; zajmuje ok. 40 MB
+pamięci drukarki. Moonraker dostaje adresy Tailscale jako zaufane (jak sieć domowa), inaczej Fluidd i Orca
+dostałyby błąd 401. Link do logowania jest pokazywany tylko w oknie, nigdy w logu - nie udostępniaj go. Instalator może od razu pokazać link do logowania albo zalogujesz się później (uruchom
 instalator jeszcze raz albo przez SSH: `sudo tailscale up --accept-dns=false --hostname=qidi-q2`).
 `--tailscale yes|no` odpowiada na pytanie z góry. Odinstalowanie usuwa Tailscale, jeśli dodał go instalator.
 
@@ -82,7 +83,8 @@ instalator jeszcze raz albo przez SSH: `sudo tailscale up --accept-dns=false --h
 py tools/install.py uninstall --host IP_DRUKARKI
 ```
 
-Wszystko wraca z kopii na komputerze; kalibracja zapisana w międzyczasie zostaje.
+Wszystko wraca z kopii na komputerze (ze wszystkich uruchomień instalatora dla tej drukarki, więc zachowaj cały
+folder `backups` i aktualizuj z tego samego folderu projektu); kalibracja zapisana w międzyczasie zostaje.
 Zgubiłeś folder `backups` albo zmieniłeś komputer? `py tools/install.py uninstall --from-stock --host IP_DRUKARKI`
 przywraca zamiast tego oryginały QIDI z oficjalnej paczki.
 

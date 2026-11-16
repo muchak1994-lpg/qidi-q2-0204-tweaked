@@ -20,5 +20,5 @@
  "restart": [
   "klipper"
  ],
- "note": "Backport of the Valve-Oil (thelegendtubaguy) timer improvements to QIDI's 02.04 Klipper. update_timer() ignores attempts to re-arm a timer while its own callback is running (or paused in another greenlet); the callback's running flag is cleared with try/finally. _check_timers() keeps the scan minimum in a local variable. Reviewed: the printer behaves the same (a re-arm during the callback was overwritten by the callback's return value anyway; the minimum comes out the same), it only does less work. Restarts Klipper."
+ "note": "Backport of the Valve-Oil (thelegendtubaguy) timer improvements to QIDI's 02.04 Klipper. update_timer() ignores attempts to re-arm a timer while its own callback is running or paused in another greenlet (no re-entrant run of the same timer); the running flag is cleared with try/finally. _check_timers() keeps the scan minimum in a local variable (same result). One deliberate change of behaviour (audit 16.11.2026, shown in a simulation): while a timer's callback is paused, a request from elsewhere to run that timer again 'now' is dropped instead of starting a second, nested run. No Klipper Python code relies on that nested run; QIDI's closed Box modules cannot be checked. Restarts Klipper."
 }

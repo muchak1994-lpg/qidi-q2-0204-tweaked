@@ -8,5 +8,5 @@
    "pc-timezone"
   ]
  ],
- "note": "After a reflash the printer runs on UTC, so the time in Fluidd, in the print history and in the logs is off by an hour or two. The installer reads the time zone of the PC it runs on (Windows: tzutil, mapped to the IANA name with the Unicode CLDR table in tools/windows_zones.py; Linux/macOS: /etc/localtime) and sets the printer to it with timedatectl. If the PC's zone cannot be read, nothing is changed. Uninstall puts the previous zone back."
+ "note": "After a reflash the printer runs on UTC, so the times in Klipper's and Moonraker's logs, on the printer's screen and in file dates are off by an hour or two (Fluidd shows times in the browser's own zone). The installer reads the time zone of the PC it runs on (Windows: tzutil, mapped to the IANA name with the Unicode CLDR table in tools/windows_zones.py; Linux/macOS: TZ or /etc/localtime) and sets the printer to it with timedatectl. A zone that cannot be read, or that the printer does not know, is left alone; a failure never stops the install. Running services pick the new zone up at their next restart (or power the printer off and on). Uninstall from the PC backup puts the previous zone back; uninstall --from-stock leaves the zone as it is."
 }

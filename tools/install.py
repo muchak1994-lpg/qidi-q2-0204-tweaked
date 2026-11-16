@@ -153,6 +153,10 @@ class SSHPrinter:
         except (ValueError, KeyError, TypeError):
             return None
 
+    def has_timezone(self, zone):
+        return self._run("test -f /usr/share/zoneinfo/%s && echo yes || echo no" % shlex.quote(zone)
+                         ).decode().strip() == "yes"
+
     def timezone(self):
         return self._run("timedatectl show -p Timezone --value 2>/dev/null || true").decode().strip() or None
 
@@ -359,6 +363,21 @@ def is_state_action(action):
             or action[0] in ("moonraker-db", "timezone", "pc-timezone", "fluidd-card"))
 
 
+TZ_NAME = __import__("re").compile(r"^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$")
+
+
+def clean_timezone(name):
+    """An IANA zone name like Europe/Warsaw from what the PC reports, or None."""
+    if not name:
+        return None
+    name = name.strip().lstrip(":")
+    if "zoneinfo/" in name:
+        name = name.split("zoneinfo/", 1)[1]
+    if name.startswith("/") or not TZ_NAME.match(name):
+        return None  # a POSIX rule or a path that is not under zoneinfo
+    return name
+
+
 def pc_timezone():
     """The IANA time zone of the PC the installer runs on, or None."""
     import subprocess
@@ -368,11 +387,13 @@ def pc_timezone():
             name = subprocess.run(["tzutil", "/g"], capture_output=True, text=True, timeout=10).stdout.strip()
         except (OSError, subprocess.SubprocessError):
             return None
+        if name.endswith("_dstoff"):
+            name = name[:-len("_dstoff")]
         return WINDOWS_TO_IANA.get(name)
-    if os.environ.get("TZ", "").count("/") >= 1:
-        return os.environ["TZ"].lstrip(":")
-    real = os.path.realpath("/etc/localtime")
-    return real.split("zoneinfo/", 1)[1] if "zoneinfo/" in real else None
+    zone = clean_timezone(os.environ.get("TZ", ""))
+    if zone:
+        return zone
+    return clean_timezone(os.path.realpath("/etc/localtime"))
 
 
 # Fluidd's own default dashboard (QIDI's Fluidd 1.30.5 bundle), used when the printer has none saved yet
@@ -407,7 +428,7 @@ def fluidd_layouts_with_card(current, card):
                 last[-1].append({"id": card, "enabled": True, "collapsed": False})
                 changed = True
         for c in found:
-            if not c.get("enabled") or c.get("collapsed"):
+            if not c.get("enabled"):  # a card the user only collapsed stays as it is
                 c["enabled"], c["collapsed"] = True, False
                 changed = True
     return layouts if changed else None
@@ -421,6 +442,9 @@ def resolve_action(p, action):
     None when there is nothing to do (or the PC's zone is not known)."""
     if action[0] == "pc-timezone":
         zone = pc_timezone()
+        if zone and hasattr(p, "has_timezone") and not p.has_timezone(zone):
+            print("Time zone %s of this PC is not known to the printer - left as it is." % zone)
+            zone = None
         return ["timezone", zone] if zone else None
     if action[0] == "fluidd-card":
         current = p.db_value("fluidd", "layout.layouts") if hasattr(p, "db_value") else None
@@ -429,13 +453,24 @@ def resolve_action(p, action):
     return action
 
 
-def pending_actions(p, selected, changes):
+def unfinished_modules(host, backups=BACKUPS):
+    """Modules whose files the newest run put on the printer before it stopped (restarts still owed)."""
+    found = host_backups(host, backups)
+    if not found:
+        return set()
+    record = json.loads((found[-1] / "install.json").read_text(encoding="utf-8"))
+    if record.get("complete", True):
+        return set()
+    return {mid for e in record["files"].values() if e.get("installed") for mid in e.get("modules", [])}
+
+
+def pending_actions(p, selected, changes, resumed=()):
     """[(module, action)] that still have to run.
 
     State actions (lock a folder, enable/disable a service, set a Moonraker
     database entry) run only when not already in effect; other actions (daemon-reload, restart a service) only for
     modules whose files change in this run."""
-    touched = {mid for _, _, _, mods in changes for mid in mods}
+    touched = {mid for _, _, _, mods in changes for mid in mods} | set(resumed)
     out = []
     for m in selected:
         for action in m.get("actions", []):
@@ -460,7 +495,9 @@ def progress(what, n, total):
     sys.stdout.flush()
 
 
-def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
+def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resumed=None):
+    if resumed is None:
+        resumed = unfinished_modules(host, backups)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = backups / ("printer-%s-%s" % (host.replace(":", "_"), stamp))
     (backup / "files").mkdir(parents=True)
@@ -500,7 +537,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
             save()
         print("Installed %d file(s)" % len(changes))
         if actions is None:
-            actions = pending_actions(p, selected, changes)
+            actions = pending_actions(p, selected, changes, resumed)
         for mid, action in actions:
             if action[0] == "moonraker-db" and hasattr(p, "db_value"):
                 before = p.db_value(action[1], action[2])  # put back exactly this on uninstall
@@ -508,11 +545,18 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
                 action = action[:4] + [before if before is not None else (action[4] if len(action) > 4 else None)]
             if action[0] == "timezone" and hasattr(p, "timezone"):
                 action = action[:2] + [p.timezone()]  # the zone before, for uninstall
-            p.action(action[:4] if action[0] == "moonraker-db" else action[:2] if action[0] == "timezone" else action)
+            if action[0] == "timezone":
+                try:
+                    p.action(action[:2])
+                except InstallError as exc:  # a clock setting is not worth a half-finished install
+                    print("Time zone not changed:", str(exc).splitlines()[0])
+                    continue
+            else:
+                p.action(action[:4] if action[0] == "moonraker-db" else action)
             record["actions"].append(action)
             save()
             print("Done:", describe_action(action))
-        touched = {mid for _, _, _, mods in changes for mid in mods}
+        touched = {mid for _, _, _, mods in changes for mid in mods} | set(resumed)
         restarts = {r for m in selected for r in m.get("restart", []) if m["id"] in touched}
         for name in RESTART_ORDER:
             if name in restarts:
@@ -522,7 +566,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     finally:
         save()
         if not record["complete"] and any(e.get("installed") for e in record["files"].values()):
-            print("NOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
+            print("\nNOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
                   "Do not print yet: run the installer again (it continues where it stopped), or turn the\n"
                   "printer off and on. Backup of this run: %s" % backup)
     print("Done.")
@@ -551,11 +595,39 @@ def undo_action(action):
     return None
 
 
+def host_backups(host, backups=BACKUPS):
+    """This printer's backup folders, oldest first."""
+    return sorted(b for b in backups.glob("printer-%s-*" % host.replace(":", "_")) if (b / "install.json").is_file())
+
+
+def merged_record(found):
+    """One uninstall plan from all backups of a printer (oldest first).
+
+    Each file goes back to what was there before OUR FIRST change of it (the oldest backup that
+    installed it); "changed since install" is judged against our latest version (the newest one).
+    Config files are cleaned with the newest edits. Actions are undone newest run first."""
+    files, actions = {}, []
+    for backup in found:
+        record = json.loads((backup / "install.json").read_text(encoding="utf-8"))
+        for path, entry in record["files"].items():
+            if not entry.get("installed"):
+                continue
+            if path not in files:
+                files[path] = dict(entry, _backup=backup)
+            else:
+                first = files[path]
+                first["new_sha256"] = entry["new_sha256"]
+                if entry["kind"] == "config" or first["kind"] == "config":
+                    files[path] = dict(entry, _backup=backup, kind="config")
+        actions.append(record.get("actions", []))
+    return files, [a for run in reversed(actions) for a in reversed(run)]
+
+
 def do_uninstall(p, backup):
-    record = json.loads((backup / "install.json").read_text(encoding="utf-8"))
-    for path, entry in sorted(record["files"].items()):
-        if not entry.get("installed"):
-            continue
+    found = backup if isinstance(backup, list) else [backup]
+    files, all_actions = merged_record(found)
+    for path, entry in sorted(files.items()):
+        backup = entry["_backup"]
         if entry["kind"] != "config" and p.sha(path) not in (entry["new_sha256"], None):
             print("  left alone (changed since install):", path)
             continue
@@ -578,14 +650,14 @@ def do_uninstall(p, backup):
         else:
             p.remove(path)
         print("  restored:", path)
-    for action in reversed(record.get("actions", [])):
+    for action in all_actions:
         undo = undo_action(action)
         if undo:
             p.action(undo, check=False)
     p.action(["systemctl", "daemon-reload"], check=False)
     for name in RESTART_ORDER:
         p.restart(name)
-    print("Uninstalled using", backup)
+    print("Uninstalled using %d backup(s): %s" % (len(found), ", ".join(b.name for b in found)))
 
 
 def do_uninstall_stock(p, selected):
@@ -653,6 +725,13 @@ def do_uninstall_stock(p, selected):
 
 
 # ------------------------------------------------------------------ main
+def remove_tailscale(p):
+    try:
+        tailscale_setup.uninstall(p)
+    except Exception as exc:  # the files are already back; report, do not fail the uninstall
+        print("Tailscale not removed:", exc)
+
+
 LOGS = REPO / "logs"
 
 
@@ -715,18 +794,20 @@ def main(argv=None):
         if args.command == "uninstall":
             if args.from_stock:
                 do_uninstall_stock(p, select([], [m["id"] for m in build.load_modules()]))
-                tailscale_setup.uninstall(p)
+                remove_tailscale(p)
                 return 0
-            found = [Path(args.backup)] if args.backup else \
-                sorted(BACKUPS.glob("printer-%s-*" % args.host.replace(":", "_")))
+            found = [Path(args.backup)] if args.backup else host_backups(args.host)
             if not found:
                 raise InstallError("no backup for this printer in %s - try: uninstall --from-stock" % BACKUPS)
-            do_uninstall(p, found[-1])
-            tailscale_setup.uninstall(p)
+            do_uninstall(p, found)
+            remove_tailscale(p)
             return 0
         selected = select(args.skip, args.extra)
         changes = plan(p, selected)
-        actions = pending_actions(p, selected, changes)
+        resumed = unfinished_modules(args.host)
+        if resumed:
+            print("The last install stopped before the end - its restarts are done in this run.")
+        actions = pending_actions(p, selected, changes, resumed)
         for path, _, kind, mods in changes:
             print("  %-9s %s  (%s)" % (kind, path, ", ".join(mods)))
         for mid, action in actions:
@@ -734,11 +815,11 @@ def main(argv=None):
         print("%d file(s) to change, %d action(s), %d module(s)." % (len(changes), len(actions), len(selected)))
         if args.command == "plan":
             return 0
-        if changes or actions:
+        if changes or actions or resumed:
             if input("Install now? Type yes: ").strip().lower() != "yes":
                 print("Nothing changed.")
                 return 0
-            do_install(p, selected, changes, args.host, actions=actions)
+            do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
         mode = args.tailscale
         if mode == "ask" and not sys.stdin.isatty():
             mode = "no"  # no one to ask (scripted run)

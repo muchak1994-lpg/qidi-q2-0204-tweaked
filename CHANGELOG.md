@@ -1,6 +1,19 @@
 # Changelog
 
 ## Unreleased
+- Fixes from an independent audit of the changes since 1.0 (16.11.2026):
+  - Uninstall uses **all** backups of the printer, not only the newest: a later small run (or an update) no longer
+    hides the originals saved by the first install. Files go back to what was there before our first change.
+  - A run that stopped half-way is finished by the next run: the restarts it still owed are done.
+  - Tailscale: Moonraker trusts Tailscale addresses (else Fluidd/OrcaSlicer got "401 Unauthorized"); the version
+    and its SHA-256 are pinned in the project and a newer pin is offered as an update; a half-finished install is
+    completed and stays removable (marker written first); TUN loaded at boot when it needed modprobe; the login
+    link is never written to the log; uninstall logs out first; Ctrl+C at a question is handled; a user's own
+    Tailscale is never touched.
+  - Time zone: names from the PC are cleaned (POSIX rules and paths refused, `_dstoff` handled), a zone the
+    printer does not know is skipped, and a failure no longer stops the install.
+  - Fluidd: a bed mesh card the user only collapsed is left alone.
+  - Docs: `reactor-timer-scan` does change one thing (a re-run request for a paused timer is dropped) - now said.
 - Installer: optional **Tailscale** for remote access (QIDI's cloud does not serve 02.04). Asked at the end of
   the install (default yes); the official static build is downloaded on the PC, checked by SHA-256, copied to
   the printer and started (userspace networking when the kernel has no TUN). Login link right away or later.
@@ -8,7 +21,8 @@
 - New Klipper modules from Valve-Oil (thelegendtubaguy), adapted to 02.04 and part of a normal install:
   `reactor-timer-scan` (a timer is not re-armed while its callback runs; next wake-up computed locally) and
   `webhooks-status-diff` (unchanged status objects skipped, deep comparison only when a value differs).
-  Both keep Klipper's behaviour and only save work. Prepared with Codex "Stefan".
+  `webhooks-status-diff` sends the same messages; `reactor-timer-scan` additionally drops a request to re-run a
+  timer whose callback is paused (no nested run) - nothing in Klipper's own code relies on it. Prepared with Codex "Stefan".
 - New module `printer-timezone`: the installer sets the printer's time zone to the one of the PC it runs on
   (after a reflash the printer runs on UTC). Windows zone names are mapped to IANA names with the Unicode CLDR
   table (`tools/windows_zones.py`). Uninstall puts the previous zone back.

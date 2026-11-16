@@ -6,6 +6,7 @@
 Run:  python tests/test_install.py
 """
 import json
+import time
 import hashlib
 import shutil
 import sys
@@ -128,6 +129,82 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(self.p.read("/home/qidi/printer_data/config/printer.cfg"),
                          b"[idle_timeout]\ntimeout: 43200\n\n[x]\n#*# mesh = 1\n#*# shaper = 9\n")
         self.assertIn(["chattr", "-i", "/home/qidi/download"], self.p.actions)
+
+    def test_uninstall_uses_every_backup(self):  # audit 16.11.2026: a later small run hid the first backup
+        fan = "/home/qidi/klipper/klippy/extras/fan.py"
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
+        time.sleep(1.1)  # backups are named by the second
+        # a later run that only has an action to do (e.g. a card the user switched off again)
+        extra = MODS + [{"id": "db", "order": 9, "files": {},
+                         "actions": [["moonraker-db", "fluidd", "k", "false"]]}]
+        install.do_install(self.p, extra, [], "h", backups=self.tmp)
+        time.sleep(1.1)
+        # and an upgrade run: the backup of fan.py now holds OUR earlier version, not QIDI's
+        mine = self.p.read(fan)
+        self.p.files[fan][0] = mine.replace(b"limit = 3", b"limit = 4")
+        found = install.host_backups("h", self.tmp)
+        self.assertEqual(len(found), 2)
+        install.do_uninstall(self.p, found)
+        self.assertEqual(self.p.read(fan), b"speed = 1\r\nlimit = 4\r\n")  # changed by hand since: left alone
+        self.p.files[fan][0] = mine
+        install.do_uninstall(self.p, found)
+        self.assertEqual(self.p.read(fan), STOCK[fan])
+        self.assertEqual(self.p.read("/home/qidi/printer_data/config/printer.cfg"),
+                         b"[idle_timeout]\ntimeout: 43200\n\n[x]\n#*# mesh = 1\n")
+        self.assertNotIn(("fluidd", "k"), self.p.db)  # was not there before: removed
+
+    def test_stopped_install_is_finished_by_the_next_run(self):  # audit 16.11.2026
+        changes = install.plan(self.p, MODS, built=self.built)
+        real = self.p.action
+
+        def fail(argv, check=True):
+            raise install.InstallError("boom")
+        self.p.action = fail
+        with self.assertRaises(install.InstallError):
+            install.do_install(self.p, MODS, changes, "h", backups=self.tmp)
+        self.assertEqual(self.p.restarts, [])
+        self.p.action = real
+        time.sleep(1.1)
+        self.assertEqual(install.unfinished_modules("h", self.tmp), {"fan", "idle"})
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
+        self.assertEqual(self.p.restarts, ["klipper"])
+        self.assertEqual(install.unfinished_modules("h", self.tmp), set())
+
+    def test_time_zone_problem_does_not_stop_the_install(self):  # audit 16.11.2026
+        mods = MODS + [{"id": "tz", "order": 9, "files": {}, "actions": [["pc-timezone"]]}]
+        saved = install.pc_timezone
+        install.pc_timezone = lambda: "Europe/Kyiv"
+        real = self.p.action
+
+        def no_such_zone(argv, check=True):
+            if argv[0] == "timezone":
+                raise install.InstallError("printer command failed (1): timedatectl")
+            real(argv, check)
+        self.p.action = no_such_zone
+        try:
+            install.do_install(self.p, mods, install.plan(self.p, mods, built=self.built), "h", backups=self.tmp)
+        finally:
+            install.pc_timezone = saved
+        self.assertEqual(self.p.restarts, ["klipper"])
+        self.assertEqual(self.p.tz, "Etc/UTC")
+
+    def test_zone_unknown_to_the_printer_is_skipped(self):
+        saved = install.pc_timezone
+        install.pc_timezone = lambda: "Europe/Kyiv"
+        self.p.has_timezone = lambda zone: False
+        try:
+            self.assertIsNone(install.resolve_action(self.p, ["pc-timezone"]))
+        finally:
+            install.pc_timezone = saved
+
+    def test_pc_zone_names_cleaned(self):
+        for raw, zone in ((":Europe/Warsaw", "Europe/Warsaw"), ("/usr/share/zoneinfo/Europe/Warsaw", "Europe/Warsaw"),
+                          ("CET-1CEST,M3.5.0,M10.5.0/3", None), (":/etc/localtime", None), ("", None)):
+            self.assertEqual(install.clean_timezone(raw), zone, raw)
+
+    def test_collapsed_mesh_card_is_left_alone(self):
+        layouts = {"dashboard": {"c": [{"id": "bed-mesh-card", "enabled": True, "collapsed": True}]}}
+        self.assertIsNone(install.fluidd_layouts_with_card(json.dumps(layouts), "bed-mesh-card"))
 
     def test_actions_only_when_needed(self):
         mods = MODS + [{"id": "svc", "order": 4, "files": {"/home/qidi/klipper/klippy/extras/fan.py": {}},
