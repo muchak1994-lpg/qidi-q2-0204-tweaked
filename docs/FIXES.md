@@ -49,6 +49,8 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `heater-comm-loss-message` | On a lost board connection a heater error can be reported before the real cause. | 7 s instead of 5 s before a heater's temperature counts as stale (Klipper 46912431). |
 | `serialqueue-clock-margin` | Messages scheduled far ahead have no margin against a 31-bit clock overflow on the boards. | Wider margin (Klipper 867d73f0). |
 | `probe-retry-fix` | When a probe point's two samples disagree (bed mesh, Z tilt), the nozzle load cell is re-zeroed with the nozzle still pressed on the bed - the next samples trigger in the air - and the retry count starts over, so a point that never agrees is probed forever and print start hangs. | Re-zero after the nozzle lifts, as before every point; at most `samples_tolerance_retries` retries, then an error. Same fix as Valve-Oil (Max 4, Plus 5). |
+| `reactor-timer-scan` | Klipper's timer loop could re-arm a timer while its own callback was still running, and recalculated the next wake-up the long way. | A timer is not re-armed while its callback runs (cleared safely with try/finally); the next wake-up is computed locally. Same result, less work. From Valve-Oil (thelegendtubaguy), adapted to 02.04. |
+| `webhooks-status-diff` | Klipper compares every status object for every client (Fluidd, Moonraker, screen) on each update, also when nothing changed, and runs QIDI's deep comparison even for equal values. | Unchanged status objects are skipped and the deep comparison runs only when a value differs. The same messages are sent, with less work. From Valve-Oil (thelegendtubaguy), adapted to 02.04. |
 
 ## Macros and configuration
 

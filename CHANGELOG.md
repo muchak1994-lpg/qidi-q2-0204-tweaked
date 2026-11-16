@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- New Klipper modules from Valve-Oil (thelegendtubaguy), adapted to 02.04 and part of a normal install:
+  `reactor-timer-scan` (a timer is not re-armed while its callback runs; next wake-up computed locally) and
+  `webhooks-status-diff` (unchanged status objects skipped, deep comparison only when a value differs).
+  Both keep Klipper's behaviour and only save work. Prepared with Codex "Stefan".
 - New module `printer-timezone`: the installer sets the printer's time zone to the one of the PC it runs on
   (after a reflash the printer runs on UTC). Windows zone names are mapped to IANA names with the Unicode CLDR
   table (`tools/windows_zones.py`). Uninstall puts the previous zone back.

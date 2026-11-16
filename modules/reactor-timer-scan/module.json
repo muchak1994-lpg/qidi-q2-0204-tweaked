@@ -1,0 +1,24 @@
+{
+ "id": "reactor-timer-scan",
+ "order": 140,
+ "title": "Klipper reactor: prevent timer callback re-arming and reduce timer scan overhead",
+ "files": {
+  "/home/qidi/klipper/klippy/reactor.py": {
+   "stock_sha256": "9791f202e994334184d880047a2681377b226fabfd78a711f353ac042cce4771",
+   "edits": [
+    [
+     "    def update_timer(self, timer_handler, waketime):\r\n        timer_handler.waketime = waketime\r\n        self._next_timer = min(self._next_timer, waketime)\r\n",
+     "    def update_timer(self, timer_handler, waketime):\r\n        # Do not re-arm a timer while its callback is paused in another greenlet.\r\n        if getattr(timer_handler, \"timer_is_running\", False):\r\n            return\r\n        timer_handler.waketime = waketime\r\n        self._next_timer = min(self._next_timer, waketime)\r\n"
+    ],
+    [
+     "    def _check_timers(self, eventtime, busy):\r\n        if eventtime < self._next_timer:\r\n            if busy:\r\n                return 0.\r\n            if self._check_gc:\r\n                gi = gc.get_count()\r\n                if gi[0] >= 700:\r\n                    # Reactor looks idle and gc is due - run it\r\n                    gc_level = 0\r\n                    if gi[1] >= 10:\r\n                        gc_level = 1\r\n                        if gi[2] >= 10:\r\n                            gc_level = 2\r\n                    self._last_gc_times[gc_level] = eventtime\r\n                    gc.collect(gc_level)\r\n                    return 0.\r\n            return min(1., max(.001, self._next_timer - eventtime))\r\n        self._next_timer = self.NEVER\r\n        g_dispatch = self._g_dispatch\r\n        for t in self._timers:\r\n            waketime = t.waketime\r\n            if eventtime >= waketime:\r\n                t.waketime = self.NEVER\r\n                t.waketime = waketime = t.callback(eventtime)\r\n                if g_dispatch is not self._g_dispatch:\r\n                    self._next_timer = min(self._next_timer, waketime)\r\n                    self._end_greenlet(g_dispatch)\r\n                    return 0.\r\n            self._next_timer = min(self._next_timer, waketime)\r\n        return 0.\r\n",
+     "    def _check_timers(self, eventtime, busy):\r\n        if eventtime < self._next_timer:\r\n            if busy:\r\n                return 0.\r\n            if self._check_gc:\r\n                gi = gc.get_count()\r\n                if gi[0] >= 700:\r\n                    # Reactor looks idle and gc is due - run it\r\n                    gc_level = 0\r\n                    if gi[1] >= 10:\r\n                        gc_level = 1\r\n                        if gi[2] >= 10:\r\n                            gc_level = 2\r\n                    self._last_gc_times[gc_level] = eventtime\r\n                    gc.collect(gc_level)\r\n                    return 0.\r\n            return min(1., max(.001, self._next_timer - eventtime))\r\n        # Keep the scan minimum local; callbacks may still lower _next_timer.\r\n        never = self._next_timer = self.NEVER\r\n        next_timer = never\r\n        g_dispatch = self._g_dispatch\r\n        for t in self._timers:\r\n            waketime = t.waketime\r\n            if eventtime >= waketime:\r\n                t.waketime = never\r\n                t.timer_is_running = True\r\n                try:\r\n                    t.waketime = waketime = t.callback(eventtime)\r\n                finally:\r\n                    t.timer_is_running = False\r\n                if g_dispatch is not self._g_dispatch:\r\n                    self._next_timer = min(self._next_timer, next_timer, waketime)\r\n                    self._end_greenlet(g_dispatch)\r\n                    return 0.\r\n            if waketime < next_timer:\r\n                next_timer = waketime\r\n        if next_timer < self._next_timer:\r\n            self._next_timer = next_timer\r\n        return 0.\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "Backport of the Valve-Oil (thelegendtubaguy) timer improvements to QIDI's 02.04 Klipper. update_timer() ignores attempts to re-arm a timer while its own callback is running (or paused in another greenlet); the callback's running flag is cleared with try/finally. _check_timers() keeps the scan minimum in a local variable. Reviewed: the printer behaves the same (a re-arm during the callback was overwritten by the callback's return value anyway; the minimum comes out the same), it only does less work. Restarts Klipper."
+}
