@@ -10,7 +10,7 @@ Community fixes and small improvements for the **QIDI Q2** 3D printer running fi
 
 ## What it fixes
 
-58 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light,
+60 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light,
 filament drying fixes), Klipper fixes (bed mesh probe retries, homing, fuzzy skin, hotend fan, QIDI Box heaters
 and fan threshold, MCU errors, safe settings saving and more, several from upstream Klipper), macros (Z homing
 guard, load temperature after a hotter filament, drying from Fluidd), Moonraker/Fluidd fixes, stable Ethernet MAC,

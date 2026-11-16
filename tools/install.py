@@ -24,6 +24,7 @@ import argparse
 import base64
 import getpass
 import hashlib
+import os
 import io
 import json
 import posixpath
@@ -127,6 +128,14 @@ class SSHPrinter:
             self._run("curl -sf -X POST -H 'Content-Type: application/json' -d %s "
                       "http://127.0.0.1:7125/server/database/item >/dev/null" % shlex.quote(body), check=check)
             return
+        if argv[0] == "moonraker-db-delete":
+            # ["moonraker-db-delete", namespace, key]: the entry was not there before the install
+            self._run("curl -s -X DELETE 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s'"
+                      " >/dev/null" % (argv[1], argv[2]), check=check)
+            return
+        if argv[0] == "timezone":
+            self._run("timedatectl set-timezone %s" % shlex.quote(argv[1]), sudo=True, check=check)
+            return
         if argv[:2] == ["chattr", "+i"]:
             # a freshly flashed printer has no /home/qidi/download yet: make it, then lock it
             self._run("mkdir -p %s && chattr +i %s" % (shlex.quote(argv[2]), shlex.quote(argv[2])),
@@ -143,8 +152,13 @@ class SSHPrinter:
         except (ValueError, KeyError, TypeError):
             return None
 
+    def timezone(self):
+        return self._run("timedatectl show -p Timezone --value 2>/dev/null || true").decode().strip() or None
+
     def needs(self, argv):
         """False when a state-type action is already in effect (so it is skipped)."""
+        if argv[0] == "timezone":
+            return self.timezone() != argv[1]
         if argv[0] == "moonraker-db":
             current = self.db_value(argv[1], argv[2])
             return current is None or json.loads(current) != json.loads(argv[3])
@@ -339,8 +353,79 @@ STATE_ACTIONS = (("chattr", "+i"), ("systemctl", "enable"), ("systemctl", "disab
 
 
 def is_state_action(action):
-    """Lock a folder, enable/disable a service, or set a Moonraker database entry."""
-    return tuple(action[:2]) in STATE_ACTIONS or action[0] == "moonraker-db"
+    """Lock a folder, enable/disable a service, set a Moonraker database entry or the time zone."""
+    return (tuple(action[:2]) in STATE_ACTIONS
+            or action[0] in ("moonraker-db", "timezone", "pc-timezone", "fluidd-card"))
+
+
+def pc_timezone():
+    """The IANA time zone of the PC the installer runs on, or None."""
+    import subprocess
+    if os.name == "nt":
+        from windows_zones import WINDOWS_TO_IANA
+        try:
+            name = subprocess.run(["tzutil", "/g"], capture_output=True, text=True, timeout=10).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return WINDOWS_TO_IANA.get(name)
+    if os.environ.get("TZ", "").count("/") >= 1:
+        return os.environ["TZ"].lstrip(":")
+    real = os.path.realpath("/etc/localtime")
+    return real.split("zoneinfo/", 1)[1] if "zoneinfo/" in real else None
+
+
+# Fluidd's own default dashboard (QIDI's Fluidd 1.30.5 bundle), used when the printer has none saved yet
+FLUIDD_DEFAULT_DASHBOARD = {
+    "container1": [{"id": i, "enabled": e, "collapsed": False} for i, e in (
+        ("printer-status-card", True), ("box-card", True), ("spoolman-card", False), ("camera-card", True),
+        ("toolhead-card", True), ("macros-card", False), ("outputs-card", True), ("runout-sensors-card", False),
+        ("printer-limits-card", False), ("retract-card", False))],
+    "container2": [{"id": i, "enabled": e, "collapsed": False} for i, e in (
+        ("temperature-card", True), ("sensors-card", True), ("console-card", True), ("jobs-card", True),
+        ("job-queue-card", False), ("gcode-preview-card", False), ("bed-mesh-card", False))],
+}
+
+
+def fluidd_layouts_with_card(current, card):
+    """Fluidd's saved layouts with `card` switched on in every dashboard layout (None: already on)."""
+    layouts = json.loads(current) if current else {}
+    if not isinstance(layouts, dict):
+        layouts = {}
+    layouts = json.loads(json.dumps(layouts))
+    if not any(name.startswith("dashboard") for name in layouts):
+        layouts["dashboard"] = json.loads(json.dumps(FLUIDD_DEFAULT_DASHBOARD))
+    changed = False
+    for name, layout in layouts.items():
+        if not name.startswith("dashboard") or not isinstance(layout, dict):
+            continue
+        cards = [c for col in layout.values() if isinstance(col, list) for c in col if isinstance(c, dict)]
+        found = [c for c in cards if c.get("id") == card]
+        if not found:
+            last = [col for col in layout.values() if isinstance(col, list)]
+            if last:
+                last[-1].append({"id": card, "enabled": True, "collapsed": False})
+                changed = True
+        for c in found:
+            if not c.get("enabled") or c.get("collapsed"):
+                c["enabled"], c["collapsed"] = True, False
+                changed = True
+    return layouts if changed else None
+
+
+def resolve_action(p, action):
+    """Turn an action that depends on the PC or on the printer's current settings into a plain one.
+
+    ["pc-timezone"] -> ["timezone", <the PC's zone>]
+    ["fluidd-card", <card>] -> ["moonraker-db", "fluidd", "layout.layouts", <layouts with the card on>]
+    None when there is nothing to do (or the PC's zone is not known)."""
+    if action[0] == "pc-timezone":
+        zone = pc_timezone()
+        return ["timezone", zone] if zone else None
+    if action[0] == "fluidd-card":
+        current = p.db_value("fluidd", "layout.layouts") if hasattr(p, "db_value") else None
+        layouts = fluidd_layouts_with_card(current, action[1])
+        return None if layouts is None else ["moonraker-db", "fluidd", "layout.layouts", json.dumps(layouts)]
+    return action
 
 
 def pending_actions(p, selected, changes):
@@ -354,7 +439,8 @@ def pending_actions(p, selected, changes):
     for m in selected:
         for action in m.get("actions", []):
             if is_state_action(action):
-                if p.needs(action):
+                action = resolve_action(p, action)
+                if action is not None and p.needs(action):
                     out.append((m["id"], action))
             elif m["id"] in touched:
                 out.append((m["id"], action))
@@ -362,6 +448,17 @@ def pending_actions(p, selected, changes):
 
 
 # ------------------------------------------------------------------ install / uninstall
+def progress(what, n, total):
+    """One line that counts up, e.g. "Backup  12/203  [#####-----]"; a new line at the end."""
+    if total <= 0:
+        return
+    width = 30
+    done = int(width * n / total)
+    end = "\n" if n >= total else ""
+    sys.stdout.write("\r%s %4d/%d  [%s%s]%s" % (what, n, total, "#" * done, "-" * (width - done), end))
+    sys.stdout.flush()
+
+
 def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = backups / ("printer-%s-%s" % (host.replace(":", "_"), stamp))
@@ -369,10 +466,18 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     index = firmware.load_index()["files"]
     record = {"host": host, "time": stamp, "version": VERSION, "modules": [m["id"] for m in selected],
               "files": {}, "actions": [], "complete": False}
-    for path, new, kind, mods in changes:
+    stock = [path for path, _, kind, _ in changes if kind == "replace" and path in index]
+    if stock:
+        print("Backup: reading %d original file(s) from QIDI's official package (one pass, can take a minute)..."
+              % len(stock), flush=True)
+        stock = firmware.extract_many(stock)
+    else:
+        stock = {}
+    for n, (path, new, kind, mods) in enumerate(changes, 1):
+        progress("Backup", n, len(changes))
         entry = {"modules": mods, "kind": kind, "new_sha256": sha(new)}
         if kind != "new":
-            old = firmware.extract(path) if kind == "replace" and path in index else p.read(path)
+            old = stock[path] if path in stock else p.read(path)
             target = backup / "files" / path.lstrip("/")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(old)
@@ -385,7 +490,8 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     save()
     print("Backup on the PC (%d file(s)): %s" % (len(changes), backup))
     try:
-        for path, new, kind, mods in changes:
+        for n, (path, new, kind, mods) in enumerate(changes, 1):
+            progress("Installing", n, len(changes))
             st = record["files"][path].get("stat")
             owner, group, mode = st if st else default_owner(path)
             p.install(new, path, owner, group, mode)
@@ -397,12 +503,14 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
         for mid, action in actions:
             if action[0] == "moonraker-db" and hasattr(p, "db_value"):
                 before = p.db_value(action[1], action[2])  # put back exactly this on uninstall
-                if before is not None:
-                    action = action[:4] + [before]
-            p.action(action[:4] if action[0] == "moonraker-db" else action)
+                # nothing there before: the module's factory value if it names one, else remove it again
+                action = action[:4] + [before if before is not None else (action[4] if len(action) > 4 else None)]
+            if action[0] == "timezone" and hasattr(p, "timezone"):
+                action = action[:2] + [p.timezone()]  # the zone before, for uninstall
+            p.action(action[:4] if action[0] == "moonraker-db" else action[:2] if action[0] == "timezone" else action)
             record["actions"].append(action)
             save()
-            print("Done:", " ".join(action))
+            print("Done:", describe_action(action))
         touched = {mid for _, _, _, mods in changes for mid in mods}
         restarts = {r for m in selected for r in m.get("restart", []) if m["id"] in touched}
         for name in RESTART_ORDER:
@@ -420,10 +528,22 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None):
     return backup
 
 
+def describe_action(action):
+    if action[0] == "moonraker-db" and len(action[3]) > 60:
+        return "moonraker-db %s %s (%d characters)" % (action[1], action[2], len(action[3]))
+    if action[0] == "timezone":
+        return "timezone %s" % action[1]
+    return " ".join(str(a) for a in action[:4] if a is not None)
+
+
 def undo_action(action):
     if action[0] == "moonraker-db":
-        # optional 5th element: the value to put back on uninstall (QIDI's factory value)
-        return action[:3] + [action[4]] if len(action) > 4 else None
+        # 5th element: the value to put back on uninstall; None = there was none, so remove it again
+        if len(action) > 4:
+            return action[:3] + [action[4]] if action[4] is not None else ["moonraker-db-delete"] + action[1:3]
+        return None
+    if action[0] == "timezone":
+        return ["timezone", action[2]] if len(action) > 2 and action[2] else None
     for key, fn in UNDO_ACTIONS.items():
         if tuple(action[:2]) == key:
             return fn(action)
@@ -542,6 +662,8 @@ class _Tee(io.TextIOBase):
 
     def write(self, text):
         self.stream.write(text)
+        if text.startswith("\r") and not text.endswith("\n"):
+            return len(text)  # a progress line that is still counting: only its last state goes in the log
         try:
             self.log.write(text)
             self.log.flush()
@@ -603,7 +725,7 @@ def main(argv=None):
         for path, _, kind, mods in changes:
             print("  %-9s %s  (%s)" % (kind, path, ", ".join(mods)))
         for mid, action in actions:
-            print("  action    %s  (%s)" % (" ".join(action), mid))
+            print("  action    %s  (%s)" % (describe_action(action), mid))
         print("%d file(s) to change, %d action(s), %d module(s)." % (len(changes), len(actions), len(selected)))
         if args.command == "plan" or not (changes or actions):
             return 0

@@ -1,0 +1,12 @@
+{
+ "id": "printer-timezone",
+ "order": 14,
+ "title": "Printer clock in the time zone of your PC (the installer sets it)",
+ "files": {},
+ "actions": [
+  [
+   "pc-timezone"
+  ]
+ ],
+ "note": "After a reflash the printer runs on UTC, so the time in Fluidd, in the print history and in the logs is off by an hour or two. The installer reads the time zone of the PC it runs on (Windows: tzutil, mapped to the IANA name with the Unicode CLDR table in tools/windows_zones.py; Linux/macOS: /etc/localtime) and sets the printer to it with timedatectl. If the PC's zone cannot be read, nothing is changed. Uninstall puts the previous zone back."
+}

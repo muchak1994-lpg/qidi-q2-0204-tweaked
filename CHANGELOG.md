@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+- New module `printer-timezone`: the installer sets the printer's time zone to the one of the PC it runs on
+  (after a reflash the printer runs on UTC). Windows zone names are mapped to IANA names with the Unicode CLDR
+  table (`tools/windows_zones.py`). Uninstall puts the previous zone back.
+- New module `fluidd-bed-mesh-card`: the bed mesh card is switched on on Fluidd's dashboard (QIDI ships it off),
+  so a mesh can be loaded after homing and its deviations seen in 3D. The saved layout is kept and put back on
+  uninstall.
+- Installer: the backup reads all original files from QIDI's package in one pass instead of one pass per file
+  (it took very long on a fresh install), and the backup and the install show a progress bar.
+- Installer: a Moonraker database entry that did not exist before the install is removed again on uninstall.
+
 ## 1.0.0 - 2026-11-14
 First release. Tested with a full reflash (eMMC by USB-C, USB updates 1.1.1 -> 02.01 -> 02.04) and an install
 from a fresh copy of the project on 14.11.2026.

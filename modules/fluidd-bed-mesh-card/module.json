@@ -1,0 +1,13 @@
+{
+ "id": "fluidd-bed-mesh-card",
+ "order": 119,
+ "title": "Fluidd: the bed mesh card on the dashboard (load a mesh after homing and see the deviations)",
+ "files": {},
+ "actions": [
+  [
+   "fluidd-card",
+   "bed-mesh-card"
+  ]
+ ],
+ "note": "QIDI's Fluidd ships with the bed mesh card switched off on the dashboard (it is only on the Tune page). The installer switches it on in Fluidd's saved layout on the printer (Moonraker database, fluidd / layout.layouts), so after homing you can load or calibrate a mesh and see the deviations in 3D right on the dashboard, in every browser. Other cards and your own arrangement are kept; if no layout was saved yet, Fluidd's default one is used with the card added. Reload an open Fluidd page once. Uninstall puts the saved layout back as it was (or removes it, if there was none)."
+}
