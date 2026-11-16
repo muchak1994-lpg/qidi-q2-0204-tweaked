@@ -62,8 +62,17 @@
  "/home/qidi/klipper/klippy/chelper/serialqueue.c": [
   "3c6397a157f68a17f969608aa7d6ffd76f5d20db84eb61e1f894636505392746"
  ],
+ "/home/qidi/klipper/klippy/extras/ai_func_manager.py": [
+  "ed3346b54b1a4ea8000207bd83c751928c3351c983bf29200f0913d6dd1b1a2a"
+ ],
  "/home/qidi/klipper/klippy/extras/heaters.py": [
   "55303a73fa734e7b890ff53d269d21bb4f3e06768f7053d992419cffa9ffa9a8"
+ ],
+ "/home/qidi/klipper/klippy/extras/probe.py": [
+  "c62cc9f2dd9baba6d605a6be4b6b6d4aa0cbb48049410956a717f8266a1bb670"
+ ],
+ "/home/qidi/klipper/klippy/extras/virtual_sdcard.py": [
+  "12b102e0031654f82efb6276b007aa486dd7fb351e0856ba79e36a83b9f2f959"
  ],
  "/home/qidi/klipper/klippy/mcu.py": [
   "13d9c23da7df7d61cf23c145a987cfaaf07bbd8b98f14febad399158a4809600",

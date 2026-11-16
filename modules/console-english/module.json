@@ -1,7 +1,7 @@
 {
  "id": "console-english",
  "order": 23,
- "title": "English console messages (light sync)",
+ "title": "English console messages (light sync, AI switches, PEI check, power-loss resume)",
  "files": {
   "/home/qidi/klipper/klippy/extras/smart_output_pin.py": {
    "stock_sha256": "685bc3e031ba8cca187f6fbc18551722ad965a943a322728ed6eea118852951b",
@@ -19,6 +19,46 @@
     [
      "\n    { action_respond_info(\"SMART_STATUS 状态更新: MODE=%d, SCREEN=%d, TIMELAPSE=%d\" % (m, s, t)) }\n\n",
      "\n    { action_respond_info(\"SMART_STATUS state updated: MODE=%d, SCREEN=%d, TIMELAPSE=%d\" % (m, s, t)) }\n\n"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/extras/ai_func_manager.py": {
+   "edits": [
+    [
+     "gcmd.respond_info(f\"AI {err_type.name} 检测已 {status_str}\")",
+     "gcmd.respond_info(f\"AI {err_type.name} detection {'enabled' if state else 'disabled'}\")"
+    ],
+    [
+     "gcmd.respond_info(f\"错误: 未知的AI类型 '{type_input}'\")",
+     "gcmd.respond_info(f\"Error: unknown AI type '{type_input}'\")"
+    ],
+    [
+     "gcmd.respond_info(f\"灵敏度无效: {value_input}\")",
+     "gcmd.respond_info(f\"Invalid sensitivity: {value_input}\")"
+    ],
+    [
+     "gcmd.respond_info(f\"AI {err_type.name} 灵敏度设为: {value_input}\")",
+     "gcmd.respond_info(f\"AI {err_type.name} sensitivity set to: {value_input}\")"
+    ],
+    [
+     "gcmd.respond_info(f\"错误: 未知类型 '{type_input}'\")",
+     "gcmd.respond_info(f\"Error: unknown type '{type_input}'\")"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/extras/probe.py": {
+   "edits": [
+    [
+     "gcmd.respond_info(f\"没开启pei检测\")",
+     "gcmd.respond_info(\"PEI plate detection is not enabled\")"
+    ]
+   ]
+  },
+  "/home/qidi/klipper/klippy/extras/virtual_sdcard.py": {
+   "edits": [
+    [
+     "gcmd.respond_info(\"打印机恢复状态ing\")",
+     "gcmd.respond_info(\"Restoring the printer state (power-loss resume)\")"
     ]
    ]
   }

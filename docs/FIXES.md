@@ -43,7 +43,7 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `save-variables-atomic` | A power cut while saving settings can leave an empty settings file; Klipper then may not start. | Writes a temporary file and renames it (atomic); identical content is not rewritten. |
 | `external-slot16-literal` | After loading from the external spool holder QIDI writes `slot16`, which the settings saver rejects. | Accepts that exact value. |
 | `ai-fixes` | Pausing, resuming or cancelling while the AI foreign-object check waits breaks the print state; AI messages have broken characters. | Commands are handled correctly during the check; text encoding fixed. The foreign-object check itself stays as QIDI made it (it can be switched off on the screen); see *Camera AI* below. |
-| `console-english` | Some console messages are Chinese. | English messages. |
+| `console-english` | Some console messages are Chinese (light sync, AI switches and sensitivity, PEI plate check, power-loss resume). | English messages. |
 | `mcu-restart-shutdown` | When a board restarts on its own (e.g. a QIDI Box losing power), Klipper's shutdown code fails with an error instead of stopping cleanly. | One missing default parameter (Klipper 9ce631e8). |
 | `homing-trsync` | Homing across two boards (the Q2 homes Z with the nozzle sensor on the toolhead board): the setup messages could be scheduled too late, and an earlier timeout could be sent to the board. | Two upstream fixes (Klipper 8e6e467e, 29d4ec2d). |
 | `heater-comm-loss-message` | On a lost board connection a heater error can be reported before the real cause. | 7 s instead of 5 s before a heater's temperature counts as stale (Klipper 46912431). |
@@ -96,7 +96,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `klipper-priority` | Klipper gets the CPU first (Nice -10). |
 | `restart-on-exit` | Klipper and Moonraker also restart after a clean exit. |
 | `legacy-qidilink-cleanup` | Old QIDILink / FRP remote services turned off. |
-| `adb-root-shell-off` | QIDI's system starts Android Debug Bridge (`usbdevice.service`); on the Max 4 it gives anyone on the network a root shell without a password (port 5555, found by Valve-Oil). Turned off; skipped if the printer has no such service. Updates, recovery and reflash do not use it. |
+| `adb-root-shell-off` | QIDI's system starts Android Debug Bridge (`usbdevice.service`); it gives anyone on the network a root shell without a password (port 5555; found by Valve-Oil on the Max 4, confirmed on the Q2 02.04). Turned off; skipped if the printer has no such service. Updates, recovery and reflash do not use it. |
 | `qidi-tuning-calm` | QIDI's CPU tuning script sets priorities and exits, and systemd started it again every ~3 s, forever. Now once a minute (same settings, a drop-in file; QIDI's files unchanged). |
 | `journal-retention` | **Off by default** (`--with journal-retention`): system log kept 7 days, up to 2 GB, for diagnostics. |
 | `dns-fallback-global` | 02.04's network hook adds the Chinese public DNS 114.114.114.114 and 223.5.5.5 as fallbacks after your router's DNS; with a typical home router one of them ends up in the printer's DNS list. QIDI's 03.02 international package uses 1.1.1.1 and 8.8.8.8. That one line of the hook is changed to 1.1.1.1 and 8.8.8.8, as in 03.02; the rest of QIDI's hook stays. Takes effect at the next network connect or reboot; uninstall puts QIDI's line back. |
@@ -126,3 +126,9 @@ See the README: printer profiles "(Tweaked)" with Normal Lift and chamber fan of
   at startup, `LOAD_FILAMENT_CONTROL` / `FLOW_STOP` problems): checked against the Q2's 02.04 code, which is an older
   QIDI Box and probe code without those parts - not needed. Its Moonraker cloud-handshake fix: not ported, the Q2's
   QIDI cloud module is compiled and the fix depends on its internals.
+- Root filesystem mounted `sync`: QIDI's Rockchip start script (`rockchip.service`) switches `/` to `sync` for a
+  first-boot setup that always fails on the Q2 (the RK3308 is misspelled in the script and the packages are missing), so
+  it happens again at every start. Measured on the Q2: small
+  writes are much slower (about 2.5 ms each), but Klipper and Moonraker write their logs in separate threads and a
+  2 h 46 min print showed no timing problems. Left as it is on purpose: with `sync` nothing written is lost when the
+  printer is switched off at the mains or loses power (Z offset in `saved_variables.cfg`, history, logs).

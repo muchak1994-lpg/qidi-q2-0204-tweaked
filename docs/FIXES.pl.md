@@ -43,7 +43,7 @@ Lista: `py tools/build.py --list`; pominięcie modułu: `--skip MODUŁ`.
 | `save-variables-atomic` | Zanik prądu w trakcie zapisu ustawień może zostawić pusty plik ustawień; Klipper może potem nie wstać. | Zapis do pliku tymczasowego i podmiana (atomowo); identyczna treść nie jest przepisywana. |
 | `external-slot16-literal` | Po ładowaniu z zewnętrznej szpuli QIDI zapisuje `slot16`, czego zapis ustawień nie przyjmuje. | Przyjmuje dokładnie tę wartość. |
 | `ai-fixes` | Pauza, wznowienie lub anulowanie w trakcie czekania na kontrolę obcych obiektów AI psuje stan druku; komunikaty AI mają popsute znaki. | Komendy działają poprawnie w trakcie kontroli; kodowanie tekstu naprawione. Sama kontrola zostaje taka, jak ją zrobiło QIDI (można ją wyłączyć na ekranie); patrz *AI kamery* niżej. |
-| `console-english` | Część komunikatów w konsoli jest po chińsku. | Komunikaty po angielsku. |
+| `console-english` | Część komunikatów w konsoli jest po chińsku (synchronizacja światła, przełączniki i czułość AI, sprawdzanie płyty PEI, wznawianie po zaniku prądu). | Komunikaty po angielsku. |
 | `mcu-restart-shutdown` | Gdy płytka sama się zrestartuje (np. Box QIDI straci zasilanie), kod zatrzymania Klippera wywraca się błędem zamiast bezpiecznie zatrzymać drukarkę. | Brakujący domyślny parametr (Klipper 9ce631e8). |
 | `homing-trsync` | Bazowanie z dwiema płytkami (Q2 bazuje Z czujnikiem w dyszy na płytce głowicy): komunikaty konfiguracji mogły iść za późno, a do płytki mógł trafić krótszy limit czasu. | Dwie poprawki z Klippera (8e6e467e, 29d4ec2d). |
 | `heater-comm-loss-message` | Przy utracie połączenia z płytką najpierw może pojawić się błąd grzałki zamiast prawdziwej przyczyny. | 7 s zamiast 5 s, zanim odczyt temperatury uznawany jest za nieaktualny (Klipper 46912431). |
@@ -96,7 +96,7 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `klipper-priority` | Klipper dostaje procesor pierwszy (Nice -10). |
 | `restart-on-exit` | Klipper i Moonraker wstają same także po zwykłym wyjściu. |
 | `legacy-qidilink-cleanup` | Wyłączone stare usługi zdalne QIDILink / FRP. |
-| `adb-root-shell-off` | System QIDI uruchamia Android Debug Bridge (`usbdevice.service`); w Max 4 daje każdemu w sieci powłokę roota bez hasła (port 5555, znalezione przez Valve-Oil). Wyłączone; pomijane, jeśli drukarka nie ma takiej usługi. Aktualizacje, recovery i reflash z niego nie korzystają. |
+| `adb-root-shell-off` | System QIDI uruchamia Android Debug Bridge (`usbdevice.service`); daje każdemu w sieci powłokę roota bez hasła (port 5555; znalezione przez Valve-Oil w Max 4, potwierdzone w Q2 02.04). Wyłączone; pomijane, jeśli drukarka nie ma takiej usługi. Aktualizacje, recovery i reflash z niego nie korzystają. |
 | `qidi-tuning-calm` | Skrypt strojenia CPU od QIDI ustawia priorytety i kończy pracę, a systemd uruchamiał go ponownie co ~3 s, bez końca. Teraz raz na minutę (te same ustawienia, plik drop-in; pliki QIDI bez zmian). |
 | `journal-retention` | **Domyślnie wyłączony** (`--with journal-retention`): logi systemowe 7 dni, do 2 GB, do diagnostyki. |
 | `dns-fallback-global` | Skrypt sieci w 02.04 dopisuje po DNS z routera chińskie publiczne DNS 114.114.114.114 i 223.5.5.5 jako zapasowe; przy typowym routerze domowym jeden z nich trafia na listę DNS drukarki. Międzynarodowa paczka QIDI 03.02 używa 1.1.1.1 i 8.8.8.8. Ta jedna linijka skryptu jest zmieniona na 1.1.1.1 i 8.8.8.8, jak w 03.02; reszta skryptu QIDI zostaje. Działa od następnego połączenia z siecią albo restartu; deinstalacja przywraca linijkę QIDI. |
@@ -126,3 +126,9 @@ Patrz README: profile drukarek „(Tweaked)” z podnoszeniem Z „Normalne” i
   `INIT_RFID_READ` przy starcie, problemy `LOAD_FILAMENT_CONTROL` / `FLOW_STOP`): sprawdzone z kodem 02.04 w Q2, który ma
   starszy kod Boxa i czujnika bez tych części - niepotrzebne. Ich poprawka łączenia z chmurą w Moonrakerze: nie przeniesiona,
   moduł chmury QIDI w Q2 jest skompilowany, a poprawka zależy od jego wnętrza.
+- Główny system plików zamontowany z `sync`: skrypt startowy Rockchipa od QIDI (`rockchip.service`) przełącza `/` na
+  `sync` na czas konfiguracji pierwszego startu, która w Q2 zawsze się nie udaje (literówka w nazwie RK3308 w skrypcie i
+  brak paczek), więc dzieje się to przy każdym starcie. Pomiar na Q2: drobne
+  zapisy są dużo wolniejsze (ok. 2,5 ms każdy), ale Klipper i Moonraker zapisują logi w osobnych wątkach, a druk
+  2 h 46 min nie miał żadnych problemów z czasem. Zostawione celowo: przy `sync` nic zapisanego nie ginie po wyłączeniu
+  drukarki wyłącznikiem albo zaniku prądu (Z-offset w `saved_variables.cfg`, historia, logi).
