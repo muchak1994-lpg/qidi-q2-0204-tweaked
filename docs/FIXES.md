@@ -96,8 +96,8 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `klipper-priority` | Klipper gets the CPU first (Nice -10). |
 | `restart-on-exit` | Klipper and Moonraker also restart after a clean exit. |
 | `legacy-qidilink-cleanup` | Old QIDILink / FRP remote services turned off. |
-| `adb-root-shell-off` | QIDI's system starts Android Debug Bridge (`usbdevice.service`); it gives anyone on the network a root shell without a password (port 5555; found by Valve-Oil on the Max 4, confirmed on the Q2 02.04). Turned off; skipped if the printer has no such service. Updates, recovery and reflash do not use it. |
-| `qidi-tuning-calm` | QIDI's CPU tuning script sets priorities and exits, and systemd started it again every ~3 s, forever. Now once a minute (same settings, a drop-in file; QIDI's files unchanged). |
+| `adb-root-shell-off` | QIDI's system starts Android Debug Bridge (`usbdevice.service`); it gives anyone on the network a root shell without a password (port 5555, checked on the Q2 02.04). Turned off; skipped if the printer has no such service. Updates, recovery and reflash do not use it. |
+| `qidi-tuning-calm` | QIDI's CPU tuning script sets priorities and exits, and systemd started it again about every 35 s (30 s wait in the script + 3 s), forever. Now about every 1.5 min (same settings, a drop-in file; QIDI's files unchanged). |
 | `journal-retention` | **Off by default** (`--with journal-retention`): system log kept 7 days, up to 2 GB, for diagnostics. |
 | `dns-fallback-global` | 02.04's network hook adds the Chinese public DNS 114.114.114.114 and 223.5.5.5 as fallbacks after your router's DNS; with a typical home router one of them ends up in the printer's DNS list. QIDI's 03.02 international package uses 1.1.1.1 and 8.8.8.8. That one line of the hook is changed to 1.1.1.1 and 8.8.8.8, as in 03.02; the rest of QIDI's hook stays. Takes effect at the next network connect or reboot; uninstall puts QIDI's line back. |
 

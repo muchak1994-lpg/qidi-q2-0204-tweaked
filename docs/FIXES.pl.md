@@ -96,8 +96,8 @@ Twoja kalibracja (blok `#*# SAVE_CONFIG`) zostaje: w Twoich plikach zmieniane s�
 | `klipper-priority` | Klipper dostaje procesor pierwszy (Nice -10). |
 | `restart-on-exit` | Klipper i Moonraker wstają same także po zwykłym wyjściu. |
 | `legacy-qidilink-cleanup` | Wyłączone stare usługi zdalne QIDILink / FRP. |
-| `adb-root-shell-off` | System QIDI uruchamia Android Debug Bridge (`usbdevice.service`); daje każdemu w sieci powłokę roota bez hasła (port 5555; znalezione przez Valve-Oil w Max 4, potwierdzone w Q2 02.04). Wyłączone; pomijane, jeśli drukarka nie ma takiej usługi. Aktualizacje, recovery i reflash z niego nie korzystają. |
-| `qidi-tuning-calm` | Skrypt strojenia CPU od QIDI ustawia priorytety i kończy pracę, a systemd uruchamiał go ponownie co ~3 s, bez końca. Teraz raz na minutę (te same ustawienia, plik drop-in; pliki QIDI bez zmian). |
+| `adb-root-shell-off` | System QIDI uruchamia Android Debug Bridge (`usbdevice.service`); daje każdemu w sieci powłokę roota bez hasła (port 5555, sprawdzone na Q2 02.04). Wyłączone; pomijane, jeśli drukarka nie ma takiej usługi. Aktualizacje, recovery i reflash z niego nie korzystają. |
+| `qidi-tuning-calm` | Skrypt strojenia CPU od QIDI ustawia priorytety i kończy pracę, a systemd uruchamiał go ponownie mniej więcej co 35 s (30 s czekania w skrypcie + 3 s), bez końca. Teraz mniej więcej co 1,5 min (te same ustawienia, plik drop-in; pliki QIDI bez zmian). |
 | `journal-retention` | **Domyślnie wyłączony** (`--with journal-retention`): logi systemowe 7 dni, do 2 GB, do diagnostyki. |
 | `dns-fallback-global` | Skrypt sieci w 02.04 dopisuje po DNS z routera chińskie publiczne DNS 114.114.114.114 i 223.5.5.5 jako zapasowe; przy typowym routerze domowym jeden z nich trafia na listę DNS drukarki. Międzynarodowa paczka QIDI 03.02 używa 1.1.1.1 i 8.8.8.8. Ta jedna linijka skryptu jest zmieniona na 1.1.1.1 i 8.8.8.8, jak w 03.02; reszta skryptu QIDI zostaje. Działa od następnego połączenia z siecią albo restartu; deinstalacja przywraca linijkę QIDI. |
 

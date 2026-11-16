@@ -1,4 +1,7 @@
 {
+ "/etc/systemd/system/qidi-tuning.service.d/q2-calm.conf": [
+  "be46f3f0bb8e28943e7631e4d554d49cfe2005b4b9d0aa48af8415b9a9ef9619"
+ ],
  "/home/qidi/QIDI_Client/bin/qidiclient": [
   "08ef92701e3cabf57f82296250a9db4655c5d54ddc139f412e8ddf6ea813b46e",
   "4eca6bf30adca34181a2f05f237877de3579210dbc9a28660efd0c283d0451c6",

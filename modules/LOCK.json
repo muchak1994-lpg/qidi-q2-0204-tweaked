@@ -5,7 +5,7 @@
  "/etc/systemd/system/klipper.service.d/q2-klipper-priority.conf": "f2b270d46e3a721edb20a8a4a8f4b217319abd059344a1289edd6e4d269a06a6",
  "/etc/systemd/system/klipper.service.d/q2-restart-on-exit.conf": "45ceeddca25433b4f3b1485439a575f223de7af527cacddc5e125d268206f7bb",
  "/etc/systemd/system/moonraker.service.d/q2-restart-on-exit.conf": "45ceeddca25433b4f3b1485439a575f223de7af527cacddc5e125d268206f7bb",
- "/etc/systemd/system/qidi-tuning.service.d/q2-calm.conf": "be46f3f0bb8e28943e7631e4d554d49cfe2005b4b9d0aa48af8415b9a9ef9619",
+ "/etc/systemd/system/qidi-tuning.service.d/q2-calm.conf": "ca9e2c336c1a7579866a1284801a94a4e15d75a566c30ac2d4985fd34ad06237",
  "/home/qidi/QIDI_Client/bin/qidiclient": "06e0473e2cd1c494b5984d77b1db623a4955f5ff21764182a0b2c5915fe3dab7",
  "/home/qidi/fix-fluidd-upload-print.sh": "865c08e748ac3c6e94074d957e0b6a5b5ac073b6af8b2bae67bb840b512a5564",
  "/home/qidi/fluidd/assets/index-DlFvHGAh.js": "5283e69f0101288d518f16d0b456b625b3d2f57d56f4f3cc3edee448970c788c",

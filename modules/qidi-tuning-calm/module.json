@@ -1,7 +1,7 @@
 {
  "id": "qidi-tuning-calm",
  "order": 21,
- "title": "QIDI's CPU tuning script runs once a minute instead of every few seconds",
+ "title": "QIDI's CPU tuning script runs about every 1.5 min instead of every ~35 s",
  "files": {
   "/etc/systemd/system/qidi-tuning.service.d/q2-calm.conf": {
    "source": "files/q2-calm.conf"
@@ -13,5 +13,5 @@
    "daemon-reload"
   ]
  ],
- "note": "qidi-tuning.service runs QIDI's tuning.sh (Type=simple, Restart=always, RestartSec=3). The script sets CPU affinity and priorities for Klipper, Moonraker, nginx, the camera and the screen program, pins the MCU serial and USB interrupts, and exits - so systemd started it again about every 3-5 seconds, forever, each run walking the process list (seen on the Max 4 by Valve-Oil: 8528 restarts in 3.5 days; the Q2 02.04 unit and script are the same). A drop-in sets RestartSec=60: the same settings, re-applied once a minute (e.g. after Klipper restarts). QIDI's files are not changed. Uninstall removes the drop-in."
+ "note": "qidi-tuning.service runs QIDI's tuning.sh (Type=simple, Restart=always, RestartSec=3). The script sets CPU affinity and priorities for Klipper, Moonraker, nginx, the camera and the screen program, pins the MCU serial and USB interrupts, and exits after its 30 s start-up wait - so systemd started it again about every 35 s, forever, each run walking the process list (seen on the Q2: 22 restarts in the first 13 minutes). A drop-in sets RestartSec=60: the same settings, re-applied about every 1.5 min (e.g. after Klipper restarts). QIDI's files are not changed. Uninstall removes the drop-in."
 }

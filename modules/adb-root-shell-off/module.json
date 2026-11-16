@@ -11,5 +11,5 @@
    "usbdevice.service"
   ]
  ],
- "note": "QIDI's Rockchip system image starts Android Debug Bridge (adbd) through Rockchip's usbdevice.service; on the Max 4 it runs as root on TCP port 5555 with no authentication, so any device on the printer's network gets a root shell without a password (found by Valve-Oil, thelegendtubaguy, Max 4 firmware 01.01.07.01). The service only provides ADB. The installer stops and disables it. If the printer has no such service, nothing is done. QIDI's update and recovery do not use ADB (updates go by USB stick or the update package). Uninstall turns it back on (QIDI's state)."
+ "note": "QIDI's Rockchip system image starts Android Debug Bridge (adbd) through Rockchip's usbdevice.service. On the Q2 02.04 adbd runs as root and listens on TCP port 5555 on every network interface (ADB_TCP_PORT=5555, shell /bin/bash), so any device on the printer's network can get a root shell without a password. The service sets up only the ADB USB function (checked on the printer: /var/run/.usbdevice = adb). The installer stops and disables it; if the printer has no such service, nothing is done. QIDI's updates, recovery and reflash do not use ADB. Uninstall turns it back on (QIDI's state)."
 }
