@@ -112,7 +112,7 @@ Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Źródło każd
 [docs/FIXES.pl.md](docs/FIXES.pl.md). Podziękowania dla:
 
 - [Klipper](https://github.com/Klipper3d/klipper) - Kevin O'Connor i współautorzy (GPL-3.0): kilka przeniesionych poprawek.
-- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): poprawka powtórzeń pomiaru, taka sama jak u nich dla Max 4 / Plus 5.
+- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): poprawka powtórzeń pomiaru, taka sama jak u nich dla Max 4 / Plus 5, oraz optymalizacje timerów i wysyłania statusu w Klipperze (dostosowane do 02.04).
 - [n3oney](https://github.com/qidi-community/q2-wiki/tree/main/content/randomize-probing) (wiki Q2 qidi-community): pomysł losowego punktu bazowania Z, żeby rozłożyć zużycie płyty.
 - AFSFigueiredo ([QIDI #34](https://github.com/QIDITECH/QIDI_Q2/issues/34)): poprawka podtrzymania grzałek Boxa, przetestowana na ponad 8000 zmian filamentu.
 - ValitovTimur ([QIDI #23](https://github.com/QIDITECH/QIDI_Q2/issues/23)): analiza błędu „Min or 0” grzałki Boxa i poprawka, którą wdraża `box-fixes`.

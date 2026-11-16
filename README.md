@@ -112,7 +112,7 @@ The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Each 
 [docs/FIXES.md](docs/FIXES.md). Thanks to:
 
 - [Klipper](https://github.com/Klipper3d/klipper) - Kevin O'Connor and contributors (GPL-3.0): several upstream fixes backported.
-- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): the probe retry fix, same as theirs for the Max 4 / Plus 5.
+- [Valve-Oil](https://github.com/thelegendtubaguy/Valve-Oil) - thelegendtubaguy (GPL-3.0): the probe retry fix, same as theirs for the Max 4 / Plus 5, and the Klipper timer and status-update optimizations (adapted to 02.04).
 - [n3oney](https://github.com/qidi-community/q2-wiki/tree/main/content/randomize-probing) (qidi-community Q2 wiki): the idea of a random Z homing point to spread the wear on the plate.
 - AFSFigueiredo ([QIDI #34](https://github.com/QIDITECH/QIDI_Q2/issues/34)): the Box heater keep-alive fix, tested on 8000+ tool changes.
 - ValitovTimur ([QIDI #23](https://github.com/QIDITECH/QIDI_Q2/issues/23)): the analysis of the Box heater "Min or 0" bug and the fix that `box-fixes` implements.
