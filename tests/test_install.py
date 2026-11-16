@@ -130,6 +130,32 @@ class InstallTest(unittest.TestCase):
                          b"[idle_timeout]\ntimeout: 43200\n\n[x]\n#*# mesh = 1\n#*# shaper = 9\n")
         self.assertIn(["chattr", "-i", "/home/qidi/download"], self.p.actions)
 
+    def test_backups_follow_the_printer_not_the_address(self):  # 16.11.2026: home network + Tailscale
+        p = self.p
+        p.printer_id = lambda: "serial:abc"
+        p.known_as = lambda host: False
+        install.do_install(p, MODS, install.plan(p, MODS, built=self.built), "192.168.10.119", backups=self.tmp)
+        time.sleep(1.1)
+        install.do_install(p, MODS, [], "100.73.132.37", backups=self.tmp)
+        both = install.host_backups("100.73.132.37", self.tmp, p)
+        self.assertEqual(len(both), 2)
+        self.assertEqual(both, install.host_backups("192.168.10.119", self.tmp, p))
+        self.assertTrue(both[0].name.startswith("printer-192."))  # oldest first, by time, not by name
+        other = FakePrinter({})
+        other.printer_id = lambda: "serial:xyz"  # another printer that got the same address later
+        self.assertEqual(install.host_backups("192.168.10.119", self.tmp, other), [])
+
+    def test_old_backups_without_id(self):
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "192.168.10.119",
+                           backups=self.tmp)  # FakePrinter: no ID, like backups made before IDs
+        p = FakePrinter({})
+        p.printer_id = lambda: "serial:abc"
+        p.known_as = lambda host: host == "192.168.10.119"  # the key saved for that address is this printer's
+        self.assertEqual(len(install.host_backups("100.73.132.37", self.tmp, p)), 1)
+        p.known_as = lambda host: False
+        self.assertEqual(install.host_backups("100.73.132.37", self.tmp, p), [])
+        self.assertEqual(len(install.host_backups("192.168.10.119", self.tmp, p)), 1)  # same address
+
     def test_uninstall_uses_every_backup(self):  # audit 16.11.2026: a later small run hid the first backup
         fan = "/home/qidi/klipper/klippy/extras/fan.py"
         install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
@@ -168,6 +194,26 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(actions, [["chattr", "+i", "/home/qidi/download"]])  # only the run after the reflash
         install.do_uninstall(self.p, install.host_backups("h", self.tmp))
         self.assertEqual(self.p.read(fan), STOCK[fan])
+
+    def test_adding_a_module_later_is_not_a_first_install(self):  # 16.11.2026
+        fan = "/home/qidi/klipper/klippy/extras/fan.py"
+        cfg = "/home/qidi/printer_data/config/printer.cfg"
+        first = install.plan(self.p, MODS, built=self.built)
+        self.assertEqual(first.already_ours, 0)
+        install.do_install(self.p, MODS, first, "h", backups=self.tmp)
+        time.sleep(1.1)
+        # a newer release adds one module; the files of the others are already ours
+        mods = MODS + [{"id": "extra", "order": 4, "files": {cfg: {"base": "printer", "edits": [["[x]\n", "[x]\nnew: 1\n"]]}}}]
+        built = build.build(mods, stock_reader=lambda p: STOCK[p])
+        later = install.plan(self.p, mods, built=built)
+        self.assertGreater(later.already_ours, 0)
+        install.do_install(self.p, mods, later, "h", backups=self.tmp)
+        files, actions, complete = install.merged_record(install.host_backups("h", self.tmp))
+        self.assertTrue(complete)
+        self.assertIn(fan, files)  # the first install is still part of the uninstall
+        install.do_uninstall(self.p, install.host_backups("h", self.tmp))
+        self.assertEqual(self.p.read(fan), STOCK[fan])
+        self.assertNotIn(b"new: 1", self.p.read(cfg))
 
     def test_stopped_install_is_finished_by_the_next_run(self):  # audit 16.11.2026
         changes = install.plan(self.p, MODS, built=self.built)
@@ -426,6 +472,16 @@ class SSHActionTest(unittest.TestCase):
     def test_other_actions_unchanged(self):
         self.assertEqual(self.run_action(["systemctl", "disable", "--now", "frpc.service"]),
                          [("systemctl disable --now frpc.service", True)])
+
+    def id_for(self, reply):
+        p = install.SSHPrinter.__new__(install.SSHPrinter)
+        p._run = lambda command, sudo=False, check=True: reply.encode()
+        return p.printer_id()
+
+    def test_printer_id(self):
+        self.assertEqual(self.id_for("c3d9b8674f4b94f6\n0123456789abcdef0123456789abcdef\n"), "serial:c3d9b8674f4b94f6")
+        self.assertEqual(self.id_for("0123456789abcdef0123456789abcdef\n"), "machine:0123456789abcdef0123456789abcdef")
+        self.assertIsNone(self.id_for(""))
 
     def needs_for(self, reply):
         p = install.SSHPrinter.__new__(install.SSHPrinter)

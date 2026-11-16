@@ -84,6 +84,24 @@ class SSHPrinter:
             raise InstallError("printer command failed (%d): %s\n%s" % (code, command[:160], error.strip()[:400]))
         return data
 
+    def printer_id(self):
+        """This printer's own ID (the processor's serial number), the same over any address and after a
+        reflash - so backups made over the home network and over Tailscale belong to one printer."""
+        out = self._run("sed -n 's/.*androidboot.serialno=\\([0-9A-Za-z]*\\).*/\\1/p' /proc/cmdline; "
+                        "cat /etc/machine-id 2>/dev/null; true").decode().split()
+        if not out:
+            return None
+        return ("serial:" if len(out) > 1 or len(out[0]) != 32 else "machine:") + out[0]
+
+    def known_as(self, host):
+        """True when the SSH key saved for that address is this printer's key (backups from before printer IDs)."""
+        key = self.client.get_transport().get_remote_server_key()
+        for store in (self.client.get_host_keys(), getattr(self.client, "_system_host_keys", None)):
+            entry = store.lookup(host) if store is not None else None
+            if entry and key.get_name() in entry and entry[key.get_name()] == key:
+                return True
+        return False
+
     def sha(self, path):
         out = self._run("sha256sum %s 2>/dev/null || true" % shlex.quote(path), sudo=True).decode()
         return out.split()[0] if out.strip() else None
@@ -262,13 +280,18 @@ OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community f
                    "and run the installer again.")
 
 
+class Plan(list):
+    """The changes, plus how many of the modules' files were already our version (0 on a first install)."""
+    already_ours = 0
+
+
 def plan(p, selected, built=None):
     """[(path, new_bytes, kind, modules)] that must change on the printer."""
     files, owners = built or build.build(selected)
     index = firmware.load_index()["files"]
     history = load_history()
     by_id = {m["id"]: m for m in selected}
-    changes, problems = [], []
+    changes, problems = Plan(), []
     shas = p.sha_many(sorted(files)) if hasattr(p, "sha_many") else {f: p.sha(f) for f in files}
     for path in sorted(files):
         mods = [by_id[mid] for mid in owners[path]]
@@ -284,10 +307,14 @@ def plan(p, selected, built=None):
                 continue
             if new != current:
                 changes.append((path, new, "config", owners[path]))
+            elif strip_config_edits(current, mods, path) != current:
+                changes.already_ours += 1
             continue
         new = files[path]
         current = shas[path]
         if current == sha(new):
+            if current != index.get(path, {}).get("sha256"):
+                changes.already_ours += 1
             continue
         if current is None:
             changes.append((path, new, "new", owners[path]))
@@ -456,9 +483,9 @@ def resolve_action(p, action):
     return action
 
 
-def unfinished_modules(host, backups=BACKUPS):
+def unfinished_modules(host, backups=BACKUPS, p=None):
     """Modules whose files the newest run put on the printer before it stopped (restarts still owed)."""
-    found = host_backups(host, backups)
+    found = host_backups(host, backups, p)
     if not found:
         return set()
     record = json.loads((found[-1] / "install.json").read_text(encoding="utf-8"))
@@ -500,12 +527,14 @@ def progress(what, n, total):
 
 def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resumed=None):
     if resumed is None:
-        resumed = unfinished_modules(host, backups)
+        resumed = unfinished_modules(host, backups, p)
     stamp = time.strftime("%Y%m%d-%H%M%S")
     backup = backups / ("printer-%s-%s" % (host.replace(":", "_"), stamp))
     (backup / "files").mkdir(parents=True)
     index = firmware.load_index()["files"]
-    record = {"host": host, "time": stamp, "version": VERSION, "modules": [m["id"] for m in selected],
+    record = {"host": host, "printer_id": _printer_id(p), "time": stamp, "version": VERSION,
+              "already_ours": getattr(changes, "already_ours", None),
+              "modules": [m["id"] for m in selected],
               "files": {}, "actions": [], "complete": False}
     stock = [path for path, _, kind, _ in changes if kind == "replace" and path in index]
     if stock:
@@ -598,15 +627,53 @@ def undo_action(action):
     return None
 
 
-def host_backups(host, backups=BACKUPS):
-    """This printer's backup folders, oldest first."""
-    return sorted(b for b in backups.glob("printer-%s-*" % host.replace(":", "_")) if (b / "install.json").is_file())
+def _printer_id(p):
+    get = getattr(p, "printer_id", None)
+    try:
+        return get() if get else None
+    except Exception:  # an ID is a help, never a reason to stop
+        return None
+
+
+def host_backups(host, backups=BACKUPS, p=None):
+    """This printer's backup folders, oldest first - whichever address (home network, Tailscale) was used.
+
+    A backup belongs to the printer when it carries the same printer ID. Older backups (no ID yet) belong to
+    it when they were made over the same address, or over an address whose saved SSH key is this printer's."""
+    pid = _printer_id(p)
+    known_as = getattr(p, "known_as", None)
+    found = []
+    for b in backups.glob("printer-*-*"):
+        try:
+            record = json.loads((b / "install.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        other = record.get("host") or b.name[len("printer-"):].rsplit("-", 2)[0]
+        if pid and record.get("printer_id"):
+            mine = record["printer_id"] == pid
+        elif other.replace(":", "_") == host.replace(":", "_"):
+            mine = True
+        else:
+            try:
+                mine = bool(known_as and known_as(other))
+            except Exception:
+                mine = False
+        if mine:
+            found.append((record.get("time", ""), b.name, b))
+    return [b for _, _, b in sorted(found)]
 
 
 def is_first_install(record):
-    """A run on a printer with QIDI's files (fresh or reflashed): it changed files and none was ours already."""
+    """A run on a printer with QIDI's files (fresh or reflashed): it changed files and none was ours already.
+
+    Runs record how many of the modules' files were already our version; a run that only added new modules
+    to an installed printer is therefore not mistaken for a first install. Records without that number
+    (1.0) are judged by their own files: no "upgrade" among them."""
     kinds = [e.get("kind") for e in record.get("files", {}).values() if e.get("installed")]
-    return bool(kinds) and "upgrade" not in kinds
+    if not kinds or "upgrade" in kinds:
+        return False
+    already = record.get("already_ours")
+    return already is None or already == 0
 
 
 def merged_record(found):
@@ -817,7 +884,7 @@ def main(argv=None):
                 do_uninstall_stock(p, select([], [m["id"] for m in build.load_modules()]))
                 remove_tailscale(p)
                 return 0
-            found = [Path(args.backup)] if args.backup else host_backups(args.host)
+            found = [Path(args.backup)] if args.backup else host_backups(args.host, BACKUPS, p)
             if not found:
                 raise InstallError("no backup for this printer in %s - try: uninstall --from-stock" % BACKUPS)
             do_uninstall(p, found)
@@ -825,7 +892,7 @@ def main(argv=None):
             return 0
         selected = select(args.skip, args.extra)
         changes = plan(p, selected)
-        resumed = unfinished_modules(args.host)
+        resumed = unfinished_modules(args.host, BACKUPS, p)
         if resumed:
             print("The last install stopped before the end - its restarts are done in this run.")
         actions = pending_actions(p, selected, changes, resumed)

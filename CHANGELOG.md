@@ -10,6 +10,12 @@
     homing" on tool changes (QIDI_Q2 #33); 250 ms instead of 50 ms only for homing that involves a Box board.
   - Root filesystem `sync` (QIDI's failing Rockchip first-boot script): measured and left as it is on purpose -
     nothing is lost when the printer is switched off at the mains; see docs/FIXES.md, Not included.
+- Installer: a printer is recognised by its own ID (the processor's serial number), not by the address used. Backups
+  made over the home network and over Tailscale now belong to the same printer (uninstall and resumed runs see all of
+  them, oldest first by time). Older backups without an ID are matched by address or by the printer's saved SSH key.
+- Installer: a run that only adds new modules to an already installed printer is no longer taken for a first
+  install (each run now records how many of the modules' files were already ours). Before, uninstall after such a run
+  would have put back only the newly added modules.
 - `console-english`: the last 7 Chinese console messages (AI switches and sensitivity, PEI plate check, power-loss
   resume) are now English.
 - Fixes from an independent audit of the changes since 1.0 (16.11.2026):
