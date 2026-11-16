@@ -1,0 +1,15 @@
+{
+ "id": "adb-root-shell-off",
+ "order": 15,
+ "title": "QIDI's ADB root shell off (anyone on the network could get root on the printer without a password)",
+ "files": {},
+ "actions": [
+  [
+   "systemctl",
+   "disable",
+   "--now",
+   "usbdevice.service"
+  ]
+ ],
+ "note": "QIDI's Rockchip system image starts Android Debug Bridge (adbd) through Rockchip's usbdevice.service; on the Max 4 it runs as root on TCP port 5555 with no authentication, so any device on the printer's network gets a root shell without a password (found by Valve-Oil, thelegendtubaguy, Max 4 firmware 01.01.07.01). The service only provides ADB. The installer stops and disables it. If the printer has no such service, nothing is done. QIDI's update and recovery do not use ADB (updates go by USB stick or the update package). Uninstall turns it back on (QIDI's state)."
+}

@@ -51,6 +51,7 @@ Sources in brackets: **QIDI #nn** = issue in [QIDITECH/QIDI_Q2](https://github.c
 | `probe-retry-fix` | When a probe point's two samples disagree (bed mesh, Z tilt), the nozzle load cell is re-zeroed with the nozzle still pressed on the bed - the next samples trigger in the air - and the retry count starts over, so a point that never agrees is probed forever and print start hangs. | Re-zero after the nozzle lifts, as before every point; at most `samples_tolerance_retries` retries, then an error. Same fix as Valve-Oil (Max 4, Plus 5). |
 | `reactor-timer-scan` | Klipper's timer loop could re-arm a timer while its own callback was still running, and recalculated the next wake-up the long way. | A timer is not re-armed while its callback runs or is paused (no nested run; cleared safely with try/finally); the next wake-up is computed locally. One deliberate change: a request to run a paused timer again 'now' is dropped - nothing in Klipper's own code relies on it. From Valve-Oil (thelegendtubaguy), adapted to 02.04. |
 | `webhooks-status-diff` | Klipper compares every status object for every client (Fluidd, Moonraker, screen) on each update, also when nothing changed, and runs QIDI's deep comparison even for equal values. | Unchanged status objects are skipped and the deep comparison runs only when a value differs. The same messages are sent, with less work. From Valve-Oil (thelegendtubaguy), adapted to 02.04. |
+| `box-homing-timeout` | **Off by default** (`--with box-homing-timeout`). With 3 or more QIDI Boxes a tool change can stop the print with "Communication timeout during homing" (QIDI_Q2 #33): homing that involves a Box board gets only 50 ms for the boards to answer each other. | Homing that involves a Box board gets 250 ms (Klipper's own single-board value); Z homing and everything else keep 50 ms. Based on the issue report - not tested here (no Box). |
 
 ## Macros and configuration
 
@@ -95,6 +96,8 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `klipper-priority` | Klipper gets the CPU first (Nice -10). |
 | `restart-on-exit` | Klipper and Moonraker also restart after a clean exit. |
 | `legacy-qidilink-cleanup` | Old QIDILink / FRP remote services turned off. |
+| `adb-root-shell-off` | QIDI's system starts Android Debug Bridge (`usbdevice.service`); on the Max 4 it gives anyone on the network a root shell without a password (port 5555, found by Valve-Oil). Turned off; skipped if the printer has no such service. Updates, recovery and reflash do not use it. |
+| `qidi-tuning-calm` | QIDI's CPU tuning script sets priorities and exits, and systemd started it again every ~3 s, forever. Now once a minute (same settings, a drop-in file; QIDI's files unchanged). |
 | `journal-retention` | **Off by default** (`--with journal-retention`): system log kept 7 days, up to 2 GB, for diagnostics. |
 | `dns-fallback-global` | 02.04's network hook adds the Chinese public DNS 114.114.114.114 and 223.5.5.5 as fallbacks after your router's DNS; with a typical home router one of them ends up in the printer's DNS list. QIDI's 03.02 international package uses 1.1.1.1 and 8.8.8.8. That one line of the hook is changed to 1.1.1.1 and 8.8.8.8, as in 03.02; the rest of QIDI's hook stays. Takes effect at the next network connect or reboot; uninstall puts QIDI's line back. |
 

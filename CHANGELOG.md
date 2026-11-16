@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- From reviewing Valve-Oil's (thelegendtubaguy) Max 4 findings and QIDI_Q2 issues against 02.04:
+  - `adb-root-shell-off`: QIDI's ADB service (root shell without a password over the network on the Max 4) is
+    turned off; skipped when the printer has no such service. Installer: enabling/disabling a service the printer
+    does not have is now skipped instead of failing.
+  - `qidi-tuning-calm`: QIDI's CPU tuning script ran again every ~3 s forever; now once a minute.
+  - `box-homing-timeout` (optional, `--with box-homing-timeout`): 3+ QIDI Boxes - "Communication timeout during
+    homing" on tool changes (QIDI_Q2 #33); 250 ms instead of 50 ms only for homing that involves a Box board.
 - Fixes from an independent audit of the changes since 1.0 (16.11.2026):
   - Uninstall uses **all** backups of the printer, not only the newest: a later small run (or an update) no longer
     hides the originals saved by the first install. Files go back to what was there before our first change.

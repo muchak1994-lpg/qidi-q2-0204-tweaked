@@ -172,9 +172,12 @@ class SSHPrinter:
             return not out.strip() or "i" not in out.split()[0]
         if argv[:2] == ["systemctl", "enable"] or argv[:2] == ["systemctl", "disable"]:
             unit = argv[-1]
-            out = self._run("systemctl is-enabled %s 2>/dev/null; systemctl is-active %s 2>/dev/null; true"
-                            % (shlex.quote(unit), shlex.quote(unit)), sudo=True).decode().split()
-            enabled, active = (out + ["", ""])[:2]
+            out = self._run("systemctl cat %s >/dev/null 2>&1 && echo present || echo missing; "
+                            "systemctl is-enabled %s 2>/dev/null; systemctl is-active %s 2>/dev/null; true"
+                            % ((shlex.quote(unit),) * 3), sudo=True).decode().split()
+            present, enabled, active = (out + ["", "", ""])[:3]
+            if present == "missing":
+                return False  # this printer has no such service: nothing to do (and nothing to undo)
             if argv[1] == "enable":
                 return not (enabled == "enabled" and active == "active")
             return not (enabled in ("disabled", "masked", "") and active != "active")

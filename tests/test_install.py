@@ -427,6 +427,19 @@ class SSHActionTest(unittest.TestCase):
         self.assertEqual(self.run_action(["systemctl", "disable", "--now", "frpc.service"]),
                          [("systemctl disable --now frpc.service", True)])
 
+    def needs_for(self, reply):
+        p = install.SSHPrinter.__new__(install.SSHPrinter)
+        p._run = lambda command, sudo=False, check=True: reply.encode()
+        return p.needs(["systemctl", "disable", "--now", "usbdevice.service"])
+
+    def test_disable_skipped_when_service_missing(self):  # e.g. no ADB service on this printer
+        self.assertFalse(self.needs_for("missing\ninactive\n"))
+
+    def test_disable_needed_when_enabled(self):
+        self.assertTrue(self.needs_for("present\nenabled\nactive\n"))
+
+    def test_disable_skipped_when_already_off(self):
+        self.assertFalse(self.needs_for("present\ndisabled\ninactive\n"))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
