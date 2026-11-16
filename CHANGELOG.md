@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Installer: optional **Tailscale** for remote access (QIDI's cloud does not serve 02.04). Asked at the end of
+  the install (default yes); the official static build is downloaded on the PC, checked by SHA-256, copied to
+  the printer and started (userspace networking when the kernel has no TUN). Login link right away or later.
+  Uninstall removes it only if the installer added it (marker in /etc/default/tailscaled). `--tailscale ask|yes|no`.
 - New Klipper modules from Valve-Oil (thelegendtubaguy), adapted to 02.04 and part of a normal install:
   `reactor-timer-scan` (a timer is not re-armed while its callback runs; next wake-up computed locally) and
   `webhooks-status-diff` (unchanged status objects skipped, deep comparison only when a value differs).

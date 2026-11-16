@@ -66,6 +66,16 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 - A module can be left out with `--skip MODULE` (list: `py tools/build.py --list`).
 - The Ethernet MAC fix takes effect after the next reboot.
 
+### Remote access (optional Tailscale)
+
+QIDI's cloud does not serve printers on 02.04, so the QIDI app cannot reach the printer from outside your home.
+At the end of the install the installer offers **Tailscale** (free, by tailscale.com): Fluidd, OrcaSlicer
+uploads and the camera from anywhere, privately - only devices logged in to your own Tailscale account can
+reach the printer. Answer Enter (yes) or `n`. The official build is downloaded on the PC and checked by
+SHA-256; it uses about 40 MB of the printer's memory. The installer can show the login link right away, or you
+log in later (run the installer again, or over SSH: `sudo tailscale up --accept-dns=false --hostname=qidi-q2`).
+`--tailscale yes|no` answers the question in advance. Uninstall removes Tailscale if the installer added it.
+
 ## Go back
 
 ```

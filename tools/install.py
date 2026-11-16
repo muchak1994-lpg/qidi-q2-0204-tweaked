@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build  # noqa: E402
 import firmware  # noqa: E402
+import tailscale_setup  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
 VERSION = (REPO / "VERSION").read_text(encoding="utf-8").strip() if (REPO / "VERSION").is_file() else "dev"
@@ -696,6 +697,8 @@ def main(argv=None):
     ap.add_argument("--skip", action="append", default=[], help="leave this module out")
     ap.add_argument("--with", dest="extra", action="append", default=[],
                     help="also install an optional module that is off by default (e.g. journal-retention)")
+    ap.add_argument("--tailscale", choices=("ask", "yes", "no"), default="ask",
+                    help="install: optional Tailscale for remote access (ask = ask in the window)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
     ap.add_argument("--from-stock", action="store_true",
                     help="uninstall without a PC backup, using the originals from the official 02.04 package")
@@ -712,12 +715,14 @@ def main(argv=None):
         if args.command == "uninstall":
             if args.from_stock:
                 do_uninstall_stock(p, select([], [m["id"] for m in build.load_modules()]))
+                tailscale_setup.uninstall(p)
                 return 0
             found = [Path(args.backup)] if args.backup else \
                 sorted(BACKUPS.glob("printer-%s-*" % args.host.replace(":", "_")))
             if not found:
                 raise InstallError("no backup for this printer in %s - try: uninstall --from-stock" % BACKUPS)
             do_uninstall(p, found[-1])
+            tailscale_setup.uninstall(p)
             return 0
         selected = select(args.skip, args.extra)
         changes = plan(p, selected)
@@ -727,12 +732,20 @@ def main(argv=None):
         for mid, action in actions:
             print("  action    %s  (%s)" % (describe_action(action), mid))
         print("%d file(s) to change, %d action(s), %d module(s)." % (len(changes), len(actions), len(selected)))
-        if args.command == "plan" or not (changes or actions):
+        if args.command == "plan":
             return 0
-        if input("Install now? Type yes: ").strip().lower() != "yes":
-            print("Nothing changed.")
-            return 0
-        do_install(p, selected, changes, args.host, actions=actions)
+        if changes or actions:
+            if input("Install now? Type yes: ").strip().lower() != "yes":
+                print("Nothing changed.")
+                return 0
+            do_install(p, selected, changes, args.host, actions=actions)
+        mode = args.tailscale
+        if mode == "ask" and not sys.stdin.isatty():
+            mode = "no"  # no one to ask (scripted run)
+        try:
+            tailscale_setup.offer(p, mode)
+        except Exception as exc:  # optional extra: never fail the install because of it
+            print("Tailscale step skipped:", exc)
         return 0
     except (InstallError, build.BuildError) as exc:
         print("STOPPED:", exc)
