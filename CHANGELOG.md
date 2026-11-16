@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- New `adaptive-bed-mesh`: the bed mesh before a print is measured only where the first layer is printed - models,
+  wipe tower, brim and skirt, read from the file itself - plus 10 mm, not the whole plate. A quicker start for small
+  prints and fewer nozzle presses on the PEI. Whole plate as before for G29 from the screen or console, files without
+  layer markers, a first layer over most of the plate, or any error.
 - From reviewing the Q2's system and QIDI_Q2 issues against 02.04:
   - `adb-root-shell-off`: QIDI's ADB service (root shell without a password over the network on the Max 4) is
     turned off; skipped when the printer has no such service. Installer: enabling/disabling a service the printer
