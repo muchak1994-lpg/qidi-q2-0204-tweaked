@@ -153,6 +153,22 @@ class InstallTest(unittest.TestCase):
                          b"[idle_timeout]\ntimeout: 43200\n\n[x]\n#*# mesh = 1\n")
         self.assertNotIn(("fluidd", "k"), self.p.db)  # was not there before: removed
 
+    def test_backups_from_before_a_reflash_are_ignored(self):
+        fan = "/home/qidi/klipper/klippy/extras/fan.py"
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
+        time.sleep(1.1)
+        # reflash: QIDI's files again (an old-looking file of ours is NOT on the printer any more)
+        self.p.files[fan][0] = STOCK[fan]
+        self.p.files["/home/qidi/printer_data/config/printer.cfg"][0] = b"[idle_timeout]\ntimeout: 43200\n"
+        self.p.actions.clear()
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
+        files, actions, complete = install.merged_record(install.host_backups("h", self.tmp))
+        self.assertTrue(complete)
+        self.assertEqual({e["_backup"] for e in files.values()}, {install.host_backups("h", self.tmp)[-1]})
+        self.assertEqual(actions, [["chattr", "+i", "/home/qidi/download"]])  # only the run after the reflash
+        install.do_uninstall(self.p, install.host_backups("h", self.tmp))
+        self.assertEqual(self.p.read(fan), STOCK[fan])
+
     def test_stopped_install_is_finished_by_the_next_run(self):  # audit 16.11.2026
         changes = install.plan(self.p, MODS, built=self.built)
         real = self.p.action

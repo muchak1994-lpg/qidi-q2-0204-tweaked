@@ -600,15 +600,29 @@ def host_backups(host, backups=BACKUPS):
     return sorted(b for b in backups.glob("printer-%s-*" % host.replace(":", "_")) if (b / "install.json").is_file())
 
 
-def merged_record(found):
-    """One uninstall plan from all backups of a printer (oldest first).
+def is_first_install(record):
+    """A run on a printer with QIDI's files (fresh or reflashed): it changed files and none was ours already."""
+    kinds = [e.get("kind") for e in record.get("files", {}).values() if e.get("installed")]
+    return bool(kinds) and "upgrade" not in kinds
 
-    Each file goes back to what was there before OUR FIRST change of it (the oldest backup that
-    installed it); "changed since install" is judged against our latest version (the newest one).
-    Config files are cleaned with the newest edits. Actions are undone newest run first."""
+
+def merged_record(found):
+    """One uninstall plan from the backups of a printer (oldest first).
+
+    Backups older than the newest first install (e.g. from before a reflash) no longer describe the
+    printer and are left out. Each file goes back to what was there before OUR FIRST change of it
+    (the oldest backup that installed it); "changed since install" is judged against our latest
+    version (the newest one). Config files are cleaned with the newest edits. Actions are undone
+    newest run first. Returns (files, actions, complete) - complete is False when no first install
+    is among the backups (the originals may then be missing)."""
+    records = [(b, json.loads((b / "install.json").read_text(encoding="utf-8"))) for b in found]
+    start, complete = 0, False
+    for i in range(len(records) - 1, -1, -1):
+        if is_first_install(records[i][1]):
+            start, complete = i, True
+            break
     files, actions = {}, []
-    for backup in found:
-        record = json.loads((backup / "install.json").read_text(encoding="utf-8"))
+    for backup, record in records[start:]:
         for path, entry in record["files"].items():
             if not entry.get("installed"):
                 continue
@@ -620,12 +634,16 @@ def merged_record(found):
                 if entry["kind"] == "config" or first["kind"] == "config":
                     files[path] = dict(entry, _backup=backup, kind="config")
         actions.append(record.get("actions", []))
-    return files, [a for run in reversed(actions) for a in reversed(run)]
+    return files, [a for run in reversed(actions) for a in reversed(run)], complete
 
 
 def do_uninstall(p, backup):
     found = backup if isinstance(backup, list) else [backup]
-    files, all_actions = merged_record(found)
+    files, all_actions, complete = merged_record(found)
+    if not complete:
+        print("Note: no backup of a first install of this printer was found (lost, or made in another project\n"
+              "folder). Files that were already ours before the oldest backup cannot be put back from it;\n"
+              "afterwards run: py tools/install.py uninstall --from-stock --host <IP>  to be sure.")
     for path, entry in sorted(files.items()):
         backup = entry["_backup"]
         if entry["kind"] != "config" and p.sha(path) not in (entry["new_sha256"], None):

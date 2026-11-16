@@ -4,6 +4,8 @@
 - Fixes from an independent audit of the changes since 1.0 (16.11.2026):
   - Uninstall uses **all** backups of the printer, not only the newest: a later small run (or an update) no longer
     hides the originals saved by the first install. Files go back to what was there before our first change.
+    Backups from before the newest first install (e.g. before a reflash) are left out; if no first-install
+    backup is found, uninstall says so and points to `--from-stock`.
   - A run that stopped half-way is finished by the next run: the restarts it still owed are done.
   - Tailscale: Moonraker trusts Tailscale addresses (else Fluidd/OrcaSlicer got "401 Unauthorized"); the version
     and its SHA-256 are pinned in the project and a newer pin is offered as an update; a half-finished install is
