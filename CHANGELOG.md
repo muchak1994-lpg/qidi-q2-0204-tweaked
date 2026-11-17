@@ -1,6 +1,8 @@
 # Changelog
 
 ## Unreleased
+- New module power-loss-resume-homing: resuming after a real power cut no longer ends in a Klipper shutdown while X/Y
+  home (QIDITECH/klipper#18) - X and Y are switched on before homing.
 - New `adaptive-bed-mesh`: the bed mesh before a print is measured only where the first layer is printed - models,
   wipe tower, brim and skirt, read from the file itself - plus 10 mm, not the whole plate. A quicker start for small
   prints and fewer nozzle presses on the PEI. Whole plate as before for G29 from the screen or console, files without

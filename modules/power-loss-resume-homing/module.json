@@ -1,0 +1,20 @@
+{
+ "id": "power-loss-resume-homing",
+ "order": 142,
+ "title": "Power-loss resume: no Klipper shutdown while homing X/Y (QIDITECH/klipper #18)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/virtual_sdcard.py": {
+   "stock_sha256": "2d230a7bc27141599283a35264d1f43edd47a2a1cc3d529f5ed72669e9ae59ae",
+   "edits": [
+    [
+     "            \"M400\", \r\n            \"G28 X Y\",\r\n",
+     "            \"M400\", \r\n            # q2-tweaked (power-loss-resume-homing): switch X/Y on (TMC set-up and phase offset)\r\n            # before homing - not in the middle of the homing move (QIDITECH/klipper#18).\r\n            \"SET_STEPPER_ENABLE STEPPER=stepper_x ENABLE=1\",\r\n            \"SET_STEPPER_ENABLE STEPPER=stepper_y ENABLE=1\",\r\n            \"M400\",\r\n            \"G4 P1000\",\r\n            \"G28 X Y\",\r\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "After a real power cut the X/Y stepper drivers come back reset. QIDI's resume sequence (virtual_sdcard.py) homes X and Y straight away; the steppers are first switched on by the homing move itself, and Klipper's TMC code then pauses the toolhead to measure the motor phase - in the middle of the homing ('drip') move. That raises DripModeEndSignal in the main loop: 'Homing failed due to printer shutdown', every time (reported with logs in QIDITECH/klipper#18 on a Q2). Fix, as validated there with repeated real power cuts: switch X and Y on, wait for the moves and one second, then home. Only the resume-after-power-loss sequence changes; normal homing is untouched. The same code is in 01.01.03.02 (and upstream Klipper's tmc.py still pauses the toolhead there)."
+}
