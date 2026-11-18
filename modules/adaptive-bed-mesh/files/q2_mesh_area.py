@@ -5,18 +5,22 @@
 q2-0204-tweaked, module adaptive-bed-mesh.
 
 QIDI's G29 (called by PRINT_START) measures the whole plate before every
-print. Q2_ADAPTIVE_MESH reads the first layer of the file being printed and
+print. TWEAKED_ADAPTIVE_MESH reads the first layer of the file being printed and
 measures only the area of everything printed on it - the models and also the
 wipe (prime) tower, brim and skirt, which the slicer's object outlines do not
 include - plus a margin. The number of probe points shrinks with the area,
 keeping the configured point spacing (at least 3 x 3).
+
+The command name must not start with a letter followed by a digit ("Q2_..."):
+Klipper would read that as the traditional G-code "Q2" and QIDI's Klipper drops
+unknown commands without a message.
 
 The whole plate is measured, as before, when no file is printing (a G29 from
 the screen or the console), when the file has no layer markers, when the first
 layer cannot be read within the limits below, or when it covers most of the
 plate anyway.
 
-    Q2_ADAPTIVE_MESH PROFILE=kamp
+    TWEAKED_ADAPTIVE_MESH PROFILE=kamp
 """
 import logging
 import math
@@ -139,7 +143,7 @@ class Q2MeshArea:
         self.printer = config.get_printer()
         self.margin = config.getfloat('margin', MARGIN, minval=0.)
         gcode = self.printer.lookup_object('gcode')
-        gcode.register_command('Q2_ADAPTIVE_MESH', self.cmd_Q2_ADAPTIVE_MESH,
+        gcode.register_command('TWEAKED_ADAPTIVE_MESH', self.cmd_TWEAKED_ADAPTIVE_MESH,
                                desc="Bed mesh only where the first layer of the printing file is")
 
     def _mesh_settings(self):
@@ -179,7 +183,7 @@ class Q2MeshArea:
             return None, "first layer not found in the file"
         return bbox, None
 
-    def cmd_Q2_ADAPTIVE_MESH(self, gcmd):
+    def cmd_TWEAKED_ADAPTIVE_MESH(self, gcmd):
         profile = gcmd.get('PROFILE', 'default')
         base = "BED_MESH_CALIBRATE PROFILE=%s" % profile
         try:

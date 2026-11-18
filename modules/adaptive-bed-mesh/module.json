@@ -14,10 +14,16 @@
    "edits": [
     [
      "        BED_MESH_CALIBRATE PROFILE=kamp       \n",
-     "        Q2_ADAPTIVE_MESH PROFILE=kamp\n"
+     "        TWEAKED_ADAPTIVE_MESH PROFILE=kamp\n"
     ]
    ],
    "previous": [
+    [
+     [
+      "        BED_MESH_CALIBRATE PROFILE=kamp       \n",
+      "        Q2_ADAPTIVE_MESH PROFILE=kamp\n"
+     ]
+    ],
     [
      [
       "        BED_MESH_CALIBRATE PROFILE=kamp       \n",
@@ -30,5 +36,5 @@
  "restart": [
   "klipper"
  ],
- "note": "Before every print QIDI's PRINT_START measures a fresh bed mesh (G29 with k=1, the default) over the whole plate: 6 x 6 = 36 points with the nozzle probe, even for a small part. G29 now calls Q2_ADAPTIVE_MESH, which reads the first layer of the file being printed (between the first two layer markers) and measures only the area of everything extruded on it - the models and also the wipe tower, brim and skirt, which the slicer's object outlines do not include - plus 10 mm. The probe count shrinks with the area (at least 3 x 3, same spacing; Klipper's own rules). The whole plate is measured as before when no file is printing (G29 from the screen or the console), when the file has no layer markers or the first layer is not found in the first 32 MB, when the first layer covers most of the plate, or on any error. The file is read in small steps so heaters and board communication keep running. QIDI's start purge line at the front edge comes before the first layer and is not part of the area (as with any mesh, outside the measured area Klipper uses the nearest edge values). The saved-mesh setting (k=0) is not changed."
+ "note": "Before every print QIDI's PRINT_START measures a fresh bed mesh (G29 with k=1, the default) over the whole plate: 6 x 6 = 36 points with the nozzle probe, even for a small part. G29 now calls TWEAKED_ADAPTIVE_MESH, which reads the first layer of the file being printed (between the first two layer markers) and measures only the area of everything extruded on it - the models and also the wipe tower, brim and skirt, which the slicer's object outlines do not include - plus 10 mm. The probe count shrinks with the area (at least 3 x 3, same spacing; Klipper's own rules). The whole plate is measured as before when no file is printing (G29 from the screen or the console), when the file has no layer markers or the first layer is not found in the first 32 MB, when the first layer covers most of the plate, or on any error. The file is read in small steps so heaters and board communication keep running. QIDI's start purge line at the front edge comes before the first layer and is not part of the area (as with any mesh, outside the measured area Klipper uses the nearest edge values). The saved-mesh setting (k=0) is not changed."
 }

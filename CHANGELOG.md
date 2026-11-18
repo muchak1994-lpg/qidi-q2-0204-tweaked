@@ -7,6 +7,9 @@
   wipe tower, brim and skirt, read from the file itself - plus 10 mm, not the whole plate. A quicker start for small
   prints and fewer nozzle presses on the PEI. Whole plate as before for G29 from the screen or console, files without
   layer markers, a first layer over most of the plate, or any error.
+  Fix: its command was called Q2_ADAPTIVE_MESH, which Klipper reads as the G-code "Q2" and QIDI's Klipper
+  drops silently - G29 then measured no mesh at all. Renamed to TWEAKED_ADAPTIVE_MESH; a new test
+  (tests/test_command_names.py) checks every module command name the way Klipper parses it.
 - From reviewing the Q2's system and QIDI_Q2 issues against 02.04:
   - `adb-root-shell-off`: QIDI's ADB service (root shell without a password over the network on the Max 4) is
     turned off; skipped when the printer has no such service. Installer: enabling/disabling a service the printer

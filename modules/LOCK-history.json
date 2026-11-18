@@ -74,6 +74,9 @@
  "/home/qidi/klipper/klippy/extras/probe.py": [
   "c62cc9f2dd9baba6d605a6be4b6b6d4aa0cbb48049410956a717f8266a1bb670"
  ],
+ "/home/qidi/klipper/klippy/extras/q2_mesh_area.py": [
+  "237c943d8e33b3ab1b3697b6ce99ee2add0ee3071023a4981bfd9c3a7fc19753"
+ ],
  "/home/qidi/klipper/klippy/extras/virtual_sdcard.py": [
   "12b102e0031654f82efb6276b007aa486dd7fb351e0856ba79e36a83b9f2f959",
   "636295b63fbf5718622d3a6102a38a4c62188e3d3dde16ca6d260af786100991"
@@ -100,7 +103,8 @@
   "2ad863f0e11efd97afe8e8ac3b0e02cb4192ccc878142fccca08b274c49cff26",
   "0caadbb3cc5eb3345e6614306d00f721e7772b654001f18279a292737c1746d8",
   "01a7cd7b706f95f5101733619d6693d8189c14f58ffd6927a06be6e9afb9f6e6",
-  "4c951f453cced4a16262ea3c3764ab599b03fa28abc0af3d264e60f8854923bc"
+  "4c951f453cced4a16262ea3c3764ab599b03fa28abc0af3d264e60f8854923bc",
+  "29cf8082f422c8bc8963b7566bc2d7d796ed3f674a7a855064c257c6b8ca229f"
  ],
  "/home/qidi/printer_data/config/klipper-macros-qd/q2-drying-idle.cfg": [
   "f41da21824c13dd0a91f53b01b9354589969aaa627df3a647e9815896a0638af",
