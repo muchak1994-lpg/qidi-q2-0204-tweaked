@@ -118,6 +118,27 @@ Na macOS/Linux zamiast `py` wpisz `python3`. Jeśli jesteś zalogowany do konta 
 
 Profile **nie zawierają adresu drukarki ani klucza API** — połączenie ustaw sam w OrcaSlicer (ołówek przy drukarce → Połączenie).
 
+### Profile filamentów: wentylator komory według materiału
+
+Profile filamentów QIDI dla Q2 włączają wentylator obiegu komory (M106 P3) podczas druku dla PLA, PETG, TPU i nylonu;
+ogólna biblioteka filamentów OrcaSlicer (SUNLU, eSUN, Polymaker, ... `@System`) zostawia go wyłączonego dla każdego
+materiału. W `orca-profiles/filament/` jest kopia `(Tweaked)` każdego filamentu z biblioteki, którego można użyć na Q2
+(331): bierze wszystko z oryginału i ustawia tylko wentylator komory:
+
+| Materiał | Podczas druku | Po druku |
+|---|---|---|
+| PLA (PLA+, Silk, Matte, PLA-CF, ...), TPU | 100% | 0% |
+| PETG (PETG-CF, PCTG, PET-CF) | 75% | 0% |
+| Nylon (PA, PA-CF, PA-GF, PPA) | 25% – trochę wymiany powietrza, komora zostaje ciepła | 0% |
+| ABS, ASA, PC | 0% – jak QIDI: te trzymają ciepło w komorze | 0% |
+
+QIDI daje 100% dla PETG i nylonu; 75% i 25% to wybór tego projektu. Inne materiały (PP, PVA, HIPS, ...) nie mają
+profilu. Zaimportuj tylko te, których używasz: OrcaSlicer → **Plik → Importuj → Importuj konfiguracje...** → otwórz
+`orca-profiles/filament/<marka>/` i zaznacz jeden lub kilka plików. Pokazują się tylko przy wybranej drukarce Q2.
+Usunięcie: wybierz go w OrcaSlicer → ustawienia filamentu → usuń profil. Lista wszystkich:
+`orca-profiles/filament/index.tsv`. Filament, którego twoja wersja OrcaSlicer jeszcze nie zna, jest przy imporcie
+pomijany.
+
 ## Licencja i źródła
 
 Kod w tym repozytorium jest na licencji [GNU GPL v3.0](LICENSE). Źródło każdej poprawki jest wskazane w

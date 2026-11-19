@@ -1,0 +1,20 @@
+{
+    "activate_air_filtration": [
+        "1"
+    ],
+    "compatible_printers": [],
+    "compatible_printers_condition": "printer_model == \"Qidi Q2\"",
+    "complete_print_exhaust_fan_speed": [
+        "0"
+    ],
+    "during_print_exhaust_fan_speed": [
+        "25"
+    ],
+    "filament_settings_id": [
+        "DREMC PPA-CF (Tweaked)"
+    ],
+    "from": "User",
+    "inherits": "DREMC PPA-CF @System",
+    "name": "DREMC PPA-CF (Tweaked)",
+    "version": "2.4.0.19"
+}

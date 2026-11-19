@@ -119,6 +119,26 @@ On macOS/Linux use `python3` instead of `py`. If you are logged in to an Orca ac
 
 The profiles contain **no printer address or API key** — set the connection in OrcaSlicer yourself (pencil icon next to the printer → Connection).
 
+### Filament profiles: chamber fan per material
+
+QIDI's own Q2 filament profiles run the chamber circulation fan (M106 P3) during the print for PLA, PETG, TPU and
+nylon; the generic OrcaSlicer filament library (SUNLU, eSUN, Polymaker, ... `@System`) leaves it off for every
+material. `orca-profiles/filament/` has a `(Tweaked)` copy of every library filament usable on the Q2 (331): it takes
+everything from the original and only sets the chamber fan:
+
+| Material | During the print | After the print |
+|---|---|---|
+| PLA (PLA+, Silk, Matte, PLA-CF, ...), TPU | 100% | 0% |
+| PETG (PETG-CF, PCTG, PET-CF) | 75% | 0% |
+| Nylon (PA, PA-CF, PA-GF, PPA) | 25% - a little air exchange, the chamber stays warm | 0% |
+| ABS, ASA, PC | 0% - as QIDI: these keep the chamber warm | 0% |
+
+QIDI uses 100% for PETG and nylon; 75% and 25% are this project's choice. Other materials (PP, PVA, HIPS, ...) get no
+profile. Import only the ones you use: OrcaSlicer → **File → Import → Import Configs...** → open
+`orca-profiles/filament/<brand>/` and select one or more files. They show only with a Q2 printer selected. To
+remove one: select it in OrcaSlicer → the filament's settings → delete preset. The list of all of them:
+`orca-profiles/filament/index.tsv`. A filament your OrcaSlicer version does not know yet is skipped on import.
+
 ## License and credits
 
 The code in this repository is licensed under the [GNU GPL v3.0](LICENSE). Each fix's source is named in

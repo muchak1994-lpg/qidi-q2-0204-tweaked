@@ -1,0 +1,20 @@
+{
+    "activate_air_filtration": [
+        "1"
+    ],
+    "compatible_printers": [],
+    "compatible_printers_condition": "printer_model == \"Qidi Q2\"",
+    "complete_print_exhaust_fan_speed": [
+        "0"
+    ],
+    "during_print_exhaust_fan_speed": [
+        "75"
+    ],
+    "filament_settings_id": [
+        "FilAr PETG Azul Imperial (Tweaked)"
+    ],
+    "from": "User",
+    "inherits": "FilAr PETG Azul Imperial",
+    "name": "FilAr PETG Azul Imperial (Tweaked)",
+    "version": "2.4.0.19"
+}
