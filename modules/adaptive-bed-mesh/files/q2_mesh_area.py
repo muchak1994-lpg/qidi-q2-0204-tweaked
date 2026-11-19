@@ -147,7 +147,8 @@ class Q2MeshArea:
                                desc="Bed mesh only where the first layer of the printing file is")
 
     def _mesh_settings(self):
-        settings = self.printer.lookup_object('configfile').get_status()['settings']['bed_mesh']
+        eventtime = self.printer.get_reactor().monotonic()
+        settings = self.printer.lookup_object('configfile').get_status(eventtime)['settings']['bed_mesh']
 
         def pair(value):
             if isinstance(value, str):

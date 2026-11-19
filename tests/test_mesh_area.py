@@ -111,5 +111,100 @@ class AreaTest(unittest.TestCase):
         self.assertGreaterEqual(hi[1] - lo[1], 2.)
 
 
+class _Reactor:
+    def monotonic(self):
+        return 1000.
+
+    def pause(self, waketime):
+        return waketime
+
+
+class _ConfigFile:
+    def get_status(self, eventtime):  # the printer's Klipper requires eventtime (a print on 2026-11-19 failed without it)
+        return {'settings': {'bed_mesh': {'mesh_min': (10., 10.), 'mesh_max': (260., 260.),
+                                          'probe_count': (6, 6)}}}
+
+
+class _SdCard:
+    def __init__(self, path):
+        self.path = path
+
+    def file_path(self):
+        return self.path
+
+
+class _GCode:
+    def __init__(self):
+        self.scripts = []
+
+    def register_command(self, name, func, desc=None):
+        self.command = func
+
+    def run_script_from_command(self, script):
+        self.scripts.append(script)
+
+
+class _Printer:
+    def __init__(self, path):
+        self.objects = {'configfile': _ConfigFile(), 'gcode': _GCode(), 'virtual_sdcard': _SdCard(path)}
+
+    def get_reactor(self):
+        return _Reactor()
+
+    def lookup_object(self, name, default=None):
+        return self.objects.get(name, default)
+
+
+class _Config:
+    def __init__(self, printer):
+        self.printer = printer
+
+    def get_printer(self):
+        return self.printer
+
+    def getfloat(self, name, default, minval=None):
+        return default
+
+
+class _GCmd:
+    def __init__(self):
+        self.info = []
+
+    def get(self, name, default=None):
+        return {'PROFILE': 'kamp'}.get(name, default)
+
+    def respond_info(self, msg):
+        self.info.append(msg)
+
+
+class CommandTest(unittest.TestCase):
+    """The whole TWEAKED_ADAPTIVE_MESH command against Klipper-like objects."""
+
+    def run_command(self, path):
+        printer = _Printer(path)
+        q.load_config(_Config(printer))
+        gcmd = _GCmd()
+        printer.objects['gcode'].command(gcmd)
+        return gcmd.info, printer.objects['gcode'].scripts
+
+    def test_small_print_measures_only_under_the_first_layer(self):
+        import tempfile, os
+        fd, path = tempfile.mkstemp(suffix=".gcode")
+        with os.fdopen(fd, "w") as f:
+            f.write(START + LAYER1 + LAYER2)
+        try:
+            info, scripts = self.run_command(path)
+        finally:
+            os.unlink(path)
+        self.assertTrue(info[0].startswith("Bed mesh: only under the first layer"), info)
+        self.assertEqual(scripts, ["BED_MESH_CALIBRATE PROFILE=kamp MESH_MIN=110.000,110.000 "
+                                   "MESH_MAX=160.000,160.000 PROBE_COUNT=3,3"])
+
+    def test_no_file_is_whole_plate(self):
+        info, scripts = self.run_command(None)
+        self.assertEqual(info, ["Bed mesh: whole plate (no file is printing)"])
+        self.assertEqual(scripts, ["BED_MESH_CALIBRATE PROFILE=kamp"])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
