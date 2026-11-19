@@ -107,6 +107,81 @@ class OrcaProfilesTest(unittest.TestCase):
         self.assertIn("Added by this project", run("status", "--user-dir", "default", *self.common))
 
 
+class FilamentTest(unittest.TestCase):
+    """Filament profiles for the filaments enabled in OrcaSlicer, and the installer's OrcaSlicer step."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.root = self.tmp / "OrcaSlicer"
+        self.user = self.root / "user" / "default"
+        self.user.mkdir(parents=True)
+        conf = {"filaments": ["SUNLU PETG @System", "Not In Our List @System"], "models": []}
+        (self.root / "OrcaSlicer.conf").write_text(json.dumps(conf, indent=1) + "\n# MD5 checksum 0123\n",
+                                                   encoding="utf-8")
+        self.backups_before = set(op.BACKUPS.glob("*.zip")) if op.BACKUPS.is_dir() else set()
+        self.common = ("--orca-dir", str(self.root), "--skip-running-check")
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp)
+        if op.BACKUPS.is_dir():
+            for z in set(op.BACKUPS.glob("*.zip")) - self.backups_before:
+                z.unlink()
+            if not any(op.BACKUPS.iterdir()):
+                op.BACKUPS.rmdir()
+
+    def petg(self):
+        return self.user / "filament" / "SUNLU PETG (Tweaked).json"
+
+    def test_enabled_filaments(self):
+        self.assertEqual(op.enabled_filaments(self.root), ["SUNLU PETG @System", "Not In Our List @System"])
+        self.assertEqual(op.enabled_filaments(self.tmp), [])  # no OrcaSlicer.conf
+        (self.tmp / "OrcaSlicer.conf").write_text("not json", encoding="utf-8")
+        self.assertEqual(op.enabled_filaments(self.tmp), [])
+        names = [n for _, n, _ in op.filament_files(["SUNLU PETG @System", "Not In Our List @System"])]
+        self.assertEqual(names, ["SUNLU PETG (Tweaked).json", "SUNLU PETG (Tweaked).info"])
+
+    def test_install_adds_only_enabled_filaments_and_uninstall_removes_them(self):
+        run("install", "--apply", *self.common)
+        self.assertEqual(sorted(p.name for p in (self.user / "filament").iterdir()),
+                         ["SUNLU PETG (Tweaked).info", "SUNLU PETG (Tweaked).json"])
+        data = json.loads(self.petg().read_text(encoding="utf-8"))
+        self.assertEqual(data["during_print_exhaust_fan_speed"], ["75"])
+        self.assertTrue(self.user.joinpath("machine").is_dir())
+        run("uninstall", "--apply", *self.common)
+        self.assertEqual(list((self.user / "filament").iterdir()), [])
+
+    def offer(self, answer, running=False):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out), \
+                unittest.mock.patch.object(op, "orca_running", return_value=running):
+            op.offer("ask", read=lambda prompt: answer, root=self.root)
+        return out.getvalue()
+
+    def test_offer_no_changes_nothing(self):
+        out = self.offer("n")
+        self.assertIn("filaments you use, with the chamber fan set per material: 1", out)
+        self.assertFalse(self.petg().exists())
+        self.assertFalse((self.user / "machine").exists())
+
+    def test_offer_while_orca_is_open_changes_nothing(self):
+        self.assertIn("Close it", self.offer("", running=True))
+        self.assertFalse(self.petg().exists())
+        self.assertIn("Close it", self.offer("", running=None))
+
+    def test_offer_yes_adds_then_has_nothing_left(self):
+        self.offer("")
+        self.assertTrue(self.petg().exists())
+        self.assertIn("already there", self.offer(""))
+
+    def test_offer_without_orca_or_with_mode_no(self):
+        out = io.StringIO()
+        with contextlib.redirect_stdout(out):
+            op.offer("ask", read=lambda prompt: self.fail("must not ask"), root=self.tmp / "none")
+            op.offer("no", read=lambda prompt: self.fail("must not ask"), root=self.root)
+        self.assertIn("no profiles folder", out.getvalue())
+        self.assertFalse(self.petg().exists())
+
+
 class OrcaRunningTest(unittest.TestCase):
     """tasklist output in the console code page (cp852 on Polish Windows, 0xFF = thousands separator)."""
 

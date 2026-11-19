@@ -105,8 +105,10 @@ What you get:
 |---|---|
 | `Qidi Q2 0.2 / 0.4 / 0.6 / 0.8 nozzle (Tweaked)` (printers) | End G-code that also turns off the chamber circulation fan; Z-hop type **Normal Lift** instead of Auto (Auto lifts in a spiral over the model and can leave spikes). |
 | `[TL] ...` (22 processes, one per QIDI Q2 process) | Timelapse **Smooth**: the head parks at the back for every photo, with a 35 mm prime tower. Pick a process **without** `[TL]` when you do not record a timelapse — the parking costs time on every layer. |
+| `<filament> (Tweaked)` (filaments) | Chamber fan per material — see below. Added for the filaments enabled in your OrcaSlicer; the others you can import. |
 
-Install (OrcaSlicer must be closed):
+The installer (`install.bat` / `tools/install.py install`) asks at the end whether to add them on the computer it
+runs on (`--orca yes|no` to answer in advance). Or by hand (OrcaSlicer must be closed):
 
 ```
 py tools/orca_profiles.py install            # shows what it would add
@@ -134,9 +136,11 @@ everything from the original and only sets the chamber fan:
 | ABS, ASA, PC | 0% - as QIDI: these keep the chamber warm | 0% |
 
 QIDI uses 100% for PETG and nylon; 75% and 25% are this project's choice. Other materials (PP, PVA, HIPS, ...) get no
-profile. Import only the ones you use: OrcaSlicer → **File → Import → Import Configs...** → open
-`orca-profiles/filament/<brand>/` and select one or more files. They show only with a Q2 printer selected. To
-remove one: select it in OrcaSlicer → the filament's settings → delete preset. The list of all of them:
+profile. The installer and `orca_profiles.py install` add the `(Tweaked)` copies of the filaments enabled in your
+OrcaSlicer (the ones you ticked under "Add/Remove filaments"); enable more there and run it again, or import single
+ones: OrcaSlicer → **File → Import → Import Configs...** → open `orca-profiles/filament/<brand>/` and select one or
+more `.json` files. They show only with a Q2 printer selected. To remove one: `orca_profiles.py uninstall --apply`
+(the ones it added), or in OrcaSlicer: the filament's settings → delete preset. The list of all of them:
 `orca-profiles/filament/index.tsv`. A filament your OrcaSlicer version does not know yet is skipped on import.
 
 ## License and credits

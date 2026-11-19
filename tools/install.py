@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build  # noqa: E402
 import firmware  # noqa: E402
+import orca_profiles  # noqa: E402
 import tailscale_setup  # noqa: E402
 
 REPO = Path(__file__).resolve().parent.parent
@@ -890,6 +891,8 @@ def main(argv=None):
                     help="also install an optional module that is off by default (e.g. journal-retention)")
     ap.add_argument("--tailscale", choices=("ask", "yes", "no"), default="ask",
                     help="install: optional Tailscale for remote access (ask = ask in the window)")
+    ap.add_argument("--orca", choices=("ask", "yes", "no"), default="ask",
+                    help="install: add the project's OrcaSlicer profiles on this computer (ask = ask in the window)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
     ap.add_argument("--from-stock", action="store_true",
                     help="uninstall without a PC backup, using the originals from the official 02.04 package")
@@ -938,6 +941,13 @@ def main(argv=None):
             tailscale_setup.offer(p, mode)
         except Exception as exc:  # optional extra: never fail the install because of it
             print("Tailscale step skipped:", exc)
+        mode = args.orca
+        if mode == "ask" and not sys.stdin.isatty():
+            mode = "no"
+        try:
+            orca_profiles.offer(mode)
+        except Exception as exc:  # optional extra on the PC: never fail the install because of it
+            print("OrcaSlicer step skipped:", exc)
         return 0
     except (InstallError, build.BuildError) as exc:
         print("STOPPED:", exc)

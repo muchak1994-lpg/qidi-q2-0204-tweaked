@@ -9,8 +9,9 @@ for every material. This script writes one OrcaSlicer user preset per library fi
 Each preset inherits everything from the library filament and only sets the chamber fan (FAN below)
 and limits the preset to the QIDI Q2 printer.
 
-The files go to orca-profiles/filament/<brand>/ and are imported by the user in OrcaSlicer:
-File > Import > Import Configs..., picking only the filaments they want.
+The files go to orca-profiles/filament/<brand>/ (a .json and the .info OrcaSlicer keeps next to it).
+They are imported by the user in OrcaSlicer (File > Import > Import Configs..., picking only the
+filaments they want), or added by tools/orca_profiles.py for the filaments enabled in OrcaSlicer.
 
 Usage (maintainer, after updating the OrcaSlicer library):
     python tools/orca_filaments.py --library <OrcaSlicer>/resources/profiles/OrcaFilamentLibrary/filament \
@@ -116,7 +117,8 @@ def plan(library_root):
             raise SystemExit("two library filaments give the same name: " + new)
         names.add(new)
         entries.append({"name": new, "inherits": name, "type": ftype, "fan": FAN[ftype],
-                        "brand": brand_folder(library_root, path), "file": file_name(new) + ".json"})
+                        "brand": brand_folder(library_root, path), "file": file_name(new) + ".json",
+                        "base_id": data.get("setting_id", "")})
     files = [(e["brand"], e["file"].lower()) for e in entries]
     if len(set(files)) != len(files):
         raise SystemExit("two presets give the same file name")
@@ -139,6 +141,11 @@ def preset(entry):
     }
 
 
+def info(entry):
+    """The .info file OrcaSlicer keeps next to a user preset (as it writes one on import)."""
+    return "sync_info = \nuser_id = \nsetting_id = \nbase_id = %s\nupdated_time = 0\n" % entry.get("base_id", "")
+
+
 def write(entries, out, source):
     out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
@@ -152,6 +159,7 @@ def write(entries, out, source):
         target = out / rel
         target.parent.mkdir(exist_ok=True)
         target.write_text(json.dumps(preset(e), indent=4, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+        target.with_suffix(".info").write_text(info(e), encoding="utf-8")
         lines.append("\t".join((rel, e["inherits"], e["type"], str(e["fan"]), str(AFTER_PRINT))))
     (out / INDEX_NAME).write_text("\n".join(lines) + "\n", encoding="utf-8")
 

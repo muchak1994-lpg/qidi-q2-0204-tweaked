@@ -3,14 +3,16 @@
 # Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """QIDI Q2 02.04 Tweaked - OrcaSlicer profiles (add-only).
 
-Adds the project's printer and process profiles to OrcaSlicer's user folder.
+Adds the project's printer and process profiles to OrcaSlicer's user folder, and the "(Tweaked)"
+filament profiles (chamber fan per material, orca-profiles/filament/) of the filaments enabled in
+OrcaSlicer. Other filaments: import them in OrcaSlicer, or enable them there and run this again.
 It never overwrites or deletes a file it did not add itself:
 
 * a file with the same name that already exists is skipped and reported;
 * every added file is recorded (with its SHA-256) in a manifest kept in the
   Orca user folder, so `uninstall` removes only those files, and only if they
   are unchanged (a profile you edited afterwards is left alone);
-* before any change, the current machine/ and process/ folders are zipped to
+* before any change, the current machine/, process/ and filament/ folders are zipped to
   backups/ next to this repository.
 
 Without --apply every command only shows what it would do.
@@ -35,12 +37,18 @@ import time
 import zipfile
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import orca_filaments  # noqa: E402
+
 PROJECT = "qidi-q2-0204-tweaked"
 MANIFEST_NAME = "." + PROJECT + "-orca-manifest.json"
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "orca-profiles"
 BACKUPS = REPO / "backups"
 KINDS = ("machine", "process")
+BACKUP_KINDS = KINDS + ("filament",)
+FILAMENT_SRC = SRC / "filament"
+HOW_TO_ADD = "py tools/orca_profiles.py install --apply"
 FORBIDDEN_KEYS = ("print_host", "printhost_apikey", "print_host_webui")
 
 
@@ -92,6 +100,34 @@ def source_files():
     return files
 
 
+def enabled_filaments(root):
+    """Names of the filaments enabled in OrcaSlicer (OrcaSlicer.conf, "filaments"); [] when unknown."""
+    try:
+        text = (Path(root) / "OrcaSlicer.conf").read_text(encoding="utf-8")
+        data = json.loads("\n".join(line for line in text.splitlines() if not line.startswith("#")))
+    except (OSError, ValueError):
+        return []
+    names = data.get("filaments") if isinstance(data, dict) else None
+    return [n for n in names if isinstance(n, str)] if isinstance(names, list) else []
+
+
+def filament_files(enabled):
+    """[(kind, filename, path)] of our filament profiles (.json + .info) made from the given Orca filaments."""
+    index = FILAMENT_SRC / orca_filaments.INDEX_NAME
+    if not index.is_file():
+        return []
+    wanted, files = set(enabled), []
+    for line in index.read_text(encoding="utf-8").splitlines():
+        if not line or line.startswith("#"):
+            continue
+        rel, inherits = line.split("\t")[:2]
+        if inherits in wanted:
+            path = FILAMENT_SRC / rel
+            for f in (path, path.with_suffix(".info")):
+                files.append(("filament", f.name, f))
+    return files
+
+
 def check_sources(files):
     """Refuse to ship a broken or private profile."""
     problems = []
@@ -105,7 +141,7 @@ def check_sources(files):
             problems.append("%s/%s: invalid JSON (%s)" % (kind, name, exc))
             continue
         stem = name[:-5]
-        if data.get("name") != stem:
+        if orca_filaments.file_name(str(data.get("name"))) != stem:
             problems.append("%s/%s: name field %r differs from file name" % (kind, name, data.get("name")))
         for key in FORBIDDEN_KEYS:
             if key in data:
@@ -160,7 +196,7 @@ def backup(user_dir):
     stamp = time.strftime("%Y%m%d-%H%M%S")
     target = BACKUPS / ("orca-%s-%s.zip" % (user_dir.name, stamp))
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
-        for kind in KINDS:
+        for kind in BACKUP_KINDS:
             folder = user_dir / kind
             if folder.is_dir():
                 for path in sorted(folder.rglob("*")):
@@ -204,7 +240,8 @@ def cmd_status(args, user_dir, files):
           "identical copy already there: %(same)d, same name owned by someone else (left alone): %(other)d" % counts)
 
 
-def cmd_install(args, user_dir, files):
+def install_plan(user_dir, files):
+    """(to add [(rel, source, dest)], already there [rel], skipped [rel])."""
     manifest = load_manifest(user_dir)
     plan_add, plan_skip, plan_same = [], [], []
     for kind, name, path in files:
@@ -216,6 +253,12 @@ def cmd_install(args, user_dir, files):
             plan_same.append(rel)
         else:
             plan_skip.append(rel)
+    return plan_add, plan_same, plan_skip
+
+
+def cmd_install(args, user_dir, files):
+    manifest = load_manifest(user_dir)
+    plan_add, plan_same, plan_skip = install_plan(user_dir, files)
     print("Orca user folder:", user_dir)
     print("To add: %d   already present: %d   skipped, a file of that name exists: %d"
           % (len(plan_add), len(plan_same), len(plan_skip)))
@@ -239,7 +282,8 @@ def cmd_install(args, user_dir, files):
         manifest["files"][rel] = hashlib.sha256(data).hexdigest()
         print("  added:", rel)
     save_manifest(user_dir, manifest)
-    print("Done. Start OrcaSlicer: printers \"... (Tweaked)\" and processes \"[TL] ...\" are in the lists.")
+    print("Done. Start OrcaSlicer: printers \"... (Tweaked)\", processes \"[TL] ...\" and filaments "
+          "\"... (Tweaked)\" are in the lists.")
 
 
 def cmd_uninstall(args, user_dir, files):
@@ -276,6 +320,57 @@ def cmd_uninstall(args, user_dir, files):
     print("Done.")
 
 
+def ask(question, default=True, read=input):
+    answer = read("%s [%s] " % (question, "Y/n" if default else "y/N")).strip().lower()
+    return default if not answer else answer in ("y", "yes", "t", "tak")
+
+
+def offer(mode="ask", read=input, root=None):
+    """The installer's OrcaSlicer step, on this computer. mode: ask / yes / no. Never stops the installer."""
+    if mode == "no":
+        return
+    try:
+        _offer(mode, read, Path(root) if root else default_orca_root())
+    except (KeyboardInterrupt, EOFError):
+        print("\nOrcaSlicer profiles left out. Add them any time:", HOW_TO_ADD)
+    except SystemExit as exc:
+        print("OrcaSlicer profiles not added: %s\nAdd them any time: %s" % (exc.code, HOW_TO_ADD))
+
+
+def _offer(mode, read, root):
+    if not (root / "user").is_dir():
+        print("\nOrcaSlicer: no profiles folder on this computer - step skipped "
+              "(after installing OrcaSlicer: %s)." % HOW_TO_ADD)
+        return
+    files = source_files() + filament_files(enabled_filaments(root))
+    problems = check_sources(files)
+    if problems:
+        print("OrcaSlicer profiles skipped, the project files are not valid:\n  " + "\n  ".join(problems))
+        return
+    print()
+    user_dir = pick_user_dir(root, None)
+    plan_add = install_plan(user_dir, files)[0]
+    if not plan_add:
+        print("OrcaSlicer: the project's profiles are already there.")
+        return
+    count = {}
+    for rel, _, _ in plan_add:
+        if rel.endswith(".json"):
+            kind = rel.split("/")[0]
+            count[kind] = count.get(kind, 0) + 1
+    print("OrcaSlicer profiles from this project (only added, nothing of yours is changed):\n"
+          "  printers \"Qidi Q2 ... (Tweaked)\": %d, timelapse processes \"[TL] ...\": %d,\n"
+          "  filaments you use, with the chamber fan set per material: %d"
+          % (count.get("machine", 0), count.get("process", 0), count.get("filament", 0)))
+    if mode == "ask" and not ask("Add them to OrcaSlicer?", True, read):
+        print("Not added. Any time later:", HOW_TO_ADD)
+        return
+    if orca_running() is not False:
+        print("OrcaSlicer is open (or that could not be checked). Close it and run:", HOW_TO_ADD)
+        return
+    cmd_install(argparse.Namespace(apply=True, skip_running_check=True), user_dir, files)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Add (never overwrite) the QIDI Q2 02.04 Tweaked OrcaSlicer profiles.")
     parser.add_argument("command", choices=("status", "install", "uninstall"))
@@ -286,11 +381,11 @@ def main(argv=None):
     parser.add_argument("-v", "--verbose", action="store_true")
     args = parser.parse_args(argv)
 
-    files = source_files()
+    root = Path(args.orca_dir) if args.orca_dir else default_orca_root()
+    files = source_files() + filament_files(enabled_filaments(root))
     problems = check_sources(files)
     if problems or not files:
         sys.exit("Profile files in this repository are not valid:\n  " + "\n  ".join(problems or ["none found"]))
-    root = Path(args.orca_dir) if args.orca_dir else default_orca_root()
     user_dir = pick_user_dir(root, args.user_dir)
     {"status": cmd_status, "install": cmd_install, "uninstall": cmd_uninstall}[args.command](args, user_dir, files)
 

@@ -104,8 +104,10 @@ Co dostajesz:
 |---|---|
 | `Qidi Q2 0.2 / 0.4 / 0.6 / 0.8 nozzle (Tweaked)` (drukarki) | Końcowy G-code, który gasi też wentylator obiegu komory; podnoszenie Z **Normalne** zamiast Auto (Auto podnosi spiralą nad modelem i potrafi zostawić kolce). |
 | `[TL] ...` (22 profile procesu, po jednym na każdy profil QIDI Q2) | Timelapse **płynny**: głowica do każdego zdjęcia odjeżdża do tyłu, z wieżą 35 mm. Gdy nie nagrywasz timelapse, wybierz proces **bez** `[TL]` — odjazdy wydłużają każdą warstwę. |
+| `<filament> (Tweaked)` (filamenty) | Wentylator komory według materiału — niżej. Dodawane dla filamentów włączonych w twojej Orce; pozostałe możesz zaimportować. |
 
-Instalacja (OrcaSlicer musi być zamknięta):
+Instalator (`install.bat` / `tools/install.py install`) na końcu pyta, czy dodać je na komputerze, na którym działa
+(`--orca yes|no`, żeby odpowiedzieć z góry). Albo ręcznie (OrcaSlicer musi być zamknięta):
 
 ```
 py tools/orca_profiles.py install            # pokazuje, co doda
@@ -133,9 +135,11 @@ materiału. W `orca-profiles/filament/` jest kopia `(Tweaked)` każdego filament
 | ABS, ASA, PC | 0% – jak QIDI: te trzymają ciepło w komorze | 0% |
 
 QIDI daje 100% dla PETG i nylonu; 75% i 25% to wybór tego projektu. Inne materiały (PP, PVA, HIPS, ...) nie mają
-profilu. Zaimportuj tylko te, których używasz: OrcaSlicer → **Plik → Importuj → Importuj konfiguracje...** → otwórz
-`orca-profiles/filament/<marka>/` i zaznacz jeden lub kilka plików. Pokazują się tylko przy wybranej drukarce Q2.
-Usunięcie: wybierz go w OrcaSlicer → ustawienia filamentu → usuń profil. Lista wszystkich:
+profilu. Instalator i `orca_profiles.py install` dodają kopie `(Tweaked)` filamentów włączonych w twojej Orce (tych
+zaznaczonych w „Dodaj/usuń filamenty”); włącz tam kolejne i uruchom jeszcze raz albo zaimportuj pojedyncze:
+OrcaSlicer → **Plik → Importuj → Importuj konfiguracje...** → otwórz `orca-profiles/filament/<marka>/` i zaznacz jeden
+lub kilka plików `.json`. Pokazują się tylko przy wybranej drukarce Q2. Usunięcie: `orca_profiles.py uninstall
+--apply` (te, które dodał) albo w OrcaSlicer: ustawienia filamentu → usuń profil. Lista wszystkich:
 `orca-profiles/filament/index.tsv`. Filament, którego twoja wersja OrcaSlicer jeszcze nie zna, jest przy imporcie
 pomijany.
 

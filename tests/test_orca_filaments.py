@@ -45,6 +45,8 @@ class GeneratedFilesTest(unittest.TestCase):
             self.assertEqual(int(after), of.AFTER_PRINT, rel)
             self.assertEqual(data, of.preset({"name": data["name"], "inherits": inherits, "fan": int(fan)}), rel)
             self.assertEqual(Path(rel).name, of.file_name(data["name"]) + ".json")
+            info = (of.OUT / rel).with_suffix(".info").read_text(encoding="utf-8")
+            self.assertRegex(info, r"\Async_info = \nuser_id = \nsetting_id = \nbase_id = \w+\nupdated_time = 0\n\Z", rel)
             self.assertTrue(data["name"].endswith(of.SUFFIX))
             self.assertNotIn(data["name"], names)
             names.add(data["name"])
