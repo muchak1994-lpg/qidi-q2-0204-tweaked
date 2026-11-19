@@ -5,8 +5,8 @@
 
     python tools/printer.py check --host 192.168.1.50
 
-Connects over SSH (user "mks" by default; you type the password, it is not
-stored), and compares the printer's files with the official 01.01.02.04
+Connects over SSH (user "mks" by default; with your SSH key if the printer
+accepts it, otherwise you type the password - it is not stored), and compares the printer's files with the official 01.01.02.04
 package prepared by `tools/firmware.py fetch`:
 
 * the firmware manifest must be the 01.01.02.04 one, otherwise nothing else
@@ -30,7 +30,7 @@ MANIFEST_PATH = "/home/qidi/update/firmware_manifest.json"
 CHECK_ROOTS = ("/home/qidi/klipper/klippy", "/home/qidi/QIDI_Client/bin")
 
 
-def connect(host, user, port=22, password=None):
+def _client():
     try:
         import paramiko
     except ImportError:
@@ -42,8 +42,35 @@ def connect(host, user, port=22, password=None):
     if known.is_file():
         client.load_host_keys(str(known))
     client.set_missing_host_key_policy(_AskHostKey(known))
+    return client
+
+
+def connect_with_key(host, user, port=22):
+    """Log in with the user's own SSH key (~/.ssh or an SSH agent), or None when the printer does not
+    accept one - most users have no key there and simply type the password, as before."""
+    import paramiko
+    client = _client()
+    try:
+        client.connect(host, port=port, username=user, timeout=15, allow_agent=True, look_for_keys=True)
+    except paramiko.AuthenticationException:
+        client.close()
+        return None
+    except paramiko.SSHException as exc:
+        client.close()
+        if "No authentication methods available" in str(exc):  # no key on this PC
+            return None
+        raise
+    return client
+
+
+def connect(host, user, port=22, password=None):
+    """SSH connection: the SSH key when the printer accepts it, otherwise the typed password."""
     if password is None:
+        client = connect_with_key(host, user, port)
+        if client is not None:
+            return client
         password = getpass.getpass("SSH password for %s@%s: " % (user, host))
+    client = _client()
     client.connect(host, port=port, username=user, password=password,
                    timeout=15, allow_agent=False, look_for_keys=False)
     return client

@@ -61,20 +61,44 @@ class InstallError(Exception):
 
 # ------------------------------------------------------------------ printer
 class SSHPrinter:
-    """Operations on the real printer over SSH. sudo uses the SSH password."""
+    """Operations on the real printer over SSH. sudo uses the SSH password (None: sudo needs none)."""
 
-    def __init__(self, host, user, password, port=22):
+    def __init__(self, host, user, password, port=22, client=None):
         import printer
-        self.client = printer.connect(host, user, port, password=password)
+        self.client = client or printer.connect(host, user, port, password=password)
         self.password = password
         self.sftp = self.client.open_sftp()
         self.staging = None
 
-    def _run(self, command, sudo=False, check=True):
-        if sudo:
+    @classmethod
+    def open(cls, host, user, port=22):
+        """With the user's SSH key and passwordless sudo when the printer allows both (set up by the owner,
+        never by this project); otherwise the password is asked once, as before, for login and sudo."""
+        import printer
+        client = printer.connect_with_key(host, user, port)
+        if client is not None:
+            p = cls(host, user, None, port, client=client)
+            if p._run("sudo -n true", check=False, raw=True) is not None:
+                print("Logged in with the SSH key (sudo needs no password).")
+                return p
+            p.password = getpass.getpass("sudo password for %s@%s: " % (user, host))
+            print("Logged in with the SSH key.")
+            return p
+        password = getpass.getpass("SSH password for %s@%s: " % (user, host))
+        return cls(host, user, password, port)
+
+    def _run(self, command, sudo=False, check=True, raw=False):
+        """raw: run as is and return None on a non-zero exit."""
+        if raw:
+            _, out, _ = self.client.exec_command(command, timeout=60)
+            data = out.read()
+            return data if out.channel.recv_exit_status() == 0 else None
+        if sudo and self.password is None:
+            command = "sudo -n sh -c %s" % shlex.quote(command)
+        elif sudo:
             command = "sudo -S -p '' sh -c %s" % shlex.quote(command)
         stdin, out, err = self.client.exec_command(command, timeout=900)
-        if sudo:
+        if sudo and self.password is not None:
             stdin.write(self.password + "\n")
             stdin.flush()
         data = out.read()
@@ -874,10 +898,9 @@ def main(argv=None):
     print("QIDI Q2 02.04 Tweaked", VERSION)
     if log_path:
         print("Log (no password in it):", log_path)
-    password = getpass.getpass("SSH password for %s@%s: " % (args.user, args.host))
     p = None
     try:
-        p = SSHPrinter(args.host, args.user, password, args.port)
+        p = SSHPrinter.open(args.host, args.user, args.port)
         check_printer(p, require_idle=args.command != "plan")
         if args.command == "uninstall":
             if args.from_stock:

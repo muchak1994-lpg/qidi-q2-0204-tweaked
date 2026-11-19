@@ -10,6 +10,11 @@
   Fix: its command was called Q2_ADAPTIVE_MESH, which Klipper reads as the G-code "Q2" and QIDI's Klipper
   drops silently - G29 then measured no mesh at all. Renamed to TWEAKED_ADAPTIVE_MESH; a new test
   (tests/test_command_names.py) checks every module command name the way Klipper parses it.
+  Fix: on the printer it then failed reading the mesh settings (configfile.get_status needs eventtime) and fell back
+  to the whole plate; a new test runs the whole command against Klipper-like objects.
+- Installer and `tools/printer.py`: when the printer accepts your SSH key, no password is asked to log in; when
+  sudo on the printer also needs none, nothing is asked at all. Nothing changes for everyone else (password as
+  before). The project never changes sudo settings on the printer.
 - From reviewing the Q2's system and QIDI_Q2 issues against 02.04:
   - `adb-root-shell-off`: QIDI's ADB service (root shell without a password over the network on the Max 4) is
     turned off; skipped when the printer has no such service. Installer: enabling/disabling a service the printer
