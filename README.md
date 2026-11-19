@@ -10,7 +10,7 @@ Community fixes and small improvements for the **QIDI Q2** 3D printer running fi
 
 ## What it fixes
 
-67 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light,
+68 small modules: screen program (print queue from 03.02, update popup off, dark mode for the light,
 filament drying fixes), Klipper fixes (bed mesh probe retries, homing, fuzzy skin, hotend fan, QIDI Box heaters
 and fan threshold, MCU errors, safe settings saving and more, several from upstream Klipper), macros (Z homing
 guard, load temperature after a hotter filament, drying from Fluidd), Moonraker/Fluidd fixes, stable Ethernet MAC,
@@ -65,6 +65,15 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 - The backup goes to `backups/` on your PC. Keep that folder.
 - A module can be left out with `--skip MODULE` (list: `py tools/build.py --list`).
 - The Ethernet MAC fix takes effect after the next reboot.
+
+### Toolhead accelerometer check (read only)
+
+QIDI's Q2 toolhead firmware has a known bug: the accelerometer delivers about 390 samples a second instead of 1600
+([QIDI_Q2 #39](https://github.com/QIDITECH/QIDI_Q2/issues/39)), and most Q2 printers have it. At the end of the
+install the installer asks whether to check yours (`--toolhead yes|no` answers in advance). The check only reads
+the toolhead's memory, tells you whether you have the bug and what is recommended, and keeps a backup of the
+toolhead firmware on your PC. Nothing is flashed: the optional manual fix is described in
+[docs/TOOLHEAD_ACCELEROMETER.md](docs/TOOLHEAD_ACCELEROMETER.md) and is done at your own risk.
 
 ### Remote access (optional Tailscale)
 

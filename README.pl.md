@@ -10,7 +10,7 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 ## Co naprawia
 
-67 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
+68 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
 poprawki suszenia filamentu), poprawki Klippera (powtórzenia pomiaru siatki, bazowanie, fuzzy skin, wentylator
 hotendu, grzałki i próg wentylatorów Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne, kilka z oficjalnego
 Klippera), makra (strażnik bazowania Z, temperatura ładowania po cieplejszym filamencie, suszenie z Fluidda),
@@ -65,6 +65,15 @@ py tools/install.py install --host IP_DRUKARKI (kopia na komputerze, potem insta
 - Kopia trafia do `backups/` na komputerze. Zachowaj ten folder.
 - Moduł można pominąć opcją `--skip MODUŁ` (lista: `py tools/build.py --list`).
 - Poprawka adresu MAC działa po następnym restarcie drukarki.
+
+### Sprawdzenie akcelerometru głowicy (tylko odczyt)
+
+Firmware głowicy Q2 od QIDI ma znany błąd: akcelerometr daje około 390 próbek na sekundę zamiast 1600
+([QIDI_Q2 #39](https://github.com/QIDITECH/QIDI_Q2/issues/39)), a większość drukarek Q2 go ma. Na końcu instalacji
+instalator pyta, czy sprawdzić Twoją (`--toolhead yes|no` odpowiada z góry). Sprawdzenie tylko czyta pamięć głowicy,
+mówi, czy masz ten błąd i co zalecamy, i zapisuje na PC kopię firmware głowicy. Nic nie jest flashowane: opcjonalna
+ręczna poprawka jest opisana w [docs/TOOLHEAD_ACCELEROMETER.pl.md](docs/TOOLHEAD_ACCELEROMETER.pl.md) i robisz ją na
+własne ryzyko.
 
 ### Dostęp zdalny (opcjonalny Tailscale)
 

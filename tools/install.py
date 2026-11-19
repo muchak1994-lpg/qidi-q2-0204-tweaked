@@ -232,6 +232,18 @@ class SSHPrinter:
     def http_json(self, url_path):
         return json.loads(self._run("curl -s -m 10 'http://127.0.0.1:7125%s'" % url_path))
 
+    def gcode(self, script, timeout=300):
+        """Run one G-code command through Moonraker and wait for it (Moonraker's JSON answer)."""
+        body = json.dumps({"script": script})
+        return json.loads(self._run("curl -s -m %d -X POST -H 'Content-Type: application/json' -d %s "
+                                    "http://127.0.0.1:7125/printer/gcode/script" % (timeout, shlex.quote(body))))
+
+    def remove_tree(self, path):
+        """A folder of the toolhead check under THR_SAVE_DIR, then that folder too when it is empty."""
+        if not path.startswith(THR_SAVE_DIR + "/") or ".." in path:
+            raise InstallError("refusing to remove " + path)
+        self._run("rm -rf %s; rmdir %s 2>/dev/null; true" % (shlex.quote(path), shlex.quote(THR_SAVE_DIR)), sudo=True)
+
     def close(self):
         if self.staging:
             self._run("rm -rf %s" % shlex.quote(self.staging), sudo=True, check=False)
@@ -630,6 +642,77 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
     return backup
 
 
+# ------------------------------------------------------------------ toolhead check (thr-accel-check)
+THR_FILES = ("bootloader.bin", "application.bin", "report.json")
+THR_SAVE_DIR = "/home/qidi/printer_data/config/q2_thr_backup"
+THR_DOC = "docs/TOOLHEAD_ACCELEROMETER.md"
+THR_INTRO = (
+    "QIDI's Q2 toolhead firmware has a known bug: the accelerometer delivers about 390 samples a second instead of "
+    "1600, so the input shaper calibration sees only part of the vibrations (QIDI_Q2 #39). Most Q2 printers have it.")
+
+
+def toolhead_check(p, backups=BACKUPS, wait=90, sleep=time.sleep):
+    """Run TWEAKED_THR_CHECK SAVE=1 once, print its result, keep the toolhead backup on the PC, remove it from
+    the printer. Read only on the toolhead; any problem here is reported and never fails the install."""
+    for _ in range(max(1, wait // 3)):
+        try:
+            if p.http_json("/printer/info")["result"]["state"] == "ready":
+                break
+        except (InstallError, ValueError, KeyError, TypeError):
+            pass
+        sleep(3)
+    else:
+        print("Toolhead check skipped: Klipper is not ready.")
+        return None
+    if "q2_thr_check" not in p.http_json("/printer/objects/list")["result"]["objects"]:
+        print("Toolhead check skipped: TWEAKED_THR_CHECK is not loaded.")
+        return None
+    print("Toolhead check (read only, about a minute) ...")
+    p.gcode("TWEAKED_THR_CHECK SAVE=1")
+    result = p.http_json("/printer/objects/query?q2_thr_check")["result"]["status"]["q2_thr_check"]
+    if not result.get("done"):
+        print("Toolhead check: no result.")
+        return None
+    for line in result.get("lines", []):
+        print("  " + line)
+    if result.get("state") == "bug":
+        print("  What to do: nothing is required - the printer works as it is. Fixing it means rewriting the "
+              "toolhead firmware by hand, at your own risk. Read " + THR_DOC + " first.")
+    saved = result.get("saved")
+    if not saved:
+        return result
+    target = Path(backups) / ("toolhead-%s-%s" % (result["bootloader_sha256"][:8], result["application_sha256"][:8]))
+    if not all((target / name).is_file() for name in THR_FILES):
+        target.mkdir(parents=True, exist_ok=True)
+        for name in THR_FILES:
+            data = p.read(posixpath.join(saved, name))
+            if data is None:
+                raise InstallError("toolhead backup incomplete: %s" % name)
+            (target / name).write_bytes(data)
+        print("  Toolhead backup on the PC:", target)
+    else:
+        print("  Toolhead backup already on the PC:", target)
+    p.remove_tree(saved)
+    return result
+
+
+def toolhead_offer(p, mode="ask", read=input, backups=BACKUPS):
+    """The installer's question: check this printer's toolhead? Read only; never fails the install."""
+    if mode == "no":
+        return None
+    print()
+    print(THR_INTRO)
+    if mode == "ask":
+        try:
+            answer = read("Check whether this printer has it (read only, about a minute)? [Y/n] ")
+        except (EOFError, KeyboardInterrupt):
+            return None
+        if answer.strip().lower() in ("n", "no"):
+            print("Skipped. You can check any time: TWEAKED_THR_CHECK in the Fluidd console (%s)." % THR_DOC)
+            return None
+    return toolhead_check(p, backups)
+
+
 def describe_action(action):
     if action[0] == "moonraker-db" and len(action[3]) > 60:
         return "moonraker-db %s %s (%d characters)" % (action[1], action[2], len(action[3]))
@@ -891,6 +974,8 @@ def main(argv=None):
                     help="also install an optional module that is off by default (e.g. journal-retention)")
     ap.add_argument("--tailscale", choices=("ask", "yes", "no"), default="ask",
                     help="install: optional Tailscale for remote access (ask = ask in the window)")
+    ap.add_argument("--toolhead", choices=("ask", "yes", "no"), default="ask",
+                    help="install: check the toolhead accelerometer bug, read only (ask = ask in the window)")
     ap.add_argument("--orca", choices=("ask", "yes", "no"), default="ask",
                     help="install: add the project's OrcaSlicer profiles on this computer (ask = ask in the window)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
@@ -934,6 +1019,14 @@ def main(argv=None):
                 print("Nothing changed.")
                 return 0
             do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
+        if any(m["id"] == "thr-accel-check" for m in selected):
+            mode = args.toolhead
+            if mode == "ask" and not sys.stdin.isatty():
+                mode = "no"  # no one to ask (scripted run)
+            try:
+                toolhead_offer(p, mode)
+            except Exception as exc:  # a check, never a reason to fail the install
+                print("Toolhead check skipped:", str(exc).splitlines()[0] if str(exc) else exc)
         mode = args.tailscale
         if mode == "ask" and not sys.stdin.isatty():
             mode = "no"  # no one to ask (scripted run)

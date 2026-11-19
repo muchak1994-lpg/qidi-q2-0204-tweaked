@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- New module `thr-accel-check` (from the 03.02 port, read only): QIDI's Q2 toolhead firmware has an accelerometer bug
+  (about 390 samples a second instead of 1600, QIDI_Q2 #39). At the end of an install the installer says so and asks
+  whether to check the printer (`--toolhead yes|no`); the console command `TWEAKED_THR_CHECK` measures the rate and
+  identifies the toolhead bootloader and firmware (memory reads only), the installer prints whether you have the
+  bug and what is recommended, and keeps a backup of the toolhead firmware on the PC. Flashing stays manual, at
+  your own risk: docs/TOOLHEAD_ACCELEROMETER.md.
 - OrcaSlicer filament profiles (orca-profiles/filament/, imported in OrcaSlicer with File > Import > Import
   Configs): a "(Tweaked)" copy of each of the 331 OrcaFilamentLibrary filaments usable on the Q2 with the chamber
   fan set like QIDI's own profiles - the library leaves it off. PLA and TPU 100%, PETG 75%, nylon 25%,

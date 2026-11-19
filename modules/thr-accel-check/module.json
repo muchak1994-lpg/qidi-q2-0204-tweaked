@@ -1,0 +1,17 @@
+{
+ "id": "thr-accel-check",
+ "order": 143,
+ "title": "Toolhead check: is the accelerometer bug there, and a backup of the toolhead firmware (read only)",
+ "files": {
+  "/home/qidi/klipper/klippy/extras/q2_thr_check.py": {
+   "source": "files/q2_thr_check.py"
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_thr_check.cfg": {
+   "source": "files/q2_thr_check.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "QIDI's toolhead firmware THR 02.02.01.08 lacks Klipper commit 6269dda: the LIS2DW accelerometer delivers about 390 samples a second instead of 1600, so input shaper calibration sees only part of the vibrations (QIDI_Q2 #39). Fixing it means rewriting the toolhead firmware, which stays a manual, optional step (docs/TOOLHEAD_ACCELEROMETER.md). This module only looks: the console command TWEAKED_THR_CHECK measures the accelerometer for 2 s and reads the toolhead's bootloader and firmware with Klipper's debug_read (memory reads only, nothing is written), names them when known (and whether a known tool can flash that combination), and with SAVE=1 saves both to config/q2_thr_backup/. Refused during a print. At the end of an install the installer tells the user about the bug and asks whether to check this printer (--toolhead yes|no); it runs the command once, prints the result with a recommendation, copies the backup to the PC next to the other backups of this printer and removes it from the printer. Checked on a Q2 (01.01.02.04, 18.11.2026): 1602 samples/s, bootloader and patched firmware identified, backup hashes match the flasher's readback, the whole check took 56 s."
+}
