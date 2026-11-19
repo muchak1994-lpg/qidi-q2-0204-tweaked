@@ -65,6 +65,9 @@
 - Installer: the backup reads all original files from QIDI's package in one pass instead of one pass per file
   (it took very long on a fresh install), and the backup and the install show a progress bar.
 - Installer: a Moonraker database entry that did not exist before the install is removed again on uninstall.
+- OrcaSlicer profiles: `tools/orca_profiles.py install --apply` stopped with "Could not check whether OrcaSlicer
+  is running" on Windows in a non-English language with Python 3.15 (`tasklist` writes in the console code page,
+  Python 3.15 reads UTF-8). The list is now read leniently.
 
 ## 1.0.0 - 2026-11-14
 First release. Tested with a full reflash (eMMC by USB-C, USB updates 1.1.1 -> 02.01 -> 02.04) and an install

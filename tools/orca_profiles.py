@@ -66,13 +66,16 @@ def orca_running():
     """True / False, or None when it cannot be determined."""
     try:
         if platform.system() == "Windows":
-            out = subprocess.run(["tasklist", "/FO", "CSV", "/NH"], capture_output=True,
-                                 text=True, timeout=30).stdout.lower()
+            cmd = ["tasklist", "/FO", "CSV", "/NH"]
         else:
-            out = subprocess.run(["ps", "-A", "-o", "comm="], capture_output=True,
-                                 text=True, timeout=30).stdout.lower()
+            cmd = ["ps", "-A", "-o", "comm="]
+        raw = subprocess.run(cmd, capture_output=True, timeout=30).stdout
     except Exception:
         return None
+    # Bytes, decoded leniently: tasklist writes in the console code page (e.g. cp852 on Polish
+    # Windows, with 0xFF as the thousands separator), which UTF-8 mode (Python 3.15+) cannot read.
+    # The process names we look for are plain ASCII either way.
+    out = raw.decode("ascii", errors="replace").lower()
     return any(name in out for name in ("orca-slicer", "orcaslicer"))
 
 

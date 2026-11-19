@@ -107,5 +107,23 @@ class OrcaProfilesTest(unittest.TestCase):
         self.assertIn("Added by this project", run("status", "--user-dir", "default", *self.common))
 
 
+class OrcaRunningTest(unittest.TestCase):
+    """tasklist output in the console code page (cp852 on Polish Windows, 0xFF = thousands separator)."""
+
+    def check(self, stdout):
+        result = unittest.mock.Mock(stdout=stdout)
+        with unittest.mock.patch.object(op.subprocess, "run", return_value=result):
+            return op.orca_running()
+
+    def test_non_utf8_tasklist_is_read(self):
+        line = b'"explorer.exe","1234","Console","1","123\xff456 K"\r\n'
+        self.assertIs(self.check(line), False)
+        self.assertIs(self.check(line + b'"orca-slicer.exe","99","Console","1","1\xff000 K"\r\n'), True)
+
+    def test_command_failure_is_unknown(self):
+        with unittest.mock.patch.object(op.subprocess, "run", side_effect=OSError("no tasklist")):
+            self.assertIsNone(op.orca_running())
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
