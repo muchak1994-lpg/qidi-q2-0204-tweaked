@@ -8,6 +8,8 @@ Run:  python tests/test_print_start_path.py
 import ast
 import json
 import os
+import posixpath
+import types
 import unittest
 from pathlib import Path
 from typing import Optional
@@ -16,7 +18,10 @@ MODULE = Path(__file__).resolve().parent.parent / "modules/print-cache-protectio
 _source = next(iter(json.loads(MODULE.read_text())["files"].values()))["edits"][0][1]
 _tree = ast.parse(_source)
 _func = next(n for n in _tree.body if isinstance(n, ast.FunctionDef) and n.name == "_q2_print_location")
-_ns = {"os": os, "Optional": Optional}
+# The function runs in Moonraker on the printer (Linux): on a Windows PC it gets
+# POSIX path rules ("/" paths), as it has there.
+_os = os if os.name == "posix" else types.SimpleNamespace(path=posixpath, sep=posixpath.sep)
+_ns = {"os": _os, "Optional": Optional}
 exec(compile(ast.Module(body=[_func], type_ignores=[]), str(MODULE), "exec"), _ns)
 location = _ns["_q2_print_location"]
 
@@ -55,6 +60,7 @@ class PrintStartPath(unittest.TestCase):
         self.assertIsNone(location("/root/printer_data/.cache/clip.gcode.3mf", BASE, True))
         self.assertIsNone(location("/root/printer_data/.cache/", BASE, False))
 
+    @unittest.skipUnless(os.name == "posix", "needs real links on a Linux file system, as on the printer")
     def test_linked_home(self):  # /home/mks -> /home/qidi on the printer
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:

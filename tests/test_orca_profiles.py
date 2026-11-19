@@ -12,6 +12,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+import unittest.mock
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -97,8 +98,12 @@ class OrcaProfilesTest(unittest.TestCase):
 
     def test_several_user_folders_need_a_choice(self):
         (self.root / "user" / "123456").mkdir()
-        with self.assertRaises(SystemExit):
-            run("status", *self.common)
+        # No one to answer (stdin is not a terminal): it must stop, not wait. Set here,
+        # because on Windows an empty input (NUL) reports itself as a terminal.
+        with contextlib.redirect_stdout(io.StringIO()), \
+                unittest.mock.patch.object(sys, "stdin", io.StringIO()), \
+                self.assertRaises(SystemExit):
+            op.main(["status", *self.common])
         self.assertIn("Added by this project", run("status", "--user-dir", "default", *self.common))
 
 
