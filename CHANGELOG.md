@@ -17,6 +17,8 @@
 - `fluidd-fixes`: Fluidd's print ETA ("File") now uses the same progress as the printer's screen (the slicer's M73 progress,
   `elapsed x (100-P)/P`) instead of the position in the file, so Fluidd and the screen show the same time left. It no longer uses the
   duration of an earlier run of the same file. Seen on a real print only through the numbers (screen 30 min, this formula 30.6 min); not yet seen live.
+  Same for up to 50 % progress: the screen then shows the slicer's estimate minus the print time (its `prediction`, e.g. 3644 s = 1h0m44),
+  and Fluidd now does the same; above 50 % both extrapolate from the real pace. Found in the screen program; not seen live.
 - New module `fluidd-full-display`: the installer switches Fluidd's "Enable Full Display" setting on.
 - New module `timelapse-progress-note`: one short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers.
   Fluidd's per-layer timelapse line (`SET_GCODE_VARIABLE ... takingframe VALUE=False`, an echo from Moonraker's timelapse component) can then
