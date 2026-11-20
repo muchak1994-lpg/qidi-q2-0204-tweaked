@@ -1,7 +1,11 @@
 # Changelog
 
-## Unreleased
-- Fixes from a code review of everything since 1.0.0 (tested with new unit tests, not on a printer yet):
+## 1.1.0 - 2026-11-20
+Second release. Everything listed here is installed on the author's printer. Not tested on the printer yet: the
+bed mesh under the first layer in a real print (after its last fix), resuming after a real power cut
+(`power-loss-resume-homing`), and the code-review fixes below in a print.
+
+- Fixes from a code review of everything since 1.0.0 (tested with new unit tests; installed on the author's printer, not tested in a print yet):
   - Installer: when the run that finishes a stopped install is stopped too, the next run still restarts Klipper
     (before, it could say "nothing to do" with the new files not loaded yet).
   - Uninstall takes out the printer.cfg / macro edits of a module that a later install left out (`--skip`).
