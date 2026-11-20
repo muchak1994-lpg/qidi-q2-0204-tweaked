@@ -122,6 +122,10 @@ class SendTests(unittest.TestCase):
         self.assertNotIn("-T", calls[1])
         self.assertEqual(self.body(calls[1])["title"], "Paused")
 
+    def test_clock_token_becomes_the_finish_time(self):
+        (call,) = self.run_send("Print 50%", "left 30 min, done at @@+1836@@", TZ="UTC", Q2_NOTIFY_NOW="1000000000")
+        self.assertEqual(self.body(call)["message"], "left 30 min, done at 02:17")   # 01:46:40 + 30:36
+
     def test_disabled_or_missing_conf_sends_nothing(self):
         self.write_conf("ENABLED=0\nNTFY_SERVER=https://ntfy.example\nEVENTS_TOPIC=e\nCMD_TOPIC=c\n")
         self.assertEqual(self.run_send("T", "m"), [])

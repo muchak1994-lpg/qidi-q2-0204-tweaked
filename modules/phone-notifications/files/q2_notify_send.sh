@@ -70,6 +70,19 @@ else
     done
 fi
 
+expand_clock() {  # @@+SECONDS@@ in the message becomes the clock time that many seconds from now (HH:MM)
+    msg=$1
+    while :; do
+        secs=$(printf '%s' "$msg" | sed -n 's/.*@@+\([0-9][0-9]*\)@@.*/\1/p' | head -n 1)
+        [ -n "$secs" ] || break
+        now=${Q2_NOTIFY_NOW:-$(date +%s)}
+        hhmm=$(date -d "@$((now + secs))" +%H:%M 2>/dev/null) || hhmm="?"
+        msg=$(printf '%s' "$msg" | sed "s/@@+${secs}@@/$hhmm/")
+    done
+    printf '%s' "$msg"
+}
+MESSAGE=$(expand_clock "$MESSAGE")
+
 json_escape() {
     printf '%s' "$1" | tr -d '\000-\010\013\014\016-\037' | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g' -e 's/\t/\\t/g' \
         | awk 'NR>1{printf "\\n"} {printf "%s",$0}'

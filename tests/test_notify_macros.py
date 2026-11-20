@@ -126,6 +126,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertEqual(f[6:9], ["Resume=resume", "Cancel=cancel"])
 
     def test_pause_sent_once_and_again_after_resume(self):
+        self.state.update(started=1, next=50)       # a print in progress
         self.pause()
         for _ in range(3):
             self.run_tick()
@@ -135,7 +136,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertEqual(self.state["paused_sent"], 0)
         self.pause()
         self.run_tick()
-        self.assertEqual(len(self.sent), 2)
+        self.assertEqual([f[0] for f in self.sent], ["Print paused: manual"] * 2)
 
     def test_pause_does_not_touch_heaters(self):
         for state in ("printing", "paused", "complete", "standby"):
@@ -167,6 +168,83 @@ class NotifyMacroTests(unittest.TestCase):
         for line in self.all_gcode:
             if line.startswith("RUN_SHELL_COMMAND"):
                 self.assertFalse(re.search(r"[#;*]", line), line)   # Klipper would cut the line there
+
+    # ---- start, 25/50/75 %, end ----
+    def printing(self, layer, progress, duration):
+        self.printer["print_stats"].update(state="printing", print_duration=duration,
+                                           info={"current_layer": layer, "total_layer": 100})
+        self.printer["display_status"]["progress"] = progress
+
+    def test_start_sent_once_at_first_layer(self):
+        self.printing(0, 0.0, 30)             # heating: layer 0
+        self.run_tick()
+        self.assertEqual(self.sent, [])
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.run_tick()
+        self.assertEqual(len(self.sent), 1)
+        self.assertEqual(self.sent[0][0], "Print started")
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\n100 layers")
+
+    def test_milestones_25_50_75_once_each(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        for progress, expected in ((0.10, None), (0.25, "Print 25%"), (0.26, None), (0.50, "Print 50%"),
+                                   (0.75, "Print 75%"), (0.80, None), (0.99, None)):
+            before = len(self.sent)
+            self.printing(30, progress, 600)
+            self.run_tick()
+            self.run_tick()
+            got = [f[0] for f in self.sent[before:]]
+            self.assertEqual(got, [expected] if expected else [], (progress, got))
+
+    def test_milestones_already_passed_are_not_resent(self):
+        self.printing(60, 0.60, 2400)          # first tick after a Klipper restart: 60 % already done
+        self.run_tick()
+        self.assertEqual([f[0] for f in self.sent], ["Print started"])
+        self.assertEqual(self.state["next"], 75)
+
+    def test_eta_matches_printer_screen(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.printing(50, 0.57, 2434)           # screen: -30m on a 1h1m print
+        self.state["next"] = 50
+        self.run_tick()
+        title, message = self.sent[-1][0], self.sent[-1][1]
+        self.assertEqual(title, "Print 50%")
+        self.assertEqual(message, "hdd500.gcode\\nelapsed 40 min, 30 min left, done at @@+1836@@")
+
+    def test_time_format_over_an_hour(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.printing(70, 0.25, 3700)           # 1 h 01 min elapsed, 3 x that left = 3 h 05 min
+        self.run_tick()
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nelapsed 1h 01m, 3h 05m left, done at @@+11100@@")
+
+    def test_complete_and_cancelled(self):
+        for end, title in (("complete", "Print finished"), ("cancelled", "Print cancelled")):
+            with self.subTest(end):
+                self.setUp()
+                self.printing(1, 0.0, 60)
+                self.run_tick()
+                self.printer["print_stats"].update(state=end, print_duration=3600)
+                self.run_tick()
+                self.run_tick()
+                self.assertEqual([f[0] for f in self.sent], ["Print started", title])
+                self.assertEqual(self.sent[-1][6:9], [""] * 3)       # no buttons (the timelapse button comes in Task 5)
+                self.assertEqual((self.state["started"], self.state["next"]), (0, 25))
+
+    def test_nothing_is_sent_for_a_print_that_never_started(self):
+        for end in ("complete", "cancelled", "standby", "error"):
+            self.printer["print_stats"]["state"] = end
+            self.run_tick()
+        self.assertEqual(self.sent, [])
+
+    def test_timelapse_flag_is_remembered_at_start(self):
+        self.printer["gcode_macro TIMELAPSE_TAKE_FRAME"] = {"enable": True}
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.assertEqual(self.state["tl_on"], 1)
 
     def test_tick_reschedules_itself(self):
         text = self.run_tick()
