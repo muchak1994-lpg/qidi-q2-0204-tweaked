@@ -1,0 +1,2 @@
+# Shell scripts run on the printer: always LF, whatever the checkout's autocrlf setting.
+*.sh text eol=lf

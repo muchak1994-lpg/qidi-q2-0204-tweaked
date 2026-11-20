@@ -8,6 +8,7 @@
 # --tsv is one argument with tab-separated fields (an empty field = not set); Klipper's gcode_shell_command splits a command
 # line at spaces, which would break file names with spaces. In --tsv mode the two characters \n in the message become a newline.
 # A button is shown as: LABEL, and tapping it sends BODY to the command channel ($NTFY_SERVER/$CMD_TOPIC).
+# --attach takes a file, or an http(s) address that is downloaded first (a failed download only drops the picture).
 # Without --attach the message goes out as JSON (UTF-8 safe); with --attach as a file upload (PUT), where non-ASCII
 # header text is RFC 2047 encoded. Does nothing (exit 0) when the notifications are off or there is no config.
 # Never blocks long: curl has --max-time; any failure is ignored (a lost notification must not disturb a print).
@@ -82,6 +83,15 @@ header_text() {  # one line, RFC 2047 encoded when it is not plain ASCII
         printf '%s' "$one"
     fi
 }
+
+SNAP=""
+trap '[ -n "$SNAP" ] && rm -f "$SNAP"' EXIT
+case "$ATTACH" in  # an address: fetch the picture first (e.g. the camera snapshot), a failure only drops the picture
+    http://*|https://*)
+        SNAP="${Q2_NOTIFY_TMP:-/tmp}/q2_notify_snap.$$.jpg"
+        $CURL -sS --max-time 8 -o "$SNAP" "$ATTACH" >/dev/null 2>&1
+        if [ -s "$SNAP" ]; then ATTACH=$SNAP; else ATTACH=""; fi ;;
+esac
 
 if [ -n "$ATTACH" ] && [ -f "$ATTACH" ]; then
     set -- -sS --max-time 60 -T "$ATTACH" -H "Filename: $(basename "$ATTACH")" \

@@ -20,6 +20,9 @@ FAKE_CURL = """#!/usr/bin/env python3
 import json, os, sys
 with open(os.environ["FAKE_CURL_OUT"], "a") as f:
     f.write(json.dumps(sys.argv[1:]) + "\\n")
+if "-o" in sys.argv and not os.environ.get("FAKE_CURL_NO_DOWNLOAD"):
+    with open(sys.argv[sys.argv.index("-o") + 1], "wb") as f:
+        f.write(b"jpg")
 """
 
 
@@ -40,9 +43,9 @@ class SendTests(unittest.TestCase):
     def write_conf(self, text):
         self.conf.write_text(text)
 
-    def run_send(self, *args):
+    def run_send(self, *args, **extra_env):
         env = dict(os.environ, Q2_NOTIFY_CONF=str(self.conf), Q2_NOTIFY_CURL="python3 %s" % self.fake,
-                   FAKE_CURL_OUT=str(self.out))
+                   FAKE_CURL_OUT=str(self.out), Q2_NOTIFY_TMP=str(self.dir), **extra_env)
         r = subprocess.run(["sh", str(SEND), *args], env=env, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         return [json.loads(l) for l in self.out.read_text().splitlines()] if self.out.exists() else []
@@ -102,6 +105,22 @@ class SendTests(unittest.TestCase):
         self.out.unlink()
         tsv = self.run_send("--tsv", "\t".join(["Print paused: manual", "hdd 500|x", "4", "pause", "http://p/x", "", "Resume=resume"]))
         self.assertEqual(self.body(pos[0]), self.body(tsv[0]))
+
+    def test_attach_url_is_downloaded_then_uploaded_and_removed(self):
+        dl, up = self.run_send("Paused", "look", "--attach", "http://127.0.0.1/webcam/?action=snapshot")
+        self.assertEqual(dl[dl.index("-o") + 1].rsplit("/", 1)[0], str(self.dir))
+        self.assertEqual(dl[-1], "http://127.0.0.1/webcam/?action=snapshot")
+        self.assertEqual(dl[dl.index("--max-time") + 1], "8")
+        self.assertEqual(up[up.index("-T") + 1], dl[dl.index("-o") + 1])
+        self.assertEqual(up[-1], "https://ntfy.example/evtopic")
+        self.assertEqual(list(self.dir.glob("q2_notify_snap*")), [])
+
+    def test_failed_download_still_sends_the_message_without_picture(self):
+        calls = self.run_send("Paused", "look", "--attach", "http://127.0.0.1/webcam/?action=snapshot",
+                              FAKE_CURL_NO_DOWNLOAD="1")
+        self.assertEqual(len(calls), 2)
+        self.assertNotIn("-T", calls[1])
+        self.assertEqual(self.body(calls[1])["title"], "Paused")
 
     def test_disabled_or_missing_conf_sends_nothing(self):
         self.write_conf("ENABLED=0\nNTFY_SERVER=https://ntfy.example\nEVENTS_TOPIC=e\nCMD_TOPIC=c\n")
