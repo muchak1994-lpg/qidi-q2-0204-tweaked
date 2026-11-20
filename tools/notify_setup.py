@@ -124,6 +124,31 @@ def remove_include(p):
     return True
 
 
+def save_channel_note(backups, host, server, events):
+    """A plain text file on this PC with what the phone needs, so the channel name is not lost when the window closes.
+    The secret command channel is not in it (it is in the copy of q2_notify.conf next to it). Returns the path or None."""
+    try:
+        backups.mkdir(parents=True, exist_ok=True)
+        path = backups / ("notify-%s-channel.txt" % host)
+        lines = [
+            "Phone notifications (ntfy) for the printer %s" % host,
+            "",
+            "In the ntfy app (Android / iPhone): tap +, Subscribe to topic, then enter",
+            "  topic:   %s" % events,
+            "  server:  %s" % server,
+            "",
+            "Keep this file private: whoever knows the topic sees the names of your prints.",
+            "The full settings (with the secret command channel for the Resume/Cancel buttons) are in the printer file",
+            "/home/qidi/printer_data/config/q2_notify.conf and in the copy in this folder (notify-%s-*/q2_notify.conf)." % host,
+            "Lost the topic? Run the installer again - it keeps the existing settings and writes this file again.",
+        ]
+        path.write_text(chr(10).join(lines) + chr(10), encoding="utf-8")
+        return path
+    except OSError as exc:
+        print("Could not save the channel note on this PC:", exc)
+        return None
+
+
 def configure(p, mode="ask", read=input, secrets_fn=secrets.token_urlsafe, backups=BACKUPS, host="printer"):
     """Create the configuration (or keep the existing one), connect Moonraker, restart, send a test message.
     Returns True when the notifications are set up."""
@@ -145,6 +170,7 @@ def configure(p, mode="ask", read=input, secrets_fn=secrets.token_urlsafe, backu
         (copy_dir / "q2_notify.conf").write_bytes(conf)
     except OSError as exc:
         print("Could not keep a copy of the notification settings on this PC:", exc)
+    note = save_channel_note(Path(backups), host, server, events)
     template = TEMPLATE.read_text(encoding="utf-8")
     notifier = template.replace("__NTFY_URL__", apprise_url(server, events)).encode("utf-8")
     changed = p.read(MOONRAKER_NOTIFIER) != notifier
@@ -157,7 +183,8 @@ def configure(p, mode="ask", read=input, secrets_fn=secrets.token_urlsafe, backu
         p._run("systemctl restart moonraker", sudo=True, check=False)
     p._run("sh %s 'Phone notifications are on' 'Test message from the installer. Buttons and messages work from now on.' "
            "--prio 3 --tags tada" % SEND, sudo=True, check=False)
-    print("Phone notifications are set up (the channel names are not written to this log).")
+    print("Phone notifications are set up. The channel name is saved in this file on your PC (keep it private): %s"
+          % (note or "(could not be saved - it is shown below)"))
     tailscale_setup.show_private(
         "Phone: install the free ntfy app (Android or iPhone), tap +, 'Subscribe to topic' and enter:\n"
         "  topic:   %s\n  server:  %s\n"

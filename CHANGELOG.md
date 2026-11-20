@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Installer: all optional extras now come at the end, one after the other: question, yes = installed right away, no = the next
+  question (optional modules such as `journal-retention`, phone notifications, toolhead check, Tailscale, OrcaSlicer profiles).
+  Without a window to ask in (a scripted run) nothing optional is offered; `--with`, `--notify yes|no` and the other flags still work.
+- Phone notifications: the generated channel name is saved in `backups/notify-<printer>-channel.txt` on the PC (and the install log says where),
+  so it is not lost if the window is closed.
 - New optional module `phone-notifications`: messages on your phone through ntfy (free, no account): start, 25/50/75 %, finished,
   cancelled, **pause with its reason** (AI spaghetti / AI foreign object / filament runout / M0 or M25 / manual) with a camera picture and
   Resume / Cancel buttons, printer errors, a print interrupted by a restart, and the timelapse video on a button. The installer asks at

@@ -89,10 +89,10 @@ log in later (run the installer again, or over SSH: `sudo tailscale up --accept-
 
 ### Phone notifications (optional, ntfy)
 
-The installer asks whether to set up messages on your phone: print started, 25/50/75 %, finished, **paused with the reason**
+At the end of the install, one after the other with the other optional extras (each: question, yes = done right away, no = next question), the installer asks whether to set up messages on your phone: print started, 25/50/75 %, finished, **paused with the reason**
 (with a camera picture and Resume / Cancel buttons), errors, and the timelapse video on a button. It uses the free ntfy app and
 server (ntfy.sh) - no account, no phone number; or your own ntfy server. The installer shows a random channel name to subscribe to in the app
-(window only, never in the log) and sends a test message. `--notify yes|no` answers in advance; uninstall removes it.
+(in the window, and saved in a file `backups/notify-<printer address>-channel.txt` on your PC so it is not lost when the window closes) and sends a test message. `--notify yes|no` answers in advance; uninstall removes it.
 Anyone who knows the secret command channel could resume or cancel a paused print, so keep the settings private.
 
 ## Go back

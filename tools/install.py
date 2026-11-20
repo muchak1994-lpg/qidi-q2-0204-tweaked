@@ -960,6 +960,75 @@ def remove_tailscale(p):
         print("Tailscale not removed:", exc)
 
 
+def show_plan(p, selected, host):
+    """Print what would change; returns (changes, resumed, actions)."""
+    changes = plan(p, selected)
+    resumed = unfinished_modules(host, BACKUPS, p)
+    if resumed:
+        print("The last install stopped before the end - its restarts are done in this run.")
+    actions = pending_actions(p, selected, changes, resumed)
+    for path, _, kind, mods in changes:
+        print("  %-9s %s  (%s)" % (kind, path, ", ".join(mods)))
+    for mid, action in actions:
+        print("  action    %s  (%s)" % (describe_action(action), mid))
+    print("%d file(s) to change, %d action(s), %d module(s)." % (len(changes), len(actions), len(selected)))
+    return changes, resumed, actions
+
+
+def install_round(p, selected, host):
+    """Install what is still missing for this selection (the question was the confirmation). True if anything was done."""
+    changes, resumed, actions = show_plan(p, selected, host)
+    if not (changes or actions or resumed):
+        return False
+    do_install(p, selected, changes, host, actions=actions, resumed=resumed)
+    return True
+
+
+def configure_notify(p, host):
+    try:
+        notify_setup.configure(p, "yes", host=host)
+    except Exception as exc:  # optional extra: never fail the install because of it
+        print("Phone notifications step skipped:", exc)
+
+
+def _ask_yes_no(question):
+    try:
+        return input("%s [y/N] " % question).strip().lower() in ("y", "yes", "t", "tak")
+    except EOFError:
+        return False
+
+
+def optional_modules(selected, args, interactive, ask, round_fn, notify_fn, notify_wanted=None):
+    """After the main install: every optional module (marked "default": false) that is not installed yet is offered one by
+    one - question, then yes = installed right away, no = next question. Without a window to ask in (a scripted run) none is
+    offered. Phone notifications keep their own question text and --notify; they are configured right after their install.
+    Returns the selection including what was added."""
+    notify_wanted = notify_wanted or notify_setup.wanted
+    chosen = {m["id"] for m in selected if not m.get("default", True)}
+    for m in build.load_modules():
+        mid = m["id"]
+        if m.get("default", True) or mid in args.skip or mid in chosen:
+            continue
+        if mid == "phone-notifications":
+            mode = args.notify if (args.notify != "ask" or interactive) else "no"
+            if not notify_wanted(mode):
+                continue
+        else:
+            if not interactive:
+                continue
+            title = m.get("title", mid)
+            if not ask("Install the optional module %s - %s?" % (mid, title)):
+                continue
+        trial = select(args.skip, sorted(chosen | {mid}))
+        if not round_fn(trial):
+            print("  %s: nothing to do (already installed)." % mid)
+        chosen.add(mid)
+        selected = trial
+        if mid == "phone-notifications":
+            notify_fn()
+    return selected
+
+
 LOGS = REPO / "logs"
 
 
@@ -1038,25 +1107,10 @@ def main(argv=None):
             remove_tailscale(p)
             return 0
         extra = list(args.extra)
-        if args.command == "install" and "phone-notifications" not in extra:
-            mode = args.notify
-            if mode == "ask" and not sys.stdin.isatty():
-                mode = "no"  # no one to ask (scripted run)
-            if notify_setup.wanted(mode):
-                extra.append("phone-notifications")
-        elif args.notify == "yes" and "phone-notifications" not in extra:
+        if args.notify == "yes" and "phone-notifications" not in extra:
             extra.append("phone-notifications")
         selected = select(args.skip, extra)
-        changes = plan(p, selected)
-        resumed = unfinished_modules(args.host, BACKUPS, p)
-        if resumed:
-            print("The last install stopped before the end - its restarts are done in this run.")
-        actions = pending_actions(p, selected, changes, resumed)
-        for path, _, kind, mods in changes:
-            print("  %-9s %s  (%s)" % (kind, path, ", ".join(mods)))
-        for mid, action in actions:
-            print("  action    %s  (%s)" % (describe_action(action), mid))
-        print("%d file(s) to change, %d action(s), %d module(s)." % (len(changes), len(actions), len(selected)))
+        changes, resumed, actions = show_plan(p, selected, args.host)
         if args.command == "plan":
             return 0
         if changes or actions or resumed:
@@ -1064,6 +1118,14 @@ def main(argv=None):
                 print("Nothing changed.")
                 return 0
             do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
+        if any(m["id"] == "phone-notifications" for m in selected):
+            configure_notify(p, args.host)  # --with / --notify yes: set it up right away
+        # The optional extras, one after the other: question -> yes -> done (no -> next question).
+        interactive = sys.stdin.isatty()
+        selected = optional_modules(
+            selected, args, interactive, _ask_yes_no,
+            lambda sel: install_round(p, sel, args.host),
+            lambda: configure_notify(p, args.host))
         if any(m["id"] == "thr-accel-check" for m in selected):
             mode = args.toolhead
             if mode == "ask" and not sys.stdin.isatty():
@@ -1079,11 +1141,6 @@ def main(argv=None):
             tailscale_setup.offer(p, mode)
         except Exception as exc:  # optional extra: never fail the install because of it
             print("Tailscale step skipped:", exc)
-        if any(m["id"] == "phone-notifications" for m in selected):
-            try:
-                notify_setup.configure(p, "yes", host=args.host)
-            except Exception as exc:  # optional extra: never fail the install because of it
-                print("Phone notifications step skipped:", exc)
         mode = args.orca
         if mode == "ask" and not sys.stdin.isatty():
             mode = "no"

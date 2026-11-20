@@ -152,6 +152,29 @@ class NotifySetupTest(unittest.TestCase):
         self.assertIn("systemctl restart moonraker", joined)
         self.assertIn("q2_notify_send.sh", joined)
 
+    def test_channel_is_saved_in_a_readable_file_on_the_pc(self):
+        win, saved = Window(), sys.stdout
+        sys.stdout = win
+        try:
+            self.configure("")
+        finally:
+            sys.stdout = saved
+        lines = dict(l.split("=", 1) for l in self.p.files[ns.CONF].decode().splitlines())
+        note = self.backups / "notify-printer.example-channel.txt"
+        text = note.read_text(encoding="utf-8")
+        self.assertIn(lines["EVENTS_TOPIC"], text)
+        self.assertIn("https://ntfy.sh", text)
+        self.assertNotIn(lines["CMD_TOPIC"], text)                   # the secret command channel is not in the note
+        self.assertIn(str(note), win.log.getvalue())                 # the log says where the note is ...
+        self.assertNotIn(lines["EVENTS_TOPIC"], win.log.getvalue())  # ... but does not repeat the name
+
+    def test_channel_note_is_written_again_on_a_second_run(self):
+        self.configure("")
+        note = self.backups / "notify-printer.example-channel.txt"
+        note.unlink()
+        self.configure("")
+        self.assertTrue(note.is_file())
+
     def test_copy_of_the_config_is_kept_on_the_pc(self):
         self.configure("")
         copies = list(self.backups.glob("notify-printer.example-*/q2_notify.conf"))
