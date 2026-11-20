@@ -28,6 +28,13 @@ Wiadomości mają pokazywać te same czasy, co ekran drukarki.
 
 Zmiany koloru: **świadomie nie** (przy druku zmieniającym kolor co 5 warstw byłoby to co kilka sekund).
 
+## Pauza jest pierwszym i najważniejszym powiadomieniem (decyzja 2026-11-20)
+
+Powód pauzy: brak filamentu, AI makaron, AI obcy przedmiot, `M0`/`M25` w G-code, ręczna. Pauza w stocku QIDI wyłącza dyszę
+(`M104 S0`), a stół i komorę zostawia grzane; **nie zmieniamy tego** (priorytet to uratowanie wydruku, prąd nie gra roli;
+PR QIDITECH/QIDI_Q2#11 odrzucony dla projektu). Test właściciela (07:00-20:00): mały wydruk, pauza 1-2 h, Wznów, ocena łączenia
+warstw oraz sprawdzenie czyszczenia zimnej dyszy w `RESUME_PRINT` (patrz plan, Task 8).
+
 ## Cele, nie-cele, anty-cele
 
 - Cel: działa dla każdego użytkownika projektu, także bez konta i bez numeru telefonu; domyślnie wyłączone (opt-in w instalatorze).

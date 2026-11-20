@@ -27,6 +27,7 @@
 3. Restart Klippera w trakcie druku lub wznowienie po zaniku prądu: kamienie 25/50/75% już minięte nie wysyłają się ponownie.
 4. Ta sama komenda `resume` dostarczona dwa razy (ponowne połączenie słuchacza): drugi raz nic nie robi.
 5. `video ../../etc/passwd`, `video /x`, `video a.mp4;reboot`: odrzucone, bez wywołania czegokolwiek.
+6. Pauza z `M0`/`M25` w G-code, z ekranu, z Fluidd i z AI: każda daje wiadomość z właściwym powodem i **żadna nie rusza grzania** (stół/komora zostają, jak w stocku).
 
 ---
 
@@ -49,37 +50,43 @@
 - [ ] **Step 6: Implement `q2_notify_send.sh`** - czyta konfigurację bez `source`-owania obcego kodu (parsowanie `KEY=value` linia po linii), buduje wywołanie `curl -sS --max-time 15`. Uruchom wszystkie testy z kroków 1-5, mają przejść (`wsl.exe -e python3 tests/test_notify_send.py`).
 - [ ] **Step 7: Commit** `git add modules/phone-notifications tests/test_notify_send.py && git commit -m "phone-notifications: sender script"`
 
-### Task 2: Zegar w Klipperze (start, 25/50/75%, koniec, anulowanie) i czas do końca
+### Task 2: Zegar w Klipperze i powiadomienie o pauzie z powodem (PRIORYTET)
+
+Decyzja właściciela 2026-11-20: pauza jest pierwszym i najważniejszym powiadomieniem. Pauza w stocku QIDI wyłącza dyszę (`M104 S0`),
+a stół i komorę zostawia grzane; tego **nie zmieniamy** (PR QIDITECH/QIDI_Q2#11 odrzucony dla projektu), liczy się uratowanie wydruku.
 
 **Files:**
 - Create: `modules/phone-notifications/files/q2_notify.cfg` (trafia do `klipper-macros-qd/`, wczytywane przez wildcard include)
+- Modify: `modules/phone-notifications/module.json` (edycje makr `M0` i `M25` w `gcode_macro.cfg`, wzór: `modules/z-offset-persistence`, `base: printer`)
 - Test: `tests/test_notify_macros.py` (renderuje szablony `jinja2` jak Klipper: `{%`/`%}` blokowe, `{`/`}` zmienne; pomija się, gdy `jinja2` nie jest zainstalowane)
 
 **Interfaces:**
-- Consumes: `q2_notify_send.sh` z Task 1.
-- Produces: `[gcode_shell_command q2_notify]` (`command: sh /home/qidi/q2-notify/q2_notify_send.sh`), makro `_TWEAKED_NOTIFY_ETA` zwracające tekst `"<H>h <M>m"`/`"<M> min"` z (`elapsed`, `P`), `[gcode_macro _TWEAKED_NOTIFY]` ze stanem (`variable_next: 25`, `variable_started: 0`, `variable_tl_on: 0`, `variable_last: ''`), `[delayed_gcode _TWEAKED_NOTIFY_TICK]` (`initial_duration: 15`, wywołuje samo siebie co 15 s).
+- Consumes: `q2_notify_send.sh --tsv` z Task 1.
+- Produces: `[gcode_shell_command q2_notify]` (`command: sh /home/qidi/q2-notify/q2_notify_send.sh`), `[gcode_macro _TWEAKED_NOTIFY]` ze stanem (`variable_paused_sent: 0`, `variable_reason: ''`, `variable_next: 25`, `variable_started: 0`, `variable_tl_on: 0`), `[delayed_gcode _TWEAKED_NOTIFY_TICK]` (`initial_duration: 15`, wywołuje samo siebie co 15 s). Makra `M0`/`M25` ustawiają `reason` na `M0`/`M25` przed wywołaniem `PAUSE`.
+- Powody pauzy i ich pierwszeństwo: `AI spaghetti` (zmienna `qdc_ai_error_code` zaczyna się od `noodle=`), `AI foreign object` (`foreign=`), `filament runout` (czujnik filamentu pokazuje brak), `M0/M25 in G-code` (ustawione przez edytowane makra), `manual` (reszta).
+- Pauza wysyła `Print paused: <powód>` z przyciskami `resume`/`cancel` i zdjęciem z `http://127.0.0.1/webcam/?action=snapshot` (`/tmp/q2_notify_snap.jpg`, usuwane po wysłaniu; błąd pobrania zdjęcia nie blokuje wiadomości).
 
-- [ ] **Step 1: test `test_eta_matches_printer_screen`** - `elapsed=2434`, `P=57` -> `"30 min"` (zgodnie z ekranem: -30m o 09:45:09 na druku 1h1m).
-- [ ] **Step 2: test `test_start_sent_once_at_first_layer`** - `print_stats.state='printing'`, `info.current_layer=1` -> jedno wywołanie `RUN_SHELL_COMMAND CMD=q2_notify` z tekstem `Print started`; `current_layer=0` (nagrzewanie) -> nic; drugi tick -> nic.
-- [ ] **Step 3: test `test_milestones_25_50_75_once_each`** oraz **`test_milestones_already_passed_are_not_resent`** (pierwszy tick widzi P=60 -> `next` ustawione na 75, bez wysyłania 25 i 50; Review Focus 3).
-- [ ] **Step 4: test `test_complete_and_cancelled`** - `state='complete'` -> `Print finished`; `'cancelled'` -> `Print cancelled`, bez przycisku timelapse; wysłane raz, stan zerowany po wyjściu ze stanu druku.
-- [ ] **Step 5: Implement `q2_notify.cfg`** - argumenty skryptu jako jedna linia `PARAMS` z polami rozdzielonymi tabulatorem (nazwa pliku może zawierać spację i `|`, tabulatora nie); makro `_TWEAKED_NOTIFY_ETA`; tick jak w `q2_timelapse_note.cfg` (ten sam styl: stan w `variable_*`, `SET_GCODE_VARIABLE`). Testy z kroków 1-4 mają przejść (`wsl.exe -e python3 tests/test_notify_macros.py`).
-- [ ] **Step 6: Commit** `git commit -m "phone-notifications: klipper tick (start, milestones, end)"`
+- [ ] **Step 1: recon na drukarce (zapisać w komentarzu `q2_notify.cfg`)** - nazwa czujnika filamentu (`[filament_switch_sensor ...]` w `printer.cfg`); czy po pauzie AI `qdc_ai_error_code` ma `noodle=`/`foreign=`; czy `PAUSE` z ekranu i z Fluidd idzie przez to samo makro `PAUSE` (w stocku `M0` i `M25` wołają `PAUSE`).
+- [ ] **Step 2: test `test_pause_reason_each_of_five`** - pięć zestawów danych wejściowych (AI makaron, AI obcy przedmiot, brak filamentu, `M0`/`M25`, ręczna), pięć tekstów; test `test_pause_sent_once_and_again_after_resume`.
+- [ ] **Step 3: test `test_pause_does_not_touch_heaters`** - wyrenderowany wynik ticka nie zawiera `M104`, `M140`, `M141` ani `SET_HEATER_TEMPERATURE`.
+- [ ] **Step 4: test `test_eta_matches_printer_screen`** - `elapsed=2434`, `P=57` -> `"30 min"` (ekran: -30m o 09:45:09 na druku 1h1m); makro `_TWEAKED_NOTIFY_ETA(elapsed, P)` zwraca tekst `"<H>h <M>m"` lub `"<M> min"`.
+- [ ] **Step 5: Implement `q2_notify.cfg` i edycje `M0`/`M25`** - argumenty skryptu jako jedna linia z polami rozdzielonymi tabulatorem (nazwa pliku może zawierać spację i `|`, tabulatora nie). Testy z kroków 2-4 mają przejść (`wsl.exe -e python3 tests/test_notify_macros.py`).
+- [ ] **Step 6: Commit** `git commit -m "phone-notifications: klipper tick and pause notification with reason"`
 
-### Task 3: Pauza z powodem, przyciski i zdjęcie
+### Task 3: Start, 25/50/75%, koniec, anulowanie
 
 **Files:**
-- Modify: `modules/phone-notifications/files/q2_notify.cfg` (gałąź `paused` w ticku)
+- Modify: `modules/phone-notifications/files/q2_notify.cfg`
 - Test: `tests/test_notify_macros.py`
 
 **Interfaces:**
-- Consumes: Task 1 (`--action`, `--attach`), Task 2 (tick).
-- Produces: pauza wysyła `Print paused: <powód>` z przyciskami `resume`/`cancel` i zdjęciem z `http://127.0.0.1/webcam/?action=snapshot` (zapis do `/tmp/q2_notify_snap.jpg`, usuwany po wysłaniu). Powody: `spaghetti detected`, `foreign object`, `filament runout`, `paused manually`.
+- Consumes: tick i `_TWEAKED_NOTIFY_ETA` z Task 2.
+- Produces: wiadomości `Print started` (pierwsza warstwa), `Print 25%/50%/75%: elapsed <T>, done at <HH:MM>, <T> left`, `Print finished`, `Print cancelled`.
 
-- [ ] **Step 1: recon (do zapisania w komentarzu pliku)** - na drukarce sprawdzić nazwę czujnika filamentu (`[filament_switch_sensor ...]` w `printer.cfg`) i czy po pauzie AI w `qdc_ai_error_code` jest `noodle=`/`foreign=`; rozróżnienie opisać w komentarzu `q2_notify.cfg`.
-- [ ] **Step 2: test `test_pause_reason_ai_runout_manual`** - trzy zestawy danych wejściowych, trzy teksty; pauza wysłana raz na pauzę, po `resume` stan wraca (kolejna pauza wysyła się znowu).
-- [ ] **Step 3: Implement** zgodnie z recon; zdjęcie przez `curl` w skrypcie wysyłającym (`--attach`), błąd pobrania zdjęcia nie blokuje wiadomości.
-- [ ] **Step 4: Commit.**
+- [ ] **Step 1: test `test_start_sent_once_at_first_layer`** - `print_stats.state='printing'`, `info.current_layer=1` -> jedno `RUN_SHELL_COMMAND CMD=q2_notify` z `Print started`; `current_layer=0` (nagrzewanie) -> nic; drugi tick -> nic.
+- [ ] **Step 2: testy `test_milestones_25_50_75_once_each` i `test_milestones_already_passed_are_not_resent`** (pierwszy tick widzi P=60 -> `next` ustawione na 75, bez wysyłania 25 i 50; Review Focus 3).
+- [ ] **Step 3: test `test_complete_and_cancelled`** - `state='complete'` -> `Print finished`; `'cancelled'` -> `Print cancelled`, bez przycisku timelapse; wysłane raz, stan zerowany po wyjściu ze stanu druku.
+- [ ] **Step 4: Implement w `q2_notify.cfg`, testy, Commit.**
 
 ### Task 4: Słuchacz komend
 
@@ -144,5 +151,6 @@
 
 - [ ] **Step 1:** dopisać wiersz i wpis (tekst: moduł opcjonalny; wiadomości przez serwer ntfy; kto zna kanał komend, może wznowić/anulować druk).
 - [ ] **Step 2 (tylko za zgodą, nie w trakcie druku):** `py tools/install.py install --host <adres> --notify yes`, wiadomość testowa dociera na telefon. Zapisać wynik.
-- [ ] **Step 3 (właściciel przy drukarce, pusta płyta, filament):** krótki druk z timelapse: start po 1. warstwie, 25/50/75%, pauza z telefonu (przycisk "Wznów"), koniec z przyciskiem "Pokaż timelapse", film dociera. Wynik i odchyłki od ekranu poniżej 50% zapisać w `CLAUDE.local.md`.
-- [ ] **Step 4: Commit** (push dopiero po "wyślij").
+- [ ] **Step 3 (właściciel przy drukarce 07:00-20:00, pusta płyta, filament):** mały wydruk z timelapse: start po 1. warstwie, 25/50/75%, **pauza 1-2 h** z wiadomością o powodzie, wznowienie przyciskiem "Wznów" z telefonu, koniec z przyciskiem "Pokaż timelapse", film dociera. Ocenić łączenie warstw po długiej pauzie (stół i komora grzane, dysza wyłączona).
+- [ ] **Step 4 (przy tym samym teście):** sprawdzić, czy pierwsze czyszczenie dyszy w `RESUME_PRINT` (przed `M109`, na zimnej dyszy) czemuś szkodzi: obserwować `MOVE_TO_TRASH` i pięć przejazdów X 115/98 na zimnej dyszy. Z odczytu stockowego kodu 02.04 wynika, że kolejność jest taka (czyszczenie, potem `M109`, potem wyciśnięcie `E150`), więc kolejność jest potwierdzona, do sprawdzenia zostają skutki. Wynik i odchyłki od ekranu poniżej 50% zapisać w `CLAUDE.local.md`.
+- [ ] **Step 5: Commit** (push dopiero po "wyślij").
