@@ -186,6 +186,16 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertEqual(self.sent[0][0], "Print started")
         self.assertEqual(self.sent[0][1], "hdd500.gcode\\n100 layers")
 
+    def test_start_without_layer_info_after_two_minutes(self):
+        self.printing(0, 0.0, 60)               # a file from a slicer that sends no layer numbers
+        self.run_tick()
+        self.assertEqual(self.sent, [])
+        self.printing(0, 0.03, 130)
+        self.printer["print_stats"]["info"]["total_layer"] = 0
+        self.run_tick()
+        self.assertEqual([f[0] for f in self.sent], ["Print started"])
+        self.assertEqual(self.sent[0][1], "hdd500.gcode")
+
     def test_milestones_25_50_75_once_each(self):
         self.printing(1, 0.0, 60)
         self.run_tick()

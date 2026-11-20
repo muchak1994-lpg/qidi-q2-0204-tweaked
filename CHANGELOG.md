@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- New optional module `phone-notifications`: messages on your phone through ntfy (free, no account): start, 25/50/75 %, finished,
+  cancelled, **pause with its reason** (AI spaghetti / AI foreign object / filament runout / M0 or M25 / manual) with a camera picture and
+  Resume / Cancel buttons, printer errors, a print interrupted by a restart, and the timelapse video on a button. The installer asks at
+  the start (`--notify ask|yes|no`) and shows the random channel name at the end (window only, not in the log). Uninstall removes the settings.
+  Pausing is unchanged. The tests run the scripts and the Klipper templates against stand-ins; not tried on a real print yet.
 - `fluidd-fixes`: Fluidd's print ETA ("File") now uses the same progress as the printer's screen (the slicer's M73 progress,
   `elapsed x (100-P)/P`) instead of the position in the file, so Fluidd and the screen show the same time left. It no longer uses the
   duration of an earlier run of the same file. Seen on a real print only through the numbers (screen 30 min, this formula 30.6 min); not yet seen live.
