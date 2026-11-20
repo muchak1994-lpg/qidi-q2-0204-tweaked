@@ -36,6 +36,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import build  # noqa: E402
 import firmware  # noqa: E402
+import notify_setup  # noqa: E402
 import orca_profiles  # noqa: E402
 import tailscale_setup  # noqa: E402
 
@@ -945,6 +946,13 @@ def do_uninstall_stock(p, selected):
 
 
 # ------------------------------------------------------------------ main
+def remove_notify(p):
+    try:
+        notify_setup.remove(p)
+    except Exception as exc:  # report, do not fail the uninstall
+        print("Phone notification settings not removed:", exc)
+
+
 def remove_tailscale(p):
     try:
         tailscale_setup.uninstall(p)
@@ -1000,6 +1008,8 @@ def main(argv=None):
                     help="install: optional Tailscale for remote access (ask = ask in the window)")
     ap.add_argument("--toolhead", choices=("ask", "yes", "no"), default="ask",
                     help="install: check the toolhead accelerometer bug, read only (ask = ask in the window)")
+    ap.add_argument("--notify", choices=("ask", "yes", "no"), default="ask",
+                    help="install: optional phone notifications through ntfy (ask = ask in the window)")
     ap.add_argument("--orca", choices=("ask", "yes", "no"), default="ask",
                     help="install: add the project's OrcaSlicer profiles on this computer (ask = ask in the window)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
@@ -1016,16 +1026,27 @@ def main(argv=None):
         check_printer(p, require_idle=args.command != "plan")
         if args.command == "uninstall":
             if args.from_stock:
+                remove_notify(p)
                 do_uninstall_stock(p, select([], [m["id"] for m in build.load_modules()]))
                 remove_tailscale(p)
                 return 0
             found = [Path(args.backup)] if args.backup else host_backups(args.host, BACKUPS, p)
             if not found:
                 raise InstallError("no backup for this printer in %s - try: uninstall --from-stock" % BACKUPS)
+            remove_notify(p)
             do_uninstall(p, found)
             remove_tailscale(p)
             return 0
-        selected = select(args.skip, args.extra)
+        extra = list(args.extra)
+        if args.command == "install" and "phone-notifications" not in extra:
+            mode = args.notify
+            if mode == "ask" and not sys.stdin.isatty():
+                mode = "no"  # no one to ask (scripted run)
+            if notify_setup.wanted(mode):
+                extra.append("phone-notifications")
+        elif args.notify == "yes" and "phone-notifications" not in extra:
+            extra.append("phone-notifications")
+        selected = select(args.skip, extra)
         changes = plan(p, selected)
         resumed = unfinished_modules(args.host, BACKUPS, p)
         if resumed:
@@ -1058,6 +1079,11 @@ def main(argv=None):
             tailscale_setup.offer(p, mode)
         except Exception as exc:  # optional extra: never fail the install because of it
             print("Tailscale step skipped:", exc)
+        if any(m["id"] == "phone-notifications" for m in selected):
+            try:
+                notify_setup.configure(p, "yes", host=args.host)
+            except Exception as exc:  # optional extra: never fail the install because of it
+                print("Phone notifications step skipped:", exc)
         mode = args.orca
         if mode == "ask" and not sys.stdin.isatty():
             mode = "no"
