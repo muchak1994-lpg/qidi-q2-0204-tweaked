@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- New module `fluidd-full-display`: the installer switches Fluidd's "Enable Full Display" setting on.
 - New module `timelapse-progress-note`: one short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers.
   Fluidd's per-layer timelapse line (`SET_GCODE_VARIABLE ... takingframe VALUE=False`, an echo from Moonraker's timelapse component) can then
   be hidden with a Fluidd console filter. Not tested on a real print yet.

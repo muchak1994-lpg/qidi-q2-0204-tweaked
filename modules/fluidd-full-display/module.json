@@ -1,0 +1,16 @@
+{
+ "id": "fluidd-full-display",
+ "order": 118,
+ "title": "Fluidd: 'Enable Full Display' switched on",
+ "files": {},
+ "actions": [
+  [
+   "moonraker-db",
+   "fluidd",
+   "uiSettings.general.enableFullDisplay",
+   "true",
+   "false"
+  ]
+ ],
+ "note": "Switches Fluidd's 'Enable Full Display' setting on (Settings > General). It is a Fluidd setting stored in Moonraker's database on the printer, so it applies in every browser; reload an open Fluidd page once. You can still change it in Fluidd's settings; the next install sets it back. Uninstall puts Fluidd's own default (off) back."
+}
