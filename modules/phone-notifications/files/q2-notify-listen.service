@@ -1,0 +1,17 @@
+[Unit]
+Description=QIDI Q2 - phone notifications: listen for the Resume / Cancel / timelapse buttons
+After=network-online.target moonraker.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=qidi
+ExecStart=/bin/sh /home/qidi/q2-notify/q2_notify_listen.sh
+# The script ends by itself (exit 0) when the notifications are off; it is restarted only after a crash.
+Restart=on-failure
+RestartSec=10
+Nice=10
+MemoryMax=20M
+
+[Install]
+WantedBy=multi-user.target

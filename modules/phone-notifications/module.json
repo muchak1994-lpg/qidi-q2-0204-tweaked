@@ -7,6 +7,12 @@
   "/home/qidi/q2-notify/q2_notify_send.sh": {
    "source": "files/q2_notify_send.sh"
   },
+  "/home/qidi/q2-notify/q2_notify_listen.sh": {
+   "source": "files/q2_notify_listen.sh"
+  },
+  "/etc/systemd/system/q2-notify-listen.service": {
+   "source": "files/q2-notify-listen.service"
+  },
   "/home/qidi/printer_data/config/klipper-macros-qd/q2_notify.cfg": {
    "source": "files/q2_notify.cfg"
   },
@@ -28,5 +34,17 @@
  "restart": [
   "klipper"
  ],
- "note": "OPTIONAL (install with --with phone-notifications). Nothing is sent until the notifications are switched on (q2_notify.conf, ENABLED=1). The pause message is the most important one: it says why the print paused (AI spaghetti, AI foreign object, filament runout, M0/M25 in the G-code, manual) and has Resume/Cancel buttons and a camera picture. Pausing itself is unchanged: stock QIDI leaves bed and chamber heated and turns the nozzle off. A tick every 15 s only reads printer state; the messages go out through sh + curl with time limits, so a missing internet connection never delays Klipper or a print."
+ "note": "OPTIONAL (install with --with phone-notifications). Nothing is sent until the notifications are switched on (q2_notify.conf, ENABLED=1). The pause message is the most important one: it says why the print paused (AI spaghetti, AI foreign object, filament runout, M0/M25 in the G-code, manual) and has Resume/Cancel buttons and a camera picture. Pausing itself is unchanged: stock QIDI leaves bed and chamber heated and turns the nozzle off. A tick every 15 s only reads printer state; the messages go out through sh + curl with time limits, so a missing internet connection never delays Klipper or a print.",
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ],
+  [
+   "systemctl",
+   "enable",
+   "--now",
+   "q2-notify-listen.service"
+  ]
+ ]
 }
