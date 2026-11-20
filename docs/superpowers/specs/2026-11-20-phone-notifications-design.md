@@ -12,7 +12,11 @@ Wiadomości mają pokazywać te same czasy, co ekran drukarki.
 
 1. **Start** - dopiero gdy zacznie się pierwsza warstwa (nie przy nagrzewaniu).
 2. **Co 25%** - krótko: ile minęło, o której skończy, ile zostało.
-3. **Koniec** - z linkiem do timelapse (miło, nie wymóg).
+3. **Koniec** - od razu "Druk skończony". Jeśli timelapse był włączony w tym druku (flaga `enable` zapamiętana na starcie) i
+   Moonraker ma `autorender`, **druga wiadomość z filmem `.mp4` jako załącznikiem** (2-4 MB u właściciela, z miniaturą `.jpg`), gdy
+   render się skończy. Gotowość filmu: `sh` sprawdza folder `timelapse` co kilkanaście sekund, aż pojawi się nowy `.mp4`
+   (u właściciela ok. 1 min po końcu druku); po ok. 10 min bez filmu wiadomość "film niegotowy". Timelapse wyłączony albo druk
+   anulowany/przerwany: jedna wiadomość na końcu, bez filmu. Limity ntfy.sh dla załącznika (ok. 15 MB, kilka godzin) do potwierdzenia w dokumentacji.
 4. **Błędy i pauzy** - AI (makaron, obcy przedmiot), brak filamentu, błąd/shutdown Klippera lub MCU, anulowanie.
    Brak prądu: wiadomość dopiero po powrocie zasilania ("wykryto zanik zasilania, druk do wznowienia"). Przy braku prądu
    drukarka nie może nic wysłać, to ograniczenie sprzętowe.
