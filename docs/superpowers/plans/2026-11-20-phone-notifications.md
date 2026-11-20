@@ -44,7 +44,7 @@
 - [ ] **Step 1: test `test_publishes_to_events_topic_with_headers`** - sztuczny `curl` zapisuje argumenty do pliku; asercje: URL = `NTFY_SERVER/EVENTS_TOPIC`, nagłówki `Title`, `Priority`, `Tags`, treść wiadomości w `-d`.
 - [ ] **Step 2: test `test_action_buttons_header`** - dwie `--action` dają jeden nagłówek `Actions: http, Resume, <url>, method=POST, body=resume, clear=true; http, Cancel, ...`. Składnię nagłówka potwierdzić w dokumentacji ntfy (WebFetch) i ewentualnie poprawić test.
 - [ ] **Step 3: test `test_attach_uses_put_with_filename`** - `--attach plik.jpg` wysyła plik (`-T`, nagłówek `Filename`).
-- [ ] **Step 4: test `test_disabled_or_missing_conf_sends_nothing`** (`ENABLED=0` lub brak pliku: kod wyjścia 0, `curl` niewywołany) oraz **`test_title_with_quotes_pipe_and_unicode_is_passed_intact`** (Review Focus 1).
+- [ ] **Step 4: test `test_tsv_mode_matches_positional_mode`** (te same nagłówki i treść, także dla tytułu ze spacją i `|`) oraz **`test_disabled_or_missing_conf_sends_nothing`** (`ENABLED=0` lub brak pliku: kod wyjścia 0, `curl` niewywołany) oraz **`test_title_with_quotes_pipe_and_unicode_is_passed_intact`** (Review Focus 1).
 - [ ] **Step 5: test `test_curl_has_max_time`** - w argumentach jest `--max-time 15` (Review Focus 2).
 - [ ] **Step 6: Implement `q2_notify_send.sh`** - czyta konfigurację bez `source`-owania obcego kodu (parsowanie `KEY=value` linia po linii), buduje wywołanie `curl -sS --max-time 15`. Uruchom wszystkie testy z kroków 1-5, mają przejść (`wsl.exe -e python3 tests/test_notify_send.py`).
 - [ ] **Step 7: Commit** `git add modules/phone-notifications tests/test_notify_send.py && git commit -m "phone-notifications: sender script"`
