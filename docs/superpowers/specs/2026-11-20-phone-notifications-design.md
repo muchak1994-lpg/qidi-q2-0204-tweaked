@@ -12,11 +12,15 @@ Wiadomości mają pokazywać te same czasy, co ekran drukarki.
 
 1. **Start** - dopiero gdy zacznie się pierwsza warstwa (nie przy nagrzewaniu).
 2. **Co 25%** - krótko: ile minęło, o której skończy, ile zostało.
-3. **Koniec** - od razu "Druk skończony". Jeśli timelapse był włączony w tym druku (flaga `enable` zapamiętana na starcie) i
-   Moonraker ma `autorender`, **druga wiadomość z filmem `.mp4` jako załącznikiem** (2-4 MB u właściciela, z miniaturą `.jpg`), gdy
-   render się skończy. Gotowość filmu: `sh` sprawdza folder `timelapse` co kilkanaście sekund, aż pojawi się nowy `.mp4`
-   (u właściciela ok. 1 min po końcu druku); po ok. 10 min bez filmu wiadomość "film niegotowy". Timelapse wyłączony albo druk
-   anulowany/przerwany: jedna wiadomość na końcu, bez filmu. Limity ntfy.sh dla załącznika (ok. 15 MB, kilka godzin) do potwierdzenia w dokumentacji.
+3. **Koniec** - zawsze od razu, bez czekania na film. Jeśli timelapse był włączony w tym druku (flaga `enable` zapamiętana na starcie)
+   i Moonraker ma `autorender`, wiadomość ma przycisk **"Pokaż timelapse"** (komenda `video <nazwa pliku>` na kanale komend).
+   Po kliknięciu: film gotowy -> od razu załącznik `.mp4` (2-4 MB u właściciela) z miniaturą; render jeszcze trwa -> najpierw
+   "renderuje się, zaraz wyślę", potem film (sprawdzanie folderu `timelapse` co kilkanaście sekund, limit ok. 10 min, potem "film
+   niegotowy"). Klik po czasie działa tak samo (nazwa pliku jest w komendzie, więc przycisk ze starej wiadomości też działa).
+   Timelapse wyłączony albo druk anulowany/przerwany: wiadomość bez przycisku. Brak przycisku "Nie": brak kliknięcia = nic się nie dzieje.
+   Dlaczego tak, a nie automatycznie: koniec druku nie czeka na render (przy długim druku render trwa dłużej), a film nie zużywa
+   limitów `ntfy.sh` (załącznik ok. 15 MB, kilka godzin; do potwierdzenia w dokumentacji), gdy nikt go nie chce.
+   Nazwa pliku w komendzie `video` jest sprawdzana: tylko plik `.mp4` z folderu `timelapse`, bez ścieżek i `..`.
 4. **Błędy i pauzy** - AI (makaron, obcy przedmiot), brak filamentu, błąd/shutdown Klippera lub MCU, anulowanie.
    Brak prądu: wiadomość dopiero po powrocie zasilania ("wykryto zanik zasilania, druk do wznowienia"). Przy braku prądu
    drukarka nie może nic wysłać, to ograniczenie sprzętowe.
