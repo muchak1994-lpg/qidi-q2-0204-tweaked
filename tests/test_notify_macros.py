@@ -300,6 +300,13 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertTrue(self.sent[0][1].startswith("hdd500.gcode\\nLayer"), self.sent[0][1])
 
+    def test_config_survives_klippers_comment_stripping(self):
+        # Klipper (configfile.py) cuts every config line at the first # or ; anywhere in it, even inside quotes
+        for n, line in enumerate(CFG.read_text(encoding="utf-8").splitlines(), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            self.assertEqual(re.sub("[#;].*$", "", line), line, "line %d would be cut by Klipper: %s" % (n, line))
+
     def test_tick_reschedules_itself(self):
         text = self.run_tick()
         self.assertIn("UPDATE_DELAYED_GCODE ID=_TWEAKED_NOTIFY_TICK DURATION=15", text)
