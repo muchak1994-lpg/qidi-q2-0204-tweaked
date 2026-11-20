@@ -83,6 +83,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `emmc-info` | Fluidd shows the real eMMC information. |
 | `gcode-history` | A multi-line console command stays one history entry. |
 | `timelapse-capture-recovery` | One failed timelapse frame no longer stops the whole timelapse. |
+| `timelapse-progress-note` | One short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers. Not tested on a real print yet. |
 | `fluidd-fixes` | Fluidd: file and folder names with spaces/special characters, upload/download progress per file, controls usable while paused, SoC temperature, disk usage, sane ETA at print start, keeps server info on a Klipper reset, hides dialogs while disconnected. |
 | `send-and-print-guard` | Keeps Fluidd's "Upload & Print" working (checks at boot and nightly). |
 | `fluidd-drying-button` | A "Filament drying" entry at the end of Fluidd's left navigation panel (phone and computer). It opens a window with the printer screen's own settings (15 filament types, build plate temperature up to 100 °C, time 1-24 h) and sends the same commands as the screen (`prepare_filament_dry`, `SET_FILAMENT_DRY`). Fluidd's own program file is not changed. While the printer is busy the drying entry shows an in-page "printer is busy" notice instead of the window (like the screen). Start (green) stays grey until the bed is lowered, "Lower the bed" also wakes the screen, Stop is grey when nothing is drying. Tested: lower the bed, start, time left, stop. |

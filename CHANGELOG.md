@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- New module `timelapse-progress-note`: one short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers.
+  Fluidd's per-layer timelapse line (`SET_GCODE_VARIABLE ... takingframe VALUE=False`, an echo from Moonraker's timelapse component) can then
+  be hidden with a Fluidd console filter. Not tested on a real print yet.
 - Removed `adaptive-bed-mesh` (bed mesh only under the first layer). The 20.11.2026 test print showed it never worked
   with OrcaSlicer files: they are `.gcode.3mf` (a ZIP), which the module read as plain text, so it always fell back to
   the whole plate - and QIDI's own KAMP macro, which replaces `BED_MESH_CALIBRATE`, ignored the area anyway. QIDI's macro
