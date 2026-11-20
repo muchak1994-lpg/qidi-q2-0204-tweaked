@@ -1,0 +1,32 @@
+{
+ "id": "phone-notifications",
+ "order": 144,
+ "default": false,
+ "title": "Phone notifications (ntfy): start, 25/50/75%, pause with reason, end, errors; Resume/Cancel/timelapse from the phone (optional)",
+ "files": {
+  "/home/qidi/q2-notify/q2_notify_send.sh": {
+   "source": "files/q2_notify_send.sh"
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_notify.cfg": {
+   "source": "files/q2_notify.cfg"
+  },
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "[gcode_macro M0]\ngcode:\n    PAUSE\n",
+     "[gcode_macro M0]\ngcode:\n    SET_GCODE_VARIABLE MACRO=_TWEAKED_NOTIFY VARIABLE=reason VALUE=\"'M0'\"\n    PAUSE\n"
+    ],
+    [
+     "[gcode_macro M25]\nrename_existing: M9925\ngcode:\n    PAUSE\n",
+     "[gcode_macro M25]\nrename_existing: M9925\ngcode:\n    SET_GCODE_VARIABLE MACRO=_TWEAKED_NOTIFY VARIABLE=reason VALUE=\"'M25'\"\n    PAUSE\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "OPTIONAL (install with --with phone-notifications). Nothing is sent until the notifications are switched on (q2_notify.conf, ENABLED=1). The pause message is the most important one: it says why the print paused (AI spaghetti, AI foreign object, filament runout, M0/M25 in the G-code, manual) and has Resume/Cancel buttons and a camera picture. Pausing itself is unchanged: stock QIDI leaves bed and chamber heated and turns the nozzle off. A tick every 15 s only reads printer state; the messages go out through sh + curl with time limits, so a missing internet connection never delays Klipper or a print."
+}
