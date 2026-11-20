@@ -10,6 +10,9 @@
   "/home/qidi/q2-notify/q2_notify_listen.sh": {
    "source": "files/q2_notify_listen.sh"
   },
+  "/home/qidi/q2-notify/q2_notify_video.sh": {
+   "source": "files/q2_notify_video.sh"
+  },
   "/etc/systemd/system/q2-notify-listen.service": {
    "source": "files/q2-notify-listen.service"
   },

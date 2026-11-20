@@ -246,6 +246,28 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertEqual(self.state["tl_on"], 1)
 
+    def test_finish_message_has_timelapse_button_only_when_timelapse_was_on(self):
+        for tl_on, expected in ((1, "Show timelapse=video hdd500.gcode"), (0, "")):
+            with self.subTest(tl_on=tl_on):
+                self.setUp()
+                self.state.update(started=1, next=50, tl_on=tl_on)
+                self.printer["print_stats"].update(state="complete", print_duration=3600)
+                self.run_tick()
+                self.assertEqual(self.sent[-1][0], "Print finished")
+                self.assertEqual(self.sent[-1][6], expected)
+
+    def test_cancelled_never_has_a_timelapse_button(self):
+        self.state.update(started=1, next=50, tl_on=1)
+        self.printer["print_stats"].update(state="cancelled", print_duration=600)
+        self.run_tick()
+        self.assertEqual(self.sent[-1][0], "Print cancelled")
+        self.assertEqual(self.sent[-1][6], "")
+
+    def test_folder_in_the_file_name_is_dropped(self):
+        self.pause(filename="models/hdd500.gcode")
+        self.run_tick()
+        self.assertTrue(self.sent[0][1].startswith("hdd500.gcode\\nLayer"), self.sent[0][1])
+
     def test_tick_reschedules_itself(self):
         text = self.run_tick()
         self.assertIn("UPDATE_DELAYED_GCODE ID=_TWEAKED_NOTIFY_TICK DURATION=15", text)
