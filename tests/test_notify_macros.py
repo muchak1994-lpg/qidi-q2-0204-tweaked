@@ -246,6 +246,28 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertEqual(self.state["tl_on"], 1)
 
+    def test_interrupted_print_is_reported_once_after_start(self):
+        self.printer["save_variables"]["variables"]["q2_notify_printing"] = 1
+        self.run_tick()
+        self.assertEqual(len(self.sent), 1)
+        self.assertEqual(self.sent[0][0], "Print interrupted")
+        self.assertIn("SAVE_VARIABLE VARIABLE=q2_notify_printing VALUE=0", self.all_gcode)
+        self.run_tick()                         # the flag is cleared in the real printer; the tick must not repeat anyway
+        self.assertEqual(len(self.sent), 1)
+
+    def test_no_interrupted_message_after_a_clean_start(self):
+        self.printer["save_variables"]["variables"]["q2_notify_printing"] = 0
+        self.run_tick()
+        self.assertEqual(self.sent, [])
+
+    def test_print_flag_is_saved_at_start_and_cleared_at_the_end(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.assertIn("SAVE_VARIABLE VARIABLE=q2_notify_printing VALUE=1", self.all_gcode)
+        self.printer["print_stats"].update(state="complete", print_duration=3600)
+        self.run_tick()
+        self.assertIn("SAVE_VARIABLE VARIABLE=q2_notify_printing VALUE=0", self.all_gcode)
+
     def test_finish_message_has_timelapse_button_only_when_timelapse_was_on(self):
         for tl_on, expected in ((1, "Show timelapse=video hdd500.gcode"), (0, "")):
             with self.subTest(tl_on=tl_on):
