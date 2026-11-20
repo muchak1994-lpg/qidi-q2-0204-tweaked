@@ -125,6 +125,23 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertEqual(f[5], "http://127.0.0.1/webcam/?action=snapshot")
         self.assertEqual(f[6:9], ["Resume=resume", "Cancel=cancel"])
 
+    def test_light_is_switched_on_and_given_time_before_the_picture(self):
+        self.pause()
+        self.run_tick()
+        g = self.all_gcode
+        i_light = g.index("SET_PIN PIN=caselight VALUE=1")
+        i_wait = next(i for i, l in enumerate(g) if l.startswith("G4 P"))
+        i_send = next(i for i, l in enumerate(g) if l.startswith("RUN_SHELL_COMMAND"))
+        self.assertLess(i_light, i_wait)
+        self.assertLess(i_wait, i_send)
+
+    def test_light_is_not_touched_by_other_messages(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.printer["print_stats"].update(state="complete", print_duration=3600)
+        self.run_tick()
+        self.assertNotIn("SET_PIN PIN=caselight VALUE=1", self.all_gcode)
+
     def test_pause_sent_once_and_again_after_resume(self):
         self.state.update(started=1, next=50)       # a print in progress
         self.pause()
