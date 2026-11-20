@@ -1,8 +1,7 @@
 {
  "id": "box-homing-timeout",
  "order": 133,
- "default": false,
- "title": "QIDI Box with 3+ Boxes: 'Communication timeout during homing' on tool changes (optional, QIDI_Q2 #33)",
+ "title": "QIDI Box with 3+ Boxes: 'Communication timeout during homing' on tool changes (QIDI_Q2 #33)",
  "files": {
   "/home/qidi/klipper/klippy/mcu.py": {
    "edits": [
@@ -16,5 +15,5 @@
  "restart": [
   "klipper"
  ],
- "note": "OPTIONAL (install with --with box-homing-timeout). With 3 or more QIDI Boxes, a tool change can stop the print with 'Error during homing b_endstop: Communication timeout during homing' every few hundred changes (QIDI_Q2 #33, 01.01.02.x and 03.02). The Box hub sensors are on the Box board at the end of the USB chain, and homing across two boards allows only 50 ms (TRSYNC_TIMEOUT) for the boards to hear each other; the reporter fixed it with 250 ms. This module gives 250 ms (Klipper's single-board value) only to homing that involves a Box board (mcu_box*); Z homing with the nozzle sensor and all other homing keep 50 ms. Not tested here (no Box): based on the issue report. Restarts Klipper."
+ "note": "Installed by default (harmless without a Box: the changed branch is only taken for homing that involves a Box board). Home all (G28) checked on a printer without a Box on 20.11.2026 - the timeout itself is not tested (no Box). With 3 or more QIDI Boxes, a tool change can stop the print with 'Error during homing b_endstop: Communication timeout during homing' every few hundred changes (QIDI_Q2 #33, 01.01.02.x and 03.02). The Box hub sensors are on the Box board at the end of the USB chain, and homing across two boards allows only 50 ms (TRSYNC_TIMEOUT) for the boards to hear each other; the reporter fixed it with 250 ms. This module gives 250 ms (Klipper's single-board value) only to homing that involves a Box board (mcu_box*); Z homing with the nozzle sensor and all other homing keep 50 ms. Not tested here (no Box): based on the issue report. Restarts Klipper."
 }

@@ -51,7 +51,7 @@ def run(rec, interactive=True, skip=(), notify="ask", extra=()):
 class OptionalStepTest(unittest.TestCase):
     def test_there_are_optional_modules_including_phone_notifications(self):
         self.assertIn("phone-notifications", OPTIONAL)
-        self.assertGreaterEqual(len(OPTIONAL), 3)
+        self.assertGreaterEqual(len(OPTIONAL), 2)
 
     def test_each_module_is_asked_in_turn_and_no_goes_to_the_next_question(self):
         rec = Recorder()

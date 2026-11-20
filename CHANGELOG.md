@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `box-homing-timeout` is now installed by default (it only changes homing that involves a QIDI Box board, so it does nothing without a Box): someone who adds a third Box
+  does not have to search for the fix. Home all (G28) was run on a printer without a Box after installing it: no error.
 - Installer: all optional extras now come at the end, one after the other: question, yes = installed right away, no = the next
   question (optional modules such as `journal-retention`, phone notifications, toolhead check, Tailscale, OrcaSlicer profiles).
   Without a window to ask in (a scripted run) nothing optional is offered; `--with`, `--notify yes|no` and the other flags still work.
