@@ -61,7 +61,7 @@ class CommandNamesTest(unittest.TestCase):
 
     def test_every_module_command_reaches_its_handler(self):
         names = module_names()
-        self.assertTrue(any(n == "TWEAKED_ADAPTIVE_MESH" for n, _ in names))
+        self.assertTrue(any(n == "TWEAKED_THR_CHECK" for n, _ in names))
         bad = []
         for name, where in names:
             if name in VARIABLES_ONLY:

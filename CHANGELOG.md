@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Removed `adaptive-bed-mesh` (bed mesh only under the first layer). The 20.11.2026 test print showed it never worked
+  with OrcaSlicer files: they are `.gcode.3mf` (a ZIP), which the module read as plain text, so it always fell back to
+  the whole plate - and QIDI's own KAMP macro, which replaces `BED_MESH_CALIBRATE`, ignored the area anyway. QIDI's macro
+  already narrows the mesh to the objects (in X; that print: 24 points instead of 36), so the module is not needed.
+  The installer does not take it off a printer that has it: there it stays harmless (it passes on to QIDI's macro).
 - Docs: step-by-step guide for the manual, optional toolhead accelerometer fix from a Windows PC
   (`docs/TOOLHEAD_ACCELEROMETER.md`, Polish version too). The flashing commands are the ones run on the author's
   printer on 18.11.2026; the guide's PowerShell commands and its `/tmp` folder were not run exactly as written, and
