@@ -135,6 +135,25 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertLess(i_light, i_wait)
         self.assertLess(i_wait, i_send)
 
+    def test_light_goes_back_off_after_the_picture_when_it_was_off(self):
+        self.printer["output_pin caselight"] = {"value": 0.0}
+        self.pause()
+        self.run_tick()
+        self.assertIn("SET_PIN PIN=caselight VALUE=1", self.all_gcode)
+        self.assertIn("UPDATE_DELAYED_GCODE ID=_TWEAKED_NOTIFY_LIGHT_OFF DURATION=15", self.all_gcode)
+        off = self.env.from_string(dedent(self.cfg["delayed_gcode _TWEAKED_NOTIFY_LIGHT_OFF"]["gcode"]))
+        self.assertIn("SET_PIN PIN=caselight VALUE=0", off.render(printer=self.printer))        # still paused: off
+        self.printer["print_stats"]["state"] = "printing"
+        self.assertNotIn("SET_PIN", off.render(printer=self.printer))                          # resumed meanwhile: leave it
+
+    def test_light_that_was_already_on_is_left_alone(self):
+        self.printer["output_pin caselight"] = {"value": 1.0}
+        self.pause()
+        self.run_tick()
+        self.assertEqual(len(self.sent), 1)
+        self.assertNotIn("SET_PIN PIN=caselight VALUE=1", self.all_gcode)
+        self.assertFalse([l for l in self.all_gcode if "LIGHT_OFF" in l])
+
     def test_light_is_not_touched_by_other_messages(self):
         self.printing(1, 0.0, 60)
         self.run_tick()
