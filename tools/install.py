@@ -56,6 +56,12 @@ def sha(data):
     return hashlib.sha256(data).hexdigest()
 
 
+def db_url(namespace, key):
+    """Moonraker's address of one database entry, with the names encoded for a URL."""
+    from urllib.parse import urlencode
+    return "http://127.0.0.1:7125/server/database/item?" + urlencode({"namespace": namespace, "key": key})
+
+
 class InstallError(Exception):
     pass
 
@@ -82,11 +88,23 @@ class SSHPrinter:
             if p._run("sudo -n true", check=False, raw=True) is not None:
                 print("Logged in with the SSH key (sudo needs no password).")
                 return p
-            p.password = getpass.getpass("sudo password for %s@%s: " % (user, host))
-            print("Logged in with the SSH key.")
-            return p
+            for _ in range(3):  # checked here, not halfway through the install
+                p.password = getpass.getpass("sudo password for %s@%s: " % (user, host))
+                if p.sudo_works():
+                    print("Logged in with the SSH key.")
+                    return p
+                print("Wrong sudo password, try again.")
+            raise InstallError("sudo password not accepted by the printer")
         password = getpass.getpass("SSH password for %s@%s: " % (user, host))
         return cls(host, user, password, port)
+
+    def sudo_works(self):
+        """True when sudo accepts self.password (the password goes on stdin, never on the command line)."""
+        stdin, out, _ = self.client.exec_command("sudo -S -p '' true", timeout=60)
+        stdin.write(self.password + "\n")
+        stdin.flush()
+        out.read()
+        return out.channel.recv_exit_status() == 0
 
     def _run(self, command, sudo=False, check=True, raw=False):
         """raw: run as is and return None on a non-zero exit."""
@@ -174,8 +192,7 @@ class SSHPrinter:
             return
         if argv[0] == "moonraker-db-delete":
             # ["moonraker-db-delete", namespace, key]: the entry was not there before the install
-            self._run("curl -s -X DELETE 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s'"
-                      " >/dev/null" % (argv[1], argv[2]), check=check)
+            self._run("curl -s -X DELETE %s >/dev/null" % shlex.quote(db_url(argv[1], argv[2])), check=check)
             return
         if argv[0] == "timezone":
             self._run("timedatectl set-timezone %s" % shlex.quote(argv[1]), sudo=True, check=check)
@@ -189,8 +206,7 @@ class SSHPrinter:
 
     def db_value(self, namespace, key):
         """The JSON text of one Moonraker database entry, or None when it is not set."""
-        out = self._run("curl -s 'http://127.0.0.1:7125/server/database/item?namespace=%s&key=%s' || true"
-                        % (namespace, key)).decode()
+        out = self._run("curl -s %s || true" % shlex.quote(db_url(namespace, key))).decode()
         try:
             return json.dumps(json.loads(out)["result"]["value"])
         except (ValueError, KeyError, TypeError):
@@ -521,14 +537,16 @@ def resolve_action(p, action):
 
 
 def unfinished_modules(host, backups=BACKUPS, p=None):
-    """Modules whose files the newest run put on the printer before it stopped (restarts still owed)."""
+    """Modules whose files the newest run put on the printer before it stopped, or that it was itself
+    finishing for an earlier run (restarts still owed)."""
     found = host_backups(host, backups, p)
     if not found:
         return set()
     record = json.loads((found[-1] / "install.json").read_text(encoding="utf-8"))
     if record.get("complete", True):
         return set()
-    return {mid for e in record["files"].values() if e.get("installed") for mid in e.get("modules", [])}
+    return ({mid for e in record["files"].values() if e.get("installed") for mid in e.get("modules", [])}
+            | set(record.get("resumed", [])))
 
 
 def pending_actions(p, selected, changes, resumed=()):
@@ -571,7 +589,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
     index = firmware.load_index()["files"]
     record = {"host": host, "printer_id": _printer_id(p), "time": stamp, "version": VERSION,
               "already_ours": getattr(changes, "already_ours", None),
-              "modules": [m["id"] for m in selected],
+              "modules": [m["id"] for m in selected], "resumed": sorted(resumed),
               "files": {}, "actions": [], "complete": False}
     stock = [path for path, _, kind, _ in changes if kind == "replace" and path in index]
     if stock:
@@ -634,7 +652,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
         record["complete"] = True
     finally:
         save()
-        if not record["complete"] and any(e.get("installed") for e in record["files"].values()):
+        if not record["complete"] and (resumed or any(e.get("installed") for e in record["files"].values())):
             print("\nNOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
                   "Do not print yet: run the installer again (it continues where it stopped), or turn the\n"
                   "printer off and on. Backup of this run: %s" % backup)
@@ -790,7 +808,8 @@ def merged_record(found):
     Backups older than the newest first install (e.g. from before a reflash) no longer describe the
     printer and are left out. Each file goes back to what was there before OUR FIRST change of it
     (the oldest backup that installed it); "changed since install" is judged against our latest
-    version (the newest one). Config files are cleaned with the newest edits. Actions are undone
+    version (the newest one). Config files are cleaned of the edits of every module that changed them,
+    each with its newest edits (also a module left out of a later run). Actions are undone
     newest run first. Returns (files, actions, complete) - complete is False when no first install
     is among the backups (the originals may then be missing)."""
     records = [(b, json.loads((b / "install.json").read_text(encoding="utf-8"))) for b in found]
@@ -804,13 +823,17 @@ def merged_record(found):
         for path, entry in record["files"].items():
             if not entry.get("installed"):
                 continue
+            edits = dict(files[path]["_edits"]) if path in files else {}
+            if entry["kind"] == "config":
+                edits.update((mid, backup) for mid in entry.get("modules", []))
             if path not in files:
-                files[path] = dict(entry, _backup=backup)
+                files[path] = dict(entry, _backup=backup, _edits=edits)
             else:
                 first = files[path]
                 first["new_sha256"] = entry["new_sha256"]
+                first["_edits"] = edits
                 if entry["kind"] == "config" or first["kind"] == "config":
-                    files[path] = dict(entry, _backup=backup, kind="config")
+                    files[path] = dict(entry, _backup=backup, kind="config", _edits=edits)
         actions.append(record.get("actions", []))
     return files, [a for run in reversed(actions) for a in reversed(run)], complete
 
@@ -829,8 +852,9 @@ def do_uninstall(p, backup):
             continue
         if entry["kind"] == "config":
             # take our edits out of the file as it is now (keeps calibration saved since)
-            mods = [{"id": mid, "files": {path: json.loads((backup / "modules.json").read_text())[mid][path]}}
-                    for mid in entry["modules"]]
+            edits = entry.get("_edits") or {mid: backup for mid in entry["modules"]}
+            mods = [{"id": mid, "files": {path: json.loads((b / "modules.json").read_text())[mid][path]}}
+                    for mid, b in edits.items()]  # in the order the modules were first installed
             current = p.read(path)
             try:
                 old = apply_config_edits(current, mods, path, reverse=True)

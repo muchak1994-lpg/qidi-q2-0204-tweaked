@@ -43,8 +43,9 @@ class _Stream:
 class _Client:
     """Records commands; 'sudo -n true' exits with sudo_n_code."""
 
-    def __init__(self, sudo_n_code=0):
+    def __init__(self, sudo_n_code=0, sudo_check_codes=()):
         self.sudo_n_code = sudo_n_code
+        self.sudo_check_codes = list(sudo_check_codes)  # exit codes of the password checks, in turn
         self.commands = []
         self.stdins = []
 
@@ -53,6 +54,8 @@ class _Client:
         stdin = _Stream()
         self.stdins.append(stdin)
         code = self.sudo_n_code if command == "sudo -n true" else 0
+        if command == "sudo -S -p '' true" and self.sudo_check_codes:
+            code = self.sudo_check_codes.pop(0)
         return stdin, _Stream(b"ok", code), _Stream()
 
     def open_sftp(self):
@@ -79,6 +82,22 @@ class OpenTest(unittest.TestCase):
         p._run("true", sudo=True)
         self.assertEqual(client.commands[-1], "sudo -S -p '' sh -c true")
         self.assertEqual(client.stdins[-1].written, "secret\n")
+
+    def test_wrong_sudo_password_is_asked_again(self):  # audit 20.11.2026
+        client = _Client(sudo_n_code=1, sudo_check_codes=[1, 0])
+        with mock.patch.object(printer, "connect_with_key", return_value=client), \
+                mock.patch.object(install.getpass, "getpass", side_effect=["typo", "secret"]) as ask:
+            p = install.SSHPrinter.open("printer", "mks")
+        self.assertEqual(ask.call_count, 2)
+        self.assertEqual(p.password, "secret")
+        self.assertNotIn("secret", " ".join(client.commands))  # only on stdin
+
+    def test_wrong_sudo_password_three_times_stops(self):
+        client = _Client(sudo_n_code=1, sudo_check_codes=[1, 1, 1])
+        with mock.patch.object(printer, "connect_with_key", return_value=client), \
+                mock.patch.object(install.getpass, "getpass", return_value="typo"):
+            with self.assertRaises(install.InstallError):
+                install.SSHPrinter.open("printer", "mks")
 
     def test_no_key_is_the_old_password_login(self):
         client = _Client()

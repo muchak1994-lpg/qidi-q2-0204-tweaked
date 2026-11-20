@@ -17,8 +17,9 @@ unknown commands without a message.
 
 The whole plate is measured, as before, when no file is printing (a G29 from
 the screen or the console), when the file has no layer markers, when the first
-layer cannot be read within the limits below, or when it covers most of the
-plate anyway.
+layer cannot be read within the limits below, when it covers most of the
+plate anyway, or when the file is printed object by object (the first layer of
+the first object is all that comes before its second layer).
 
     TWEAKED_ADAPTIVE_MESH PROFILE=kamp
 """
@@ -30,6 +31,8 @@ MARGIN = 10.            # mm around the first layer (nozzle presses near the edg
 MAX_BYTES = 32 << 20    # read at most this much of the file looking for the first layer
 FULL_RATIO = 0.9        # area this close to the whole plate: just measure the whole plate
 LAYER_MARKERS = (";LAYER_CHANGE", "; CHANGE_LAYER", ";LAYER:")
+TAIL_BYTES = 256 << 10  # the slicer's settings are at the end of the file
+BY_OBJECT = re.compile(r"^;\s*(print_sequence\s*=\s*by.object|complete_objects\s*=\s*1)\s*$", re.M)
 WORD = re.compile(r"([XYZEIJF])\s*(-?\d*\.?\d+)")
 
 
@@ -81,13 +84,13 @@ def first_layer_bbox(lines, pause=None):
             extrudes = False
             if "E" in words:
                 e = float(words["E"])
-                if e_relative:
+                if e_relative or not absolute:  # in Klipper G91 makes E relative too
                     extrudes = e > 0.
                 elif e_relative is False:
                     extrudes = e > e_last
                 else:  # mode not stated in the file: count it as extruding either way (a larger area is safe)
                     extrudes = e > 0. or e > e_last
-                if e_relative is not True:
+                if e_relative is not True and absolute:
                     e_last = e
             if extrudes and layer == 1:
                 points = [(x, y), (nx, ny)]
@@ -105,6 +108,11 @@ def first_layer_bbox(lines, pause=None):
                         box[3] = max(box[3], py)
             x, y = nx, ny
     return None  # no second layer marker within what was read: not trusted
+
+
+def printed_by_object(tail):
+    """True when the slicer's settings at the end of the file say "one object after another"."""
+    return BY_OBJECT.search(tail) is not None
 
 
 def mesh_area(bbox, mesh_min, mesh_max, probe_count, margin=MARGIN):
@@ -176,6 +184,12 @@ class Q2MeshArea:
                     return
                 yield line
         try:
+            with open(path, 'rb') as f:
+                f.seek(0, 2)
+                f.seek(max(0, f.tell() - TAIL_BYTES))
+                tail = f.read().decode('utf-8', 'replace')
+            if printed_by_object(tail):
+                return None, "printed object by object"
             with open(path, 'r', encoding='utf-8', errors='replace') as f:
                 bbox = first_layer_bbox(lines(f), pause)
         except OSError as exc:

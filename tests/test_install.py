@@ -215,6 +215,25 @@ class InstallTest(unittest.TestCase):
         self.assertEqual(self.p.read(fan), STOCK[fan])
         self.assertNotIn(b"new: 1", self.p.read(cfg))
 
+    def test_uninstall_takes_out_config_edits_of_a_module_left_out_later(self):  # audit 20.11.2026
+        cfg = "/home/qidi/printer_data/config/printer.cfg"
+        extra = {"id": "extra", "order": 4, "files": {cfg: {"base": "printer", "edits": [["[x]\n", "[x]\nnew: 1\n"]]}}}
+        other = {"id": "other", "order": 5, "files": {cfg: {"base": "printer",
+                                                            "edits": [["[idle_timeout]\n", "[idle_timeout]\nother: 2\n"]]}}}
+        first = MODS + [extra]
+        install.do_install(self.p, first, install.plan(self.p, first, built=build.build(
+            first, stock_reader=lambda p: STOCK[p])), "h", backups=self.tmp)
+        time.sleep(1.1)
+        later = MODS + [other]  # "extra" left out (--skip extra), its edit stays on the printer
+        changes = install.plan(self.p, later, built=build.build(later, stock_reader=lambda p: STOCK[p]))
+        install.do_install(self.p, later, changes, "h", backups=self.tmp)
+        self.assertIn(b"new: 1", self.p.read(cfg))
+        self.assertIn(b"other: 2", self.p.read(cfg))
+        install.do_uninstall(self.p, install.host_backups("h", self.tmp))
+        self.assertNotIn(b"new: 1", self.p.read(cfg))
+        self.assertNotIn(b"other: 2", self.p.read(cfg))
+        self.assertIn(b"timeout: 43200", self.p.read(cfg))
+
     def test_stopped_install_is_finished_by_the_next_run(self):  # audit 16.11.2026
         changes = install.plan(self.p, MODS, built=self.built)
         real = self.p.action
@@ -228,6 +247,30 @@ class InstallTest(unittest.TestCase):
         self.p.action = real
         time.sleep(1.1)
         self.assertEqual(install.unfinished_modules("h", self.tmp), {"fan", "idle"})
+        install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
+        self.assertEqual(self.p.restarts, ["klipper"])
+        self.assertEqual(install.unfinished_modules("h", self.tmp), set())
+
+    def test_resume_stopped_again_is_still_owed(self):  # audit 20.11.2026
+        changes = install.plan(self.p, MODS, built=self.built)
+        real_action, real_restart = self.p.action, self.p.restart
+
+        def fail(*a, **k):
+            raise install.InstallError("boom")
+        self.p.action = fail
+        with self.assertRaises(install.InstallError):
+            install.do_install(self.p, MODS, changes, "h", backups=self.tmp)
+        self.p.action = real_action
+        time.sleep(1.1)
+        # the second run has no files to change; it is stopped during the restart
+        again = install.plan(self.p, MODS, built=self.built)
+        self.assertEqual(list(again), [])
+        self.p.restart = fail
+        with self.assertRaises(install.InstallError):
+            install.do_install(self.p, MODS, again, "h", backups=self.tmp)
+        self.p.restart = real_restart
+        self.assertEqual(install.unfinished_modules("h", self.tmp), {"fan", "idle"})
+        time.sleep(1.1)
         install.do_install(self.p, MODS, install.plan(self.p, MODS, built=self.built), "h", backups=self.tmp)
         self.assertEqual(self.p.restarts, ["klipper"])
         self.assertEqual(install.unfinished_modules("h", self.tmp), set())
@@ -280,6 +323,11 @@ class InstallTest(unittest.TestCase):
         self.assertEqual((changes, install.pending_actions(self.p, MODS, changes)), ([], []))
         # a non-state action runs only for a module whose files change
         self.assertEqual(install.pending_actions(self.p, mods, []), [])
+
+    def test_db_url_is_encoded(self):  # audit 20.11.2026
+        self.assertEqual(install.db_url("fluidd", "layout.layouts"),
+                         "http://127.0.0.1:7125/server/database/item?namespace=fluidd&key=layout.layouts")
+        self.assertTrue(install.db_url("a b", "x&y#").endswith("namespace=a+b&key=x%26y%23"))
 
     def test_moonraker_db_entry_is_a_state_action(self):
         act = ["moonraker-db", "fluidd", "uiSettings.general.axis.z.inverted", "false"]

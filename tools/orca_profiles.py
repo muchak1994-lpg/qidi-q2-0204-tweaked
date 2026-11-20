@@ -118,9 +118,10 @@ def filament_files(enabled):
         return []
     wanted, files = set(enabled), []
     for line in index.read_text(encoding="utf-8").splitlines():
-        if not line or line.startswith("#"):
-            continue
-        rel, inherits = line.split("\t")[:2]
+        fields = line.split("\t")
+        if not line.strip() or line.startswith("#") or len(fields) < 2:
+            continue  # blank, comment, or a line edited by hand without its tab
+        rel, inherits = fields[:2]
         if inherits in wanted:
             path = FILAMENT_SRC / rel
             for f in (path, path.with_suffix(".info")):

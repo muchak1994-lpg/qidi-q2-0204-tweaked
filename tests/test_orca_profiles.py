@@ -140,6 +140,16 @@ class FilamentTest(unittest.TestCase):
         names = [n for _, n, _ in op.filament_files(["SUNLU PETG @System", "Not In Our List @System"])]
         self.assertEqual(names, ["SUNLU PETG (Tweaked).json", "SUNLU PETG (Tweaked).info"])
 
+    def test_hand_edited_index_lines_are_skipped(self):  # audit 20.11.2026
+        saved = op.FILAMENT_SRC
+        op.FILAMENT_SRC = self.tmp
+        try:
+            (self.tmp / op.orca_filaments.INDEX_NAME).write_text(
+                "# comment\n   \nno tab here\nA/x.json\tX @System\n", encoding="utf-8")
+            self.assertEqual([n for _, n, _ in op.filament_files(["X @System"])], ["x.json", "x.info"])
+        finally:
+            op.FILAMENT_SRC = saved
+
     def test_install_adds_only_enabled_filaments_and_uninstall_removes_them(self):
         run("install", "--apply", *self.common)
         self.assertEqual(sorted(p.name for p in (self.user / "filament").iterdir()),

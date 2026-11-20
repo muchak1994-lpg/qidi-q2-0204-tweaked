@@ -61,6 +61,15 @@ class FirstLayerTest(unittest.TestCase):
         text = "M83\n;LAYER_CHANGE\nG90\nG1 X100 Y100\nG91\nG1 X10 Y5 E1\nG90\n" + LAYER2
         self.assertEqual(bbox(text), [100., 100., 110., 105.])
 
+    def test_g91_makes_extrusion_relative(self):  # audit 20.11.2026: Klipper treats E as relative under G91
+        text = "M82\nG92 E0\nG1 E5\n;LAYER_CHANGE\nG1 X100 Y100\nG91\nG1 X10 Y5 E1\nG90\n" + LAYER2
+        self.assertEqual(bbox(text), [100., 100., 110., 105.])
+
+    def test_printed_by_object(self):  # audit 20.11.2026
+        self.assertTrue(q.printed_by_object("; foo = 1\n; print_sequence = by object\n"))
+        self.assertTrue(q.printed_by_object("; complete_objects = 1\r\n"))
+        self.assertFalse(q.printed_by_object("; print_sequence = by layer\n; complete_objects = 0\n"))
+
     def test_arc_counts_whole_circle(self):
         text = "M83\n;LAYER_CHANGE\nG1 X100 Y100\nG2 X120 Y100 I10 J0 E2\n" + LAYER2
         self.assertEqual(bbox(text), [100., 90., 120., 110.])
@@ -199,6 +208,18 @@ class CommandTest(unittest.TestCase):
         self.assertTrue(info[0].startswith("Bed mesh: only under the first layer"), info)
         self.assertEqual(scripts, ["BED_MESH_CALIBRATE PROFILE=kamp MESH_MIN=110.000,110.000 "
                                    "MESH_MAX=160.000,160.000 PROBE_COUNT=3,3"])
+
+    def test_by_object_file_is_whole_plate(self):  # audit 20.11.2026
+        import tempfile, os
+        fd, path = tempfile.mkstemp(suffix=".gcode")
+        with os.fdopen(fd, "w") as f:
+            f.write(START + LAYER1 + LAYER2 + "; CONFIG_BLOCK_START\n; print_sequence = by object\n")
+        try:
+            info, scripts = self.run_command(path)
+        finally:
+            os.unlink(path)
+        self.assertEqual(info, ["Bed mesh: whole plate (printed object by object)"])
+        self.assertEqual(scripts, ["BED_MESH_CALIBRATE PROFILE=kamp"])
 
     def test_no_file_is_whole_plate(self):
         info, scripts = self.run_command(None)

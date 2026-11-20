@@ -1,6 +1,14 @@
 # Changelog
 
 ## Unreleased
+- Fixes from a code review of everything since 1.0.0 (tested with new unit tests, not on a printer yet):
+  - Installer: when the run that finishes a stopped install is stopped too, the next run still restarts Klipper
+    (before, it could say "nothing to do" with the new files not loaded yet).
+  - Uninstall takes out the printer.cfg / macro edits of a module that a later install left out (`--skip`).
+  - A wrong sudo password is noticed right after it is typed (asked again, up to 3 times), not halfway through.
+  - `adaptive-bed-mesh`: a file printed object by object gets the whole plate measured (only the first object
+    was measured before); G91 counts the extrusion as relative, as Klipper does.
+  - Small: Moonraker database names are URL-encoded; a hand-edited Orca index line without a tab is skipped.
 - New module `thr-accel-check` (from the 03.02 port, read only): QIDI's Q2 toolhead firmware has an accelerometer bug
   (about 390 samples a second instead of 1600, QIDI_Q2 #39). At the end of an install the installer says so and asks
   whether to check the printer (`--toolhead yes|no`); the console command `TWEAKED_THR_CHECK` measures the rate and
