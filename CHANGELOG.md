@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Docs: step-by-step guide for the manual, optional toolhead accelerometer fix from a Windows PC
+  (`docs/TOOLHEAD_ACCELEROMETER.md`, Polish version too). The flashing commands are the ones run on the author's
+  printer on 18.11.2026; the guide's PowerShell commands and its `/tmp` folder were not run exactly as written, and
+  going back to the original firmware is not tested. The installer still never flashes the toolhead.
+
 ## 1.1.0 - 2026-11-20
 Second release. Everything listed here is installed on the author's printer. Not tested on the printer yet: the
 bed mesh under the first layer in a real print (after its last fix), resuming after a real power cut
