@@ -71,12 +71,12 @@ class OptionalStepTest(unittest.TestCase):
         self.assertGreater(len(rec.log), i + 1)                 # ... and only then the next question
 
     def test_modules_installed_earlier_in_the_run_stay_in_the_selection(self):
-        ids = [m for m in OPTIONAL if m != "phone-notifications"]
-        rec = Recorder(answers={ids[0]: True, ids[1]: True})
+        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
+        rec = Recorder(answers={first: True}, notify=True)
         run(rec)
         rounds = [x for k, x in rec.log if k == "round"]
-        self.assertEqual(rounds[0], [ids[0]])
-        self.assertEqual(rounds[1], sorted([ids[0], ids[1]]))
+        self.assertEqual(rounds[0], [first])
+        self.assertEqual(rounds[1], sorted([first, "phone-notifications"]))
 
     def test_phone_notifications_are_configured_right_after_their_install(self):
         rec = Recorder(notify=True)
@@ -103,18 +103,22 @@ class OptionalStepTest(unittest.TestCase):
         self.assertIn(("wanted", "yes"), rec.log)
 
     def test_skipped_and_already_selected_modules_are_not_asked(self):
-        ids = [m for m in OPTIONAL if m != "phone-notifications"]
+        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
         rec = Recorder()
-        run(rec, skip=[ids[0]], extra=[ids[1]])
-        asked = [x for k, x in rec.log if k == "ask"]
-        self.assertNotIn(ids[0], asked)
-        self.assertNotIn(ids[1], asked)
+        run(rec, skip=[first])
+        self.assertNotIn(first, [x for k, x in rec.log if k == "ask"])
+        rec = Recorder()
+        run(rec, extra=[first])
+        self.assertNotIn(first, [x for k, x in rec.log if k == "ask"])
+        rec = Recorder()
+        run(rec, extra=["phone-notifications"])
+        self.assertNotIn("wanted", [k for k, _ in rec.log])
 
     def test_already_installed_says_so_and_goes_on(self):
         first = [m for m in OPTIONAL if m != "phone-notifications"][0]
         rec = Recorder(answers={first: True}, nothing_to_do=[first])
         run(rec)
-        self.assertGreater(len([1 for k, _ in rec.log if k == "ask"]), 1)
+        self.assertIn("wanted", [k for k, _ in rec.log])     # went on to the next question
 
 
 if __name__ == "__main__":
