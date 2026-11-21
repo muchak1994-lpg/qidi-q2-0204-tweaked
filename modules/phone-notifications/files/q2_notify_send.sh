@@ -7,7 +7,8 @@
 #
 # --tsv is one argument with tab-separated fields (an empty field = not set); Klipper's gcode_shell_command splits a command
 # line at spaces, which would break file names with spaces. In --tsv mode the two characters \n in the message become a newline.
-# A button is shown as: LABEL, and tapping it sends BODY to the command channel ($NTFY_SERVER/$CMD_TOPIC).
+# A button is shown as: LABEL, and tapping it sends BODY to the command channel ($NTFY_SERVER/$CMD_TOPIC); the message then
+# disappears, except after the button "photo" (a picture on request).
 # --attach takes a file, or an http(s) address that is downloaded first (a failed download only drops the picture).
 # Without --attach the message goes out as JSON (UTF-8 safe); with --attach as a file upload (PUT), where non-ASCII
 # header text is RFC 2047 encoded. Does nothing (exit 0) when the notifications are off or there is no config.
@@ -115,6 +116,10 @@ header_text() {  # one line, RFC 2047 encoded when it is not plain ASCII
     fi
 }
 
+button_clears() {  # tapping a button removes its message, except "photo" (the picture is an extra, the message stays)
+    case "$1" in photo) printf false ;; *) printf true ;; esac
+}
+
 SNAP=""
 trap '[ -n "$SNAP" ] && rm -f "$SNAP"' EXIT
 case "$ATTACH" in  # an address: fetch the picture first (e.g. the camera snapshot), a failure only drops the picture
@@ -134,7 +139,7 @@ if [ -n "$ATTACH" ] && [ -f "$ATTACH" ]; then
         header=""
         while IFS= read -r a; do
             [ -n "$a" ] || continue
-            header="$header${header:+; }http, ${a%%=*}, $NTFY_SERVER/$CMD_TOPIC, method=POST, body=${a#*=}, clear=true"
+            header="$header${header:+; }http, ${a%%=*}, $NTFY_SERVER/$CMD_TOPIC, method=POST, body=${a#*=}, clear=$(button_clears "${a#*=}")"
         done <<EOF
 $ACTIONS
 EOF
@@ -158,7 +163,7 @@ if [ -n "$ACTIONS" ] && [ -n "$CMD_TOPIC" ]; then
     list=""
     while IFS= read -r a; do
         [ -n "$a" ] || continue
-        list="$list${list:+,}{\"action\":\"http\",\"label\":\"$(json_escape "${a%%=*}")\",\"url\":\"$(json_escape "$NTFY_SERVER/$CMD_TOPIC")\",\"method\":\"POST\",\"body\":\"$(json_escape "${a#*=}")\",\"clear\":true}"
+        list="$list${list:+,}{\"action\":\"http\",\"label\":\"$(json_escape "${a%%=*}")\",\"url\":\"$(json_escape "$NTFY_SERVER/$CMD_TOPIC")\",\"method\":\"POST\",\"body\":\"$(json_escape "${a#*=}")\",\"clear\":$(button_clears "${a#*=}")}"
     done <<EOF
 $ACTIONS
 EOF

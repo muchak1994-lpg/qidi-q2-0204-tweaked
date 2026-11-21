@@ -70,6 +70,18 @@ class SendTests(unittest.TestCase):
             self.assertEqual((a["action"], a["method"], a["url"], a["clear"]),
                              ("http", "POST", "https://ntfy.example/cmdtopic", True))
 
+    def test_photo_button_keeps_the_message(self):
+        call = self.run_send("Print 25%", "x", "--action", "Photo=photo", "--action", "Resume=resume")[-1]
+        self.out.unlink()
+        acts = self.body(call)["actions"]
+        self.assertEqual([(a["body"], a["clear"]) for a in acts], [("photo", False), ("resume", True)])
+        pic = self.dir / "snap.jpg"
+        pic.write_bytes(b"jpg")
+        call = self.run_send("Print 25%", "x", "--attach", str(pic), "--action", "Photo=photo", "--action", "Resume=resume")[-1]
+        header = [a for a in call if a.startswith("Actions: ")][0]
+        self.assertIn("body=photo, clear=false", header)
+        self.assertIn("body=resume, clear=true", header)
+
     def test_attach_uses_put_with_filename(self):
         pic = self.dir / "snap.jpg"
         pic.write_bytes(b"jpg")
