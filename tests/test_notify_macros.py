@@ -293,11 +293,11 @@ class NotifyMacroTests(unittest.TestCase):
     def test_start_and_milestones_have_the_photo_button(self):
         self.printing(1, 0.0, 60)
         self.run_tick()
-        self.assertEqual(self.sent[-1][6:9], ["Photo=photo", "", ""])
+        self.assertEqual(self.sent[-1][6:9], ["Get a photo=photo", "", ""])
         self.printing(20, 0.25, 900)
         self.run_tick()
         self.assertEqual(self.sent[-1][0], "Print 25%")
-        self.assertEqual(self.sent[-1][6:9], ["Photo=photo", "", ""])
+        self.assertEqual(self.sent[-1][6:9], ["Get a photo=photo", "", ""])
 
     def test_complete_and_cancelled(self):
         for end, title in (("complete", "Print finished"), ("cancelled", "Print cancelled")):
