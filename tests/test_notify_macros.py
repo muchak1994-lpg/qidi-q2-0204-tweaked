@@ -275,13 +275,13 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nelapsed 3h 03m, 1h 01m left, done at @@+3666@@")
 
-    def test_finished_message_has_the_filament_used(self):
+    def test_finished_message_asks_for_the_filament_weight(self):
         self.printing(1, 0.0, 60)
         self.run_tick()
         self.printer["print_stats"].update(state="complete", print_duration=3600, filament_used=12345.6)
         self.run_tick()
         self.assertEqual(self.sent[-1][0], "Print finished")
-        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nprinted in 1h 00m, filament 12.3 m")
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nprinted in 1h 00m, filament @@FIL:12345@@")
 
     def test_finished_message_without_filament_info_is_unchanged(self):
         self.printing(1, 0.0, 60)

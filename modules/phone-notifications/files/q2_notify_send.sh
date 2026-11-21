@@ -95,11 +95,29 @@ expand_eta() {  # @@ETA:ELAPSED:FALLBACK@@ becomes "<time left> left, done at @@
         [ -n "$left" ] || left=$fb
         m=$((left / 60))
         if [ "$m" -ge 60 ]; then text=$(printf '%dh %02dm' $((m / 60)) $((m % 60))); else text="$m min"; fi
-        msg=$(printf '%s' "$msg" | sed "s/$tok/$text left, done at @@+$left@@/")
+        new=$(printf '%s' "$msg" | sed "s/$tok/$text left, done at @@+$left@@/")
+        [ "$new" = "$msg" ] && break    # never loop for ever if a token could not be replaced
+        msg=$new
+    done
+    printf '%s' "$msg"
+}
+expand_fil() {  # @@FIL:MM@@ becomes the filament used: grams (the slicer's weight in proportion, from Moonraker) or, without
+                # that, metres computed from MM millimetres
+    msg=$1
+    while :; do
+        tok=$(printf '%s' "$msg" | sed -n 's/.*\(@@FIL:[0-9][0-9]*@@\).*/\1/p' | head -n 1)
+        [ -n "$tok" ] || break
+        mm=${tok#@@FIL:}; mm=${mm%@@}
+        grams=$($ETA --weight "$mm" 2>/dev/null | head -n 1 | tr -cd '0-9.')
+        if [ -n "$grams" ]; then text="$grams g"; else text="$((mm / 1000)).$(((mm % 1000) / 100)) m"; fi
+        new=$(printf '%s' "$msg" | sed "s/$tok/$text/")
+        [ "$new" = "$msg" ] && break    # never loop for ever if a token could not be replaced
+        msg=$new
     done
     printf '%s' "$msg"
 }
 MESSAGE=$(expand_eta "$MESSAGE")
+MESSAGE=$(expand_fil "$MESSAGE")
 MESSAGE=$(expand_clock "$MESSAGE")
 
 json_escape() {
