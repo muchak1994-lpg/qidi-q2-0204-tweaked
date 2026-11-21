@@ -123,7 +123,8 @@
   "765d2ae39aaa4533ac8d27ec1ed577f9e8d2b42932406d8e330c4dd83abac354"
  ],
  "/home/qidi/printer_data/config/klipper-macros-qd/q2_maint.cfg": [
-  "07f3efcd289f345cae3ef66ff06910bfb541d2857fb6e19ac114d80b103254d9"
+  "07f3efcd289f345cae3ef66ff06910bfb541d2857fb6e19ac114d80b103254d9",
+  "7b6b2f13994b4fc1c83082c160aeae340f2590413a7a3ca66c9d19a6bbe6d224"
  ],
  "/home/qidi/printer_data/config/klipper-macros-qd/q2_mesh_area.cfg": [
   "05b8f9fc08cb77d341677e1becbac6ac78fc5eb039bcb54a4447662b5c07141d"
@@ -148,7 +149,8 @@
  ],
  "/home/qidi/q2-notify/q2_notify_listen.sh": [
   "a25a2e5d15a42ab5424d9c53753821e3227cfcf25438a776a8b5b032cae70649",
-  "3ba8ec94557bb7d353fe2ac37b4cba9b65cfd38be1971c6e833e8e77a4c5a6bb"
+  "3ba8ec94557bb7d353fe2ac37b4cba9b65cfd38be1971c6e833e8e77a4c5a6bb",
+  "4011844e0643bd7934c6004af237e1cf4e99cad4a6623d0a87693122badfcbf5"
  ],
  "/home/qidi/q2-notify/q2_notify_send.sh": [
   "ee49f98455aa5440c120ff8132ad678af8ad9dc8c2b9ebedc6e5ab52c712ce8e",

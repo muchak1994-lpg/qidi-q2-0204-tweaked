@@ -2,12 +2,11 @@
 
 ## Unreleased
 
-- New module `maintenance-reminders`: counts the printer's print hours and, after a print that pushes a task over its interval,
-  shows an extra window on the printer screen (and a phone message with a Done button when `phone-notifications` is installed):
-  X/Y rails every 100 h, Z lead screws every 300 h, fans every 300 h of printing (QIDI's manual: rails every 2-4 weeks, Z screws
-  every 1-3 months). Repeats after every print until marked done (`TWEAKED_MAINT_DONE TASK=rails|zscrews|fans|all` in Fluidd, or
-  the phone button); `TWEAKED_MAINT_STATUS` shows the hours. `phone-notifications`: the Photo button is now "Get a photo", and
-  the listener understands `maintdone <task>`.
+- New module `maintenance-reminders`: counts the printer's print hours and, after a print that crosses a multiple of an interval,
+  shows an extra window on the printer screen (and sends a phone message when `phone-notifications` is installed): X/Y rails every
+  100 h, Z lead screws and fans every 300 h of printing, as two separate windows/messages (QIDI's manual: rails every 2-4 weeks,
+  Z screws every 1-3 months). Only a notice, once per interval, no buttons. `TWEAKED_MAINT_STATUS` shows the hours.
+  `phone-notifications`: the Photo button is now "Get a photo".
 - `phone-notifications`: a "Photo" button on the start and 25/50/75 % messages sends the camera picture on request (any state;
   the message stays after the tap, unlike Resume/Cancel). The "Print finished" message now also says how much filament was used
   (whole grams: the slicer's weight of the file in proportion to the length used, from Moonraker; metres when that is not known). The message

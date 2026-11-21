@@ -4,11 +4,10 @@
 """Maintenance reminders (q2_maint.cfg), rendered the way Klipper renders macros (jinja2, Klipper's delimiters).
 
 A tiny fake Klipper runs the G-code the macros print: SET_GCODE_VARIABLE / SAVE_VARIABLE change state, macro calls are
-rendered in turn, UPDATE_DELAYED_GCODE for the reminder is collected, RESPOND and RUN_SHELL_COMMAND are recorded.
+rendered in turn, the delayed reminders are collected and run on request, RESPOND and RUN_SHELL_COMMAND are recorded.
 Skipped when jinja2 is not installed.
 """
 import ast
-import re
 import shlex
 import sys
 import unittest
@@ -43,7 +42,7 @@ class MaintenanceTests(unittest.TestCase):
         self.stats = {"state": "standby", "print_duration": 0.0}
         self.notify = True                  # is the phone-notifications macro there?
         self.responds, self.shells = [], []
-        self.reminds = 0
+        self.scheduled = {}                 # delayed reminder -> seconds
 
     def printer(self):
         p = {"print_stats": self.stats, "gcode_macro _TWEAKED_MAINT": self.macro, "save_variables": {"variables": self.vars}}
@@ -51,23 +50,23 @@ class MaintenanceTests(unittest.TestCase):
             p["gcode_macro _TWEAKED_NOTIFY"] = {}
         return p
 
-    def render(self, name, key="gcode", **params):
-        tpl = self.env.from_string(dedent(self.cfg[name][key]))
-        text = tpl.render(printer=self.printer(), params=params)
+    def render(self, name, **params):
+        text = self.env.from_string(dedent(self.cfg[name]["gcode"])).render(printer=self.printer(), params=params)
         for line in [l.strip() for l in text.split("\n") if l.strip()]:
             self.execute(line)
 
     def execute(self, line):
         word = line.split()[0]
-        if word == "SET_GCODE_VARIABLE":
+        if word in ("SET_GCODE_VARIABLE", "SAVE_VARIABLE"):
             p = dict(a.split("=", 1) for a in shlex.split(line)[1:])
-            self.macro[p["VARIABLE"]] = ast.literal_eval(p["VALUE"])
-        elif word == "SAVE_VARIABLE":
-            p = dict(a.split("=", 1) for a in shlex.split(line)[1:])
-            self.vars[p["VARIABLE"].lower()] = ast.literal_eval(p["VALUE"])
+            if word == "SAVE_VARIABLE":
+                self.vars[p["VARIABLE"].lower()] = ast.literal_eval(p["VALUE"])
+            else:
+                self.macro[p["VARIABLE"]] = ast.literal_eval(p["VALUE"])
         elif word == "UPDATE_DELAYED_GCODE":
-            if "_TWEAKED_MAINT_REMIND" in line:
-                self.reminds += 1
+            p = dict(a.split("=", 1) for a in shlex.split(line)[1:])
+            if p["ID"] != "_TWEAKED_MAINT_TICK":
+                self.scheduled[p["ID"]] = int(p["DURATION"])
         elif word == "RESPOND":
             self.responds.append(line)
         elif word == "RUN_SHELL_COMMAND":
@@ -78,7 +77,7 @@ class MaintenanceTests(unittest.TestCase):
             self.shells.append(args[1].split("\t"))
         elif word == "_TWEAKED_MAINT_FINISH":
             self.render("gcode_macro _TWEAKED_MAINT_FINISH")
-        elif word in ("M118",):
+        elif word == "M118":
             pass
         else:
             self.fail("unexpected G-code: " + line)
@@ -92,11 +91,11 @@ class MaintenanceTests(unittest.TestCase):
         self.stats["state"] = end
         self.tick()
 
-    def done(self, task):
-        self.render("gcode_macro TWEAKED_MAINT_DONE", TASK=task)
-
-    def remind(self):
-        self.render("delayed_gcode _TWEAKED_MAINT_REMIND")
+    def fire(self):
+        """Let the scheduled reminders run (in the order of their delays) and forget them."""
+        for name in sorted(self.scheduled, key=self.scheduled.get):
+            self.render("delayed_gcode " + name)
+        self.scheduled = {}
 
     def test_a_finished_print_adds_its_time(self):
         self.print_for(2 * H)
@@ -106,78 +105,73 @@ class MaintenanceTests(unittest.TestCase):
     def test_nothing_is_counted_while_the_print_runs_or_at_restart(self):
         self.stats.update(state="printing", print_duration=5000.0)
         self.tick()
-        self.assertNotIn("q2_maint_total", self.vars)
         self.tick()
         self.assertNotIn("q2_maint_total", self.vars)
 
-    def test_no_reminder_below_every_interval(self):
+    def test_no_reminder_below_100_hours(self):
         self.print_for(99 * H)
-        self.assertEqual(self.reminds, 0)
+        self.assertEqual(self.scheduled, {})
 
-    def test_the_rails_are_due_at_100_hours_and_the_others_are_not(self):
+    def test_at_100_hours_only_the_rails_window_and_a_phone_message_without_buttons(self):
         self.print_for(100 * H)
-        self.assertEqual(self.reminds, 1)
-        self.remind()
+        self.assertEqual(list(self.scheduled), ["_TWEAKED_MAINT_REMIND_SHORT"])
+        self.fire()
         self.assertEqual(len(self.responds), 1)
         self.assertIn("X/Y rails", self.responds[0])
-        self.assertNotIn("Z screws", self.responds[0])
+        self.assertIn("100 h", self.responds[0])
         self.assertNotIn("fans", self.responds[0])
-        self.assertEqual(self.shells[0][6], "X/Y rails done=maintdone rails")
-        self.assertEqual(self.shells[0][7:], ["", ""])
+        (msg,) = self.shells
+        self.assertEqual(msg[0], "Maintenance: X/Y rails")
+        self.assertEqual(msg[6:9], ["", "", ""])                      # no buttons
 
-    def test_all_three_due_at_300_hours(self):
+    def test_at_300_hours_both_reminders_come_as_two_separate_windows_and_messages(self):
         self.print_for(300 * H)
-        self.remind()
-        for part in ("X/Y rails", "Z screws", "fans"):
-            self.assertIn(part, self.responds[0])
-        self.assertEqual(self.shells[0][6:], ["X/Y rails done=maintdone rails", "Z screws done=maintdone zscrews",
-                                             "Fans done=maintdone fans"])
+        self.fire()
+        self.assertEqual(len(self.responds), 2)
+        self.assertIn("X/Y rails", self.responds[0])
+        self.assertIn("Z screws, fans", self.responds[1])
+        self.assertIn("300 h", self.responds[1])
+        self.assertEqual([m[0] for m in self.shells], ["Maintenance: X/Y rails", "Maintenance: Z screws and fans"])
+        self.assertTrue(all(m[6:9] == ["", "", ""] for m in self.shells))
 
-    def test_done_resets_only_that_task_and_the_reminder_stops(self):
-        self.print_for(100 * H)
-        self.done("rails")
-        self.assertEqual(self.vars["q2_maint_rails_at"], 100 * H)
-        self.assertNotIn("q2_maint_zscrews_at", self.vars)
-        self.responds.clear()
-        self.print_for(10 * H)                                 # 10 h after the service: not due again
-        self.assertEqual(self.reminds, 1)
-        self.print_for(90 * H)                                 # 100 h after it: due again
-        self.assertEqual(self.reminds, 2)
-
-    def test_it_reminds_again_after_every_print_until_done(self):
-        self.print_for(100 * H)
-        self.print_for(1 * H)
-        self.assertEqual(self.reminds, 2)
-
-    def test_done_all_and_unknown_task(self):
+    def test_the_second_window_comes_after_the_first(self):
         self.print_for(300 * H)
-        self.done("all")
-        self.assertEqual([self.vars[k] for k in ("q2_maint_rails_at", "q2_maint_zscrews_at", "q2_maint_fans_at")],
-                         [300 * H] * 3)
-        self.responds.clear()
-        self.done("bogus")
-        self.assertIn("TYPE=error", self.responds[0])
+        self.assertLess(self.scheduled["_TWEAKED_MAINT_REMIND_SHORT"], self.scheduled["_TWEAKED_MAINT_REMIND_LONG"])
 
-    def test_no_reminder_window_while_a_new_print_has_started(self):
+    def test_a_reminder_comes_once_per_interval_not_after_every_print(self):
+        self.print_for(100 * H)
+        self.fire()
+        self.print_for(1 * H)                                     # 101 h: no new reminder
+        self.assertEqual(self.scheduled, {})
+        self.print_for(99 * H)                                    # 200 h: the next one
+        self.assertEqual(list(self.scheduled), ["_TWEAKED_MAINT_REMIND_SHORT"])
+
+    def test_one_long_print_over_several_intervals_gives_one_reminder(self):
+        self.print_for(250 * H)
+        self.fire()
+        self.assertEqual(len(self.responds), 1)
+
+    def test_no_window_while_a_new_print_has_started(self):
         self.print_for(100 * H)
         self.stats["state"] = "printing"
-        self.remind()
+        self.fire()
         self.assertEqual(self.responds, [])
 
     def test_works_without_the_phone_module(self):
         self.notify = False
         self.print_for(100 * H)
-        self.remind()
+        self.fire()
         self.assertEqual(len(self.responds), 1)
         self.assertEqual(self.shells, [])
 
-    def test_status_lists_the_hours(self):
-        self.print_for(50 * H)
+    def test_status_says_when_the_next_reminders_come(self):
+        self.print_for(130 * H)
         self.responds.clear()
         self.render("gcode_macro TWEAKED_MAINT_STATUS")
         text = "\n".join(self.responds)
-        self.assertIn("50.0 of 100 h", text)
-        self.assertIn("50.0 of 300 h", text)
+        self.assertIn("printed 130.0 h", text)
+        self.assertIn("rails: next reminder in 70.0 h", text)
+        self.assertIn("fans: next reminder in 170.0 h", text)
 
 
 if __name__ == "__main__":
