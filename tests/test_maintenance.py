@@ -119,8 +119,8 @@ class MaintenanceTests(unittest.TestCase):
         self.assertEqual(self.reminds, 1)
         self.remind()
         self.assertEqual(len(self.responds), 1)
-        self.assertIn("X/Y linear rails", self.responds[0])
-        self.assertNotIn("Z lead screws", self.responds[0])
+        self.assertIn("X/Y rails", self.responds[0])
+        self.assertNotIn("Z screws", self.responds[0])
         self.assertNotIn("fans", self.responds[0])
         self.assertEqual(self.shells[0][6], "X/Y rails done=maintdone rails")
         self.assertEqual(self.shells[0][7:], ["", ""])
@@ -128,7 +128,7 @@ class MaintenanceTests(unittest.TestCase):
     def test_all_three_due_at_300_hours(self):
         self.print_for(300 * H)
         self.remind()
-        for part in ("X/Y linear rails", "Z lead screws", "fans"):
+        for part in ("X/Y rails", "Z screws", "fans"):
             self.assertIn(part, self.responds[0])
         self.assertEqual(self.shells[0][6:], ["X/Y rails done=maintdone rails", "Z screws done=maintdone zscrews",
                                              "Fans done=maintdone fans"])
