@@ -83,9 +83,9 @@ class EtaHelperTests(unittest.TestCase):
     def test_weight_is_the_slicer_weight_in_proportion_to_the_filament_used(self):
         srv, url = serve("a.gcode", 3644, filament_total=7960.0, filament_weight_total=23.18)
         self.addCleanup(srv.shutdown)
-        self.assertEqual(run_eta(7960, url, "--weight"), "23.2")        # all of it
-        self.assertEqual(run_eta(3980, url, "--weight"), "11.6")        # half of it
-        self.assertEqual(run_eta(9000, url, "--weight"), "23.2")        # purge lines: never more than the slicer's weight
+        self.assertEqual(run_eta(7960, url, "--weight"), "23")          # all of it, whole grams
+        self.assertEqual(run_eta(3980, url, "--weight"), "12")          # half of it (11.6)
+        self.assertEqual(run_eta(9000, url, "--weight"), "23")          # purge lines: never more than the slicer's weight
 
     def test_weight_prints_nothing_without_the_slicer_numbers(self):
         for meta in ({}, {"filament_total": 0, "filament_weight_total": 5.0}, {"filament_total": 7960.0}):
@@ -130,7 +130,7 @@ class EtaTokenTests(unittest.TestCase):
         self.assertEqual(self.message("x @@ETA:900:1800@@"), "x 30 min left, done at 02:16")
 
     def test_filament_token_becomes_grams(self):
-        self.assertEqual(self.message("done, filament @@FIL:7960@@", FAKE_ETA="23.2"), "done, filament 23.2 g")
+        self.assertEqual(self.message("done, filament @@FIL:7960@@", FAKE_ETA="23"), "done, filament 23 g")
 
     def test_filament_token_falls_back_to_metres(self):
         self.assertEqual(self.message("done, filament @@FIL:12345@@"), "done, filament 12.3 m")

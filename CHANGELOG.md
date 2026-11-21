@@ -4,7 +4,7 @@
 
 - `phone-notifications`: a "Photo" button on the start and 25/50/75 % messages sends the camera picture on request (any state;
   the message stays after the tap, unlike Resume/Cancel). The "Print finished" message now also says how much filament was used
-  (grams: the slicer's weight of the file in proportion to the length used, from Moonraker; metres when that is not known). The message
+  (whole grams: the slicer's weight of the file in proportion to the length used, from Moonraker; metres when that is not known). The message
   scripts no longer loop for ever if a time/filament token cannot be replaced. Tested on stand-ins only; not on a real print.
 - `send-and-print-guard` no longer depends on checksums. It looks for the Upload & Print bug in the active Fluidd bundle by its code:
   repaired = nothing to do, the known broken code found once = repaired (only while the printer is idle), anything else = nothing
