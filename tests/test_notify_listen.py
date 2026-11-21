@@ -35,6 +35,8 @@ if url.endswith("/raw"):
         sys.stdout.write(open(os.environ["FAKE_STREAM"]).read())
 elif "/printer/objects/query" in url:
     print(json.dumps({"result": {"status": {"print_stats": {"filename": os.environ.get("FAKE_FILE", "hdd500.gcode"), "state": open(os.environ["FAKE_STATE"]).read().strip()}}}}))
+elif "/printer/gcode/script" in url:
+    note(script=url.split("script=", 1)[1])
 elif "/printer/print/" in url:
     note(post=url.rsplit("/", 1)[1])
     if url.endswith("/resume"):
@@ -149,6 +151,26 @@ class ListenTests(unittest.TestCase):
 
     def test_photo_with_extra_words_is_ignored(self):
         self.assertEqual(self.sends(self.listen(["photo now", "photos", "PHOTO"], state="printing")), [])
+
+    @staticmethod
+    def scripts(calls):
+        return [c["script"] for c in calls if "script" in c]
+
+    def test_maintdone_runs_the_done_macro_for_a_known_task_in_any_state(self):
+        for state in ("printing", "standby"):
+            with self.subTest(state):
+                for f in (self.log, Path(str(self.log) + ".conn")):
+                    if f.exists():
+                        f.unlink()
+                calls = self.listen(["maintdone rails", "maintdone zscrews", "maintdone fans"], state=state)
+                self.assertEqual(self.scripts(calls), ["TWEAKED_MAINT_DONE%20TASK=rails",
+                                                       "TWEAKED_MAINT_DONE%20TASK=zscrews",
+                                                       "TWEAKED_MAINT_DONE%20TASK=fans"])
+
+    def test_maintdone_ignores_unknown_tasks_and_tricks(self):
+        bad = ["maintdone", "maintdone ", "maintdone all", "maintdone rails;reboot", "maintdone rails fans",
+               "maintdone $(id)", "maintdone ../x", "maintdone RAILS", "maintdone rails&x=1", "maintdones rails"]
+        self.assertEqual(self.scripts(self.listen(bad, state="standby")), [])
 
     def test_reconnects_after_stream_ends(self):
         calls = self.listen([], loops=3)

@@ -1,0 +1,14 @@
+{
+ "id": "maintenance-reminders",
+ "order": 146,
+ "title": "Maintenance reminders: after a print, an extra screen window when the rails, Z screws or fans are due (counted in print hours)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/q2_maint.cfg": {
+   "source": "files/q2_maint.cfg"
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "Counts print hours (saved in saved_variables.cfg) and after a print that pushes a task over its interval shows an extra window on the printer screen (and a phone message with a Done button when phone-notifications is installed). Intervals: X/Y rails every 100 h, Z screws every 300 h, fans every 300 h of printing; QIDI's own manual says rails every 2-4 weeks and Z screws every 1-3 months. Mark done with the phone button or the Fluidd macro TWEAKED_MAINT_DONE TASK=rails|zscrews|fans|all; TWEAKED_MAINT_STATUS shows the hours. Counting starts at installation. A tick every 5 s only reads the print state."
+}

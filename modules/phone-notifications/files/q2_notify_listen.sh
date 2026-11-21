@@ -2,12 +2,13 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Q2 tweaked - phone notifications: listen on the command channel and act on the buttons of the messages.
 #
-# Reads the ntfy command channel ($NTFY_SERVER/$CMD_TOPIC/raw, one message body per line) and understands exactly four
+# Reads the ntfy command channel ($NTFY_SERVER/$CMD_TOPIC/raw, one message body per line) and understands exactly these
 # commands; everything else is ignored:
 #   resume            resume the print   (only while the print is paused)
 #   cancel            cancel the print   (only while the print is paused)
 #   video <name>      send the timelapse of that print (q2_notify_video.sh runs in the background)
 #   photo             send the camera picture now (any state; only reads the camera and the name of the print file)
+#   maintdone <task>  mark a maintenance task as done (task: rails, zscrews or fans; runs TWEAKED_MAINT_DONE)
 # resume/cancel go to Moonraker on this printer (127.0.0.1); the state is read first, so a command delivered twice (the
 # listener reconnects) does nothing the second time. A video name may not contain / \ ; | & $ ` ' " < > * ? ~ ! # and
 # may not start with - or . : it is passed to q2_notify_video.sh as ONE argument and never reaches a shell.
@@ -56,6 +57,12 @@ handle() {
             name=$(print_file)
             [ -n "$name" ] || name="No print file loaded"
             $SEND "Camera" "$name" --prio 3 --tags camera --attach "$SNAPSHOT" >/dev/null 2>&1 &
+            ;;
+        "maintdone "*)  # the Done button of a maintenance reminder: only the three known task names
+            case "${line#maintdone }" in
+                rails|zscrews|fans)
+                    $CURL -s --max-time 10 -X POST "$MOONRAKER/printer/gcode/script?script=TWEAKED_MAINT_DONE%20TASK=${line#maintdone }" >/dev/null 2>&1 ;;
+            esac
             ;;
         "video "*)
             name=${line#video }
