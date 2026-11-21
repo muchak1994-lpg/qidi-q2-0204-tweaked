@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- `send-and-print-guard` no longer depends on checksums. It looks for the Upload & Print bug in the active Fluidd bundle by its code:
+  repaired = nothing to do, the known broken code found once = repaired (only while the printer is idle), anything else = nothing
+  changed and the run still ends OK. Before, any change to Fluidd or to the screen program made it stop ("Bundle differs from the
+  known original") until new checksums were added. New tests (they did not exist). Tried on stand-ins and one real run on the printer.
+
 - `box-homing-timeout` is now installed by default (it only changes homing that involves a QIDI Box board, so it does nothing without a Box): someone who adds a third Box
   does not have to search for the fix. Home all (G28) was run on a printer without a Box after installing it: no error.
 - Installer: all optional extras now come at the end, one after the other: question, yes = installed right away, no = the next

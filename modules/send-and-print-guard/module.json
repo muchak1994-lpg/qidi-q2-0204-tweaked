@@ -25,5 +25,5 @@
    "fix-fluidd-upload-print.timer"
   ]
  ],
- "note": "TO REVIEW: the script lists approved screen-program hashes; it must be regenerated from the final screen build."
+ "note": "Fluidd's Upload & Print button uploaded the file but did not start the print. At boot and nightly this guard looks in the active Fluidd bundle for that broken code itself (no checksums): repaired code present = nothing to do; the known broken code found once = repaired, only while the printer is idle; anything else = nothing changed. It never starts a print."
 }
