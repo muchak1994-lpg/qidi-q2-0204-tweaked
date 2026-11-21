@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 - 2026-11-21
+Third release. Everything listed here is installed on the author's printer. Not tested in a real print yet: the phone
+messages (ETA below 50 %, "Get a photo", filament in grams), the maintenance reminder after a real print (only forced on
+the screen), the bed mesh, and the Upload & Print guard repairing a really broken Fluidd (stand-in tests only).
 
 - New module `maintenance-reminders`: counts the printer's print hours and, after a print that crosses a multiple of an interval,
   shows an extra window on the printer screen (and sends a phone message when `phone-notifications` is installed): X/Y rails every

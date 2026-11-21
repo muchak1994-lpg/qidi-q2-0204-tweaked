@@ -6,11 +6,11 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 > **Projekt nieoficjalny.** Niezwiązany z QIDI Technology, nieautoryzowany i niewspierany przez QIDI. Używasz na własne ryzyko. Miej pod ręką oficjalną paczkę firmware, żeby zawsze móc wrócić do wersji fabrycznej.
 
-> **Stan: 1.1.0.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; każdy moduł został zainstalowany (i zaktualizowany) tym instalatorem na drukarce autora, instalator jest testowany bez drukarki, na symulowanej drukarce, a pełna instalacja przeszła na świeżo zreflashowanej drukarce (14.11.2026). Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Stan: 1.2.0.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; każdy moduł został zainstalowany (i zaktualizowany) tym instalatorem na drukarce autora, instalator jest testowany bez drukarki, na symulowanej drukarce, a pełna instalacja przeszła na świeżo zreflashowanej drukarce (14.11.2026). Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Co naprawia
 
-68 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
+71 małych modułów: program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
 poprawki suszenia filamentu), poprawki Klippera (powtórzenia pomiaru siatki, bazowanie, fuzzy skin, wentylator
 hotendu, grzałki i próg wentylatorów Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne, kilka z oficjalnego
 Klippera), makra (strażnik bazowania Z, temperatura ładowania po cieplejszym filamencie, suszenie z Fluidda),
