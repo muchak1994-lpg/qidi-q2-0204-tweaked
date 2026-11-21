@@ -129,7 +129,7 @@ class MaintenanceTests(unittest.TestCase):
         self.fire()
         self.assertEqual(len(self.responds), 2)
         self.assertIn("X/Y rails", self.responds[0])
-        self.assertIn("Z screws, fans", self.responds[1])
+        self.assertIn("Z screws and dust the fans", self.responds[1])
         self.assertIn("300 h", self.responds[1])
         self.assertEqual([m[0] for m in self.shells], ["Maintenance: X/Y rails", "Maintenance: Z screws and fans"])
         self.assertTrue(all(m[6:9] == ["", "", ""] for m in self.shells))
