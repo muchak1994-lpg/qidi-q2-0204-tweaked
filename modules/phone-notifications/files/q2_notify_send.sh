@@ -15,6 +15,7 @@
 
 CONF="${Q2_NOTIFY_CONF:-/home/qidi/printer_data/config/q2_notify.conf}"
 CURL="${Q2_NOTIFY_CURL:-curl}"
+ETA="${Q2_NOTIFY_ETA:-python3 /home/qidi/q2-notify/q2_notify_eta.py}"
 
 ENABLED=0
 NTFY_SERVER=""
@@ -81,6 +82,23 @@ expand_clock() {  # @@+SECONDS@@ in the message becomes the clock time that many
     done
     printf '%s' "$msg"
 }
+expand_eta() {  # @@ETA:ELAPSED:FALLBACK@@ becomes "<time left> left, done at @@+SECONDS@@": the time left is the slicer's
+                # estimate minus ELAPSED (what the printer screen shows up to 50 %), or FALLBACK seconds without an estimate
+    msg=$1
+    while :; do
+        tok=$(printf '%s' "$msg" | sed -n 's/.*\(@@ETA:[0-9][0-9]*:[0-9][0-9]*@@\).*/\1/p' | head -n 1)
+        [ -n "$tok" ] || break
+        el=${tok#@@ETA:}; el=${el%%:*}
+        fb=${tok#@@ETA:*:}; fb=${fb%@@}
+        left=$($ETA "$el" 2>/dev/null | head -n 1 | tr -cd '0-9')
+        [ -n "$left" ] || left=$fb
+        m=$((left / 60))
+        if [ "$m" -ge 60 ]; then text=$(printf '%dh %02dm' $((m / 60)) $((m % 60))); else text="$m min"; fi
+        msg=$(printf '%s' "$msg" | sed "s/$tok/$text left, done at @@+$left@@/")
+    done
+    printf '%s' "$msg"
+}
+MESSAGE=$(expand_eta "$MESSAGE")
 MESSAGE=$(expand_clock "$MESSAGE")
 
 json_escape() {

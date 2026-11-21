@@ -19,6 +19,9 @@
   duration of an earlier run of the same file. Seen on a real print only through the numbers (screen 30 min, this formula 30.6 min); not yet seen live.
   Same for up to 50 % progress: the screen then shows the slicer's estimate minus the print time (its `prediction`, e.g. 3644 s = 1h0m44),
   and Fluidd now does the same; above 50 % both extrapolate from the real pace. Found in the screen program; not seen live.
+- `phone-notifications`: the 25 % and 50 % messages now show the same time left as the screen (the slicer's estimate from Moonraker minus
+  the print time; extrapolation as before when there is no estimate or above 50 %). New small helper `q2_notify_eta.py`. Tested only
+  against a stand-in Moonraker, not on a real print.
 - New module `fluidd-full-display`: the installer switches Fluidd's "Enable Full Display" setting on.
 - New module `timelapse-progress-note`: one short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers.
   Fluidd's per-layer timelapse line (`SET_GCODE_VARIABLE ... takingframe VALUE=False`, an echo from Moonraker's timelapse component) can then

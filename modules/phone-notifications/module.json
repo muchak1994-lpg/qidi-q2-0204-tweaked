@@ -7,6 +7,9 @@
   "/home/qidi/q2-notify/q2_notify_send.sh": {
    "source": "files/q2_notify_send.sh"
   },
+  "/home/qidi/q2-notify/q2_notify_eta.py": {
+   "source": "files/q2_notify_eta.py"
+  },
   "/home/qidi/q2-notify/q2_notify_listen.sh": {
    "source": "files/q2_notify_listen.sh"
   },

@@ -260,12 +260,20 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertEqual(title, "Print 50%")
         self.assertEqual(message, "hdd500.gcode\\nelapsed 40 min, 30 min left, done at @@+1836@@")
 
+    def test_eta_up_to_50_percent_asks_for_the_slicer_estimate(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.printing(20, 0.25, 900)            # screen up to 50 %: slicer estimate minus print time; fallback = extrapolation
+        self.run_tick()
+        self.assertEqual(self.sent[-1][0], "Print 25%")
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nelapsed 15 min, @@ETA:900:2700@@")
+
     def test_time_format_over_an_hour(self):
         self.printing(1, 0.0, 60)
         self.run_tick()
-        self.printing(70, 0.25, 3700)           # 1 h 01 min elapsed, 3 x that left = 3 h 05 min
+        self.printing(70, 0.75, 11000)          # 3 h 03 min elapsed, a third of that left = 1 h 01 min (above 50 %: extrapolated)
         self.run_tick()
-        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nelapsed 1h 01m, 3h 05m left, done at @@+11100@@")
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nelapsed 3h 03m, 1h 01m left, done at @@+3666@@")
 
     def test_complete_and_cancelled(self):
         for end, title in (("complete", "Print finished"), ("cancelled", "Print cancelled")):
