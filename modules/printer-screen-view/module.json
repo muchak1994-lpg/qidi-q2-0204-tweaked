@@ -4,7 +4,7 @@
  "default": false,
  "title": "Fluidd: a 'Printer screen' entry in the left navigation panel that opens a window showing the printer's touch screen (look only, optional)",
  "files": {
-  "/home/qidi/q2-screen/q2_screen.py": {
+  "/usr/local/lib/q2-screen/q2_screen.py": {
    "source": "files/q2_screen.py"
   },
   "/etc/systemd/system/q2-screen.service": {
@@ -17,7 +17,7 @@
    "edits": [
     [
      "<script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>",
-     "<script src=\"./assets/q2-screen-view.js?v=1\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
+     "<script src=\"./assets/q2-screen-view.js?v=2\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
     ]
    ]
   }
@@ -38,6 +38,23 @@
    "systemctl",
    "restart",
    "q2-screen.service"
+  ],
+  [
+   "rm",
+   "-f",
+   "/home/qidi/q2-screen/q2_screen.py"
+  ],
+  [
+   "find",
+   "/home/qidi",
+   "-maxdepth",
+   "1",
+   "-name",
+   "q2-screen",
+   "-type",
+   "d",
+   "-empty",
+   "-delete"
   ]
  ]
 }

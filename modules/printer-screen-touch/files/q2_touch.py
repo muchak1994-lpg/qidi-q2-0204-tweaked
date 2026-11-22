@@ -7,10 +7,15 @@ OPTIONAL and separate from the look-only picture service. Listens on 127.0.0.1 o
 One POST /?action=tap with JSON {"x": 0..1, "y": 0..1} (the place in the picture) writes one short touch (press and
 release) to the Goodix touch panel, exactly like a finger. The event sequence is the one proved on 06.11.2026.
 Standard library only.
+
+The service itself is OFF until the Fluidd window "arms" it (POST /?action=arm, valid ARM_SECONDS, the window renews it
+while its Touch button is on; POST /?action=disarm turns it off). Every POST must carry the header X-Q2-Touch: 1: a page of
+another site cannot send a custom header without a CORS preflight, and this service never answers one.
 """
 import json
 import math
 import os
+import signal
 import struct
 import sys
 import time
@@ -26,9 +31,12 @@ SCALE_X, SCALE_Y = 1.0, 1.0
 PRESS_SECONDS = 0.12
 MIN_GAP_SECONDS = 0.25                 # taps closer together than this are refused
 MAX_BODY = 200
+ARM_SECONDS = 60                       # one arming lasts this long; the window renews it every ~20 s while touch is on
+HEADER = "X-Q2-Touch"
 EV = struct.Struct("llHHi")            # struct input_event on 64 bit Linux
 
 last_tap = [0.0]
+armed_until = [0.0]                      # off after every start
 now = time.monotonic
 
 
@@ -43,18 +51,23 @@ def to_touch(fx, fy):
 
 
 def write_tap(f, x, y, sleep=time.sleep):
-    """One touch (press, short wait, release) as input events - the sequence of the 06.11.2026 test."""
+    """One touch (press, short wait, release) as input events - the sequence of the 06.11.2026 test.
+
+    The release is sent whatever happens in between (a failed write, the wait cut short by SIGTERM/Ctrl-C), so the
+    panel is never left "pressed"."""
     EV_SYN, EV_KEY, EV_ABS = 0, 1, 3
 
     def ev(t, c, v):
         s = time.time()
         f.write(EV.pack(int(s), int((s % 1) * 1e6), t, c, v))
-    for t, c, v in ((EV_ABS, 0x2f, 0), (EV_ABS, 0x39, 4242), (EV_ABS, 0x35, x), (EV_ABS, 0x36, y), (EV_ABS, 0x30, 10),
-                    (EV_KEY, 0x14a, 1), (EV_ABS, 0, x), (EV_ABS, 1, y), (EV_SYN, 0, 0)):
-        ev(t, c, v)
-    sleep(PRESS_SECONDS)
-    for t, c, v in ((EV_ABS, 0x2f, 0), (EV_ABS, 0x39, -1), (EV_KEY, 0x14a, 0), (EV_SYN, 0, 0)):
-        ev(t, c, v)
+    try:
+        for t, c, v in ((EV_ABS, 0x2f, 0), (EV_ABS, 0x39, 4242), (EV_ABS, 0x35, x), (EV_ABS, 0x36, y), (EV_ABS, 0x30, 10),
+                        (EV_KEY, 0x14a, 1), (EV_ABS, 0, x), (EV_ABS, 1, y), (EV_SYN, 0, 0)):
+            ev(t, c, v)
+        sleep(PRESS_SECONDS)
+    finally:
+        for t, c, v in ((EV_ABS, 0x2f, 0), (EV_ABS, 0x39, -1), (EV_KEY, 0x14a, 0), (EV_SYN, 0, 0)):
+            ev(t, c, v)
 
 
 def find_device(sys_root="/sys/class/input", dev_root="/dev/input"):
@@ -105,24 +118,36 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:
             return self.reply(400, "bad length")
         body = self.rfile.read(min(max(length, 0), 65536))   # always read what was sent, so the answer is not lost
-        if self.path != "/?action=tap":
+        action = {"/?action=tap": "tap", "/?action=arm": "arm", "/?action=disarm": "disarm"}.get(self.path)
+        if action is None:
             return self.reply(404)
-        # A page from another site may not press the screen. (Origin cannot be compared with Host here: Fluidd's web
-        # server passes its own upstream name as Host. Browsers send Sec-Fetch-Site on their own; a JSON POST from
-        # another site would in any case need a CORS preflight, which this service never allows.)
+        # A page from another site may not use this. (Origin cannot be compared with Host here: Fluidd's web
+        # server passes its own upstream name as Host. Browsers send Sec-Fetch-Site on their own - on plain http they
+        # often do not, so its absence is allowed.) The custom header makes any cross-site request need a CORS
+        # preflight, which this service never allows; the arming below keeps a stray request from touching the screen.
         site = self.headers.get("Sec-Fetch-Site")
         if site and site != "same-origin":
             return self.reply(403, "another site")
+        if self.headers.get(HEADER) != "1":
+            return self.reply(403, "header missing")
         if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
             return self.reply(415, "JSON only")
         if length > MAX_BODY:
             return self.reply(413, "too big")
+        if action == "arm":
+            armed_until[0] = now() + ARM_SECONDS
+            return self.reply(200, "ok")
+        if action == "disarm":
+            armed_until[0] = 0.0
+            return self.reply(200, "ok")
+        t = now()
+        if t >= armed_until[0]:
+            return self.reply(403, "touch is off")
         try:
             data = json.loads(body)
             x, y = to_touch(data["x"], data["y"])
         except (ValueError, KeyError, TypeError):
             return self.reply(400, "bad position")
-        t = now()
         if t - last_tap[0] < MIN_GAP_SECONDS:
             return self.reply(429, "too fast")
         last_tap[0] = t
@@ -136,7 +161,13 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+def on_term(signum, frame):
+    """SIGTERM (systemctl stop) -> SystemExit, so that a tap in progress still sends its release."""
+    raise SystemExit(0)
+
+
 def main():
+    signal.signal(signal.SIGTERM, on_term)
     HTTPServer(("127.0.0.1", PORT), Handler).serve_forever()
 
 

@@ -9,6 +9,16 @@
   "Printer screen" window. Off every time the window opens; when switched on, a click in the picture presses the same place on the real
   touch screen. Separate small service (127.0.0.1 only; accepts only same-site JSON, 4 taps a second at most). Coordinates 1:1 with the
   480x272 picture, from one test on 06.11.2026; tried on the printer on 22.11.2026 (all taps from the Fluidd window hit their place, up to the drying page; nothing was started).
+- `printer-screen-touch` / `printer-screen-view` hardening (from a security audit, 22.11.2026; the touch part was only ever "off" as a
+  variable in the Fluidd page, so any client on the network could POST a tap):
+  * Touch is now off **in the service**: it must be armed first (`?action=arm`, valid 60 s, renewed every 20 s by the open window while its
+    Touch button is on; `disarm` on switching off, closing the window or leaving the page; off after every service start). A tap without
+    arming gets 403. Every request must also carry `X-Q2-Touch: 1`, so a page of another site needs a CORS preflight, which is never granted.
+    Honest limit: a client that knows the protocol can still arm and tap, like it can already use Moonraker (printer commands, E-STOP) on this network.
+  * The root scripts moved from `/home/qidi/q2-screen/` (writable by Klipper/Moonraker) to `/usr/local/lib/q2-screen/` (root only); the update removes the old copies.
+  * A tap always sends its "release", even if a write fails or the service is stopped in the middle of it (SIGTERM).
+  * The window clicks only on a loaded 480x272 picture shown less than 1.5 s ago; no refresh while the tab is hidden; an error message
+    clears with the next good picture and the touch warning has its own line.
 - Installer: a new systemd service is now enabled in the same run that installs its unit file (before, the first run only
   copied the files and "enable" had to be repeated by running the installer a second time).
 

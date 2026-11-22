@@ -5,7 +5,7 @@ After=local-fs.target
 [Service]
 Type=simple
 # root only to read /dev/fb0; listens on 127.0.0.1 and only reads the screen, nothing else.
-ExecStart=/usr/bin/python3 /home/qidi/q2-screen/q2_screen.py
+ExecStart=/usr/bin/python3 /usr/local/lib/q2-screen/q2_screen.py
 Restart=on-failure
 RestartSec=10
 Nice=10

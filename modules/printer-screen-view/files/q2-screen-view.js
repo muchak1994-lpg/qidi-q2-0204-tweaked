@@ -61,6 +61,7 @@
       '.q2s-body{padding:6px 18px 4px;text-align:center}' +
       '.q2s-img{display:block;width:100%;height:auto;aspect-ratio:480/272;background:#000;border-radius:4px}' +
       '.q2s-msg{min-height:20px;margin:8px 0 0;opacity:.8}.q2s-msg.err{color:#ff5252;opacity:1}' +
+      '.q2s-warn{min-height:0}.q2s-warn:empty{display:none}' +
       '.q2s-foot{display:flex;justify-content:flex-end;padding:8px 18px 16px}' +
       '.q2s-btn{border:0;border-radius:4px;padding:9px 12px;font-size:14px;font-weight:500;cursor:pointer;color:#fff}' +
       '.q2s-tip{position:fixed;z-index:3001;pointer-events:none;background:#0a0a0ae6;opacity:0;color:#fff;border-radius:4px;font-size:14px;line-height:22px;padding:5px 16px;white-space:nowrap;transform:translateY(-50%) scale(0);transition:opacity .3s cubic-bezier(.25,.8,.5,1),transform .3s cubic-bezier(.25,.8,.5,1)}' +
@@ -73,32 +74,49 @@
   var dlg = null;
   function close() {
     if (!dlg) return;
-    clearTimeout(dlg.timer);
-    dlg.back.remove();
-    dlg = null;
+    var d = dlg;
+    clearTimeout(d.timer);
+    dlg = null;                                    // stops the refresh loop (a picture still on its way is dropped)
     document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('visibilitychange', onVisible);
+    try { document.dispatchEvent(new CustomEvent('q2-screen-close', { detail: { img: d.img } })); } catch (e) { /* ignore */ }
+    d.back.remove();
   }
   function onKey(e) { if (e.key === 'Escape') { e.stopPropagation(); close(); } }
+  // A hidden tab gets no refresh (and the picture goes stale, so the touch module refuses clicks on it).
+  function onVisible() {
+    var d = dlg;
+    if (!d || document.hidden) return;
+    clearTimeout(d.timer);
+    next();
+  }
 
+  // The picture counts as good only when it is a 480x272 PNG; q2Ts is when it was shown (the touch module refuses
+  // clicks on a picture that is older than ~1.5 s, missing, or after an error).
   function next() {
     var d = dlg;
-    if (!d) return;
+    if (!d || d.busy || document.hidden) return;
+    d.busy = true;
     var probe = new Image();
-    probe.onload = function () {
+    function fail() {
+      d.busy = false;
       if (dlg !== d) return;
-      d.img.src = probe.src;
-      if (!d.msg.dataset.q2t) {                      // the touch module keeps its own warning there
-        d.msg.textContent = tr('hint');
-        d.msg.className = 'q2s-msg';
-      }
-      d.timer = setTimeout(next, REFRESH_MS);
-    };
-    probe.onerror = function () {
-      if (dlg !== d) return;
+      d.img.dataset.q2Ts = '0';
       d.msg.textContent = tr('nopic');
       d.msg.className = 'q2s-msg err';
       d.timer = setTimeout(next, 3000);
+    }
+    probe.onload = function () {
+      if (dlg !== d) { d.busy = false; return; }
+      if (probe.naturalWidth !== 480 || probe.naturalHeight !== 272) return fail();
+      d.busy = false;
+      d.img.src = probe.src;
+      d.img.dataset.q2Ts = String(Date.now());
+      d.msg.textContent = tr('hint');                // an earlier error goes away with the first good picture
+      d.msg.className = 'q2s-msg';
+      d.timer = setTimeout(next, REFRESH_MS);
     };
+    probe.onerror = fail;
     probe.src = URL_BASE + '&t=' + Date.now();     // one request at a time, never piled up
   }
   function open() {
@@ -116,8 +134,11 @@
     var img = el('img', 'q2s-img');
     img.alt = tr('title');
     var msg = el('div', 'q2s-msg', tr('loading'));
+    var warn = el('div', 'q2s-msg q2s-warn');         // a line for the optional touch module (its own warnings)
+    img.dataset.q2Ts = '0';                           // no picture yet
     body.appendChild(img);
     body.appendChild(msg);
+    body.appendChild(warn);
     card.appendChild(body);
     var foot = el('div', 'q2s-foot');
     var bClose = el('button', 'q2s-btn', tr('close'));
@@ -127,13 +148,14 @@
     card.appendChild(foot);
     back.appendChild(card);
     document.body.appendChild(back);
-    dlg = { back: back, img: img, msg: msg, timer: null };
+    dlg = { back: back, img: img, msg: msg, timer: null, busy: false };
     back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
     bClose.addEventListener('click', close);
     document.addEventListener('keydown', onKey, true);
+    document.addEventListener('visibilitychange', onVisible);
     // lets the optional touch module (printer-screen-touch) add its button; without it nothing happens
     try {
-      document.dispatchEvent(new CustomEvent('q2-screen-open', { detail: { img: img, foot: foot, msg: msg, close: bClose, theme: th } }));
+      document.dispatchEvent(new CustomEvent('q2-screen-open', { detail: { img: img, foot: foot, msg: msg, warn: warn, close: bClose, theme: th } }));
     } catch (e) { /* ignore */ }
     next();
   }

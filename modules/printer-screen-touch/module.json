@@ -4,7 +4,7 @@
  "default": false,
  "title": "Fluidd: click in the 'Printer screen' window to touch the printer's real screen (optional, off in every new window)",
  "files": {
-  "/home/qidi/q2-screen/q2_touch.py": {
+  "/usr/local/lib/q2-screen/q2_touch.py": {
    "source": "files/q2_touch.py"
   },
   "/etc/systemd/system/q2-screen-touch.service": {
@@ -17,7 +17,7 @@
    "edits": [
     [
      "<script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>",
-     "<script src=\"./assets/q2-screen-touch.js?v=1\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
+     "<script src=\"./assets/q2-screen-touch.js?v=3\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
     ]
    ]
   }
@@ -38,6 +38,23 @@
    "systemctl",
    "restart",
    "q2-screen-touch.service"
+  ],
+  [
+   "rm",
+   "-f",
+   "/home/qidi/q2-screen/q2_touch.py"
+  ],
+  [
+   "find",
+   "/home/qidi",
+   "-maxdepth",
+   "1",
+   "-name",
+   "q2-screen",
+   "-type",
+   "d",
+   "-empty",
+   "-delete"
   ]
  ]
 }
