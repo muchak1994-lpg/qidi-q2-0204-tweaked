@@ -560,6 +560,11 @@ class ServiceAppearsWithTheInstallTest(unittest.TestCase):
         mods = [{"id": "svc", "order": 1, "files": {unit: {"source": "x"}},
                  "actions": [["systemctl", "daemon-reload"], ["systemctl", "enable", "--now", "q2-new.service"]]}]
         p = P({})
+        # The installer reads the index of the official QIDI package; CI has no package, so stand in for it
+        # (the other tests of this file do the same). Without this the test passed only on a PC that had fetched it.
+        saved = firmware.load_index
+        firmware.load_index = lambda: {"files": {}}
+        self.addCleanup(setattr, firmware, "load_index", saved)
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, True)
         changes = [(unit, b"[Unit]", "new", ["svc"])]
