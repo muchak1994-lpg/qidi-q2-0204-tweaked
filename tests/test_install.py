@@ -545,5 +545,29 @@ class SSHActionTest(unittest.TestCase):
     def test_disable_skipped_when_already_off(self):
         self.assertFalse(self.needs_for("present\ndisabled\ninactive\n"))
 
+class ServiceAppearsWithTheInstallTest(unittest.TestCase):
+    """A new service: when the plan is made its unit file is not there yet, so 'enable' looks pointless."""
+
+    def test_enable_runs_after_the_unit_file_is_installed(self):
+        unit = "/etc/systemd/system/q2-new.service"
+
+        class P(FakePrinter):
+            def needs(self, argv):
+                if argv[:2] == ["systemctl", "enable"]:
+                    return unit in self.files and argv not in self.actions
+                return super().needs(argv)
+
+        mods = [{"id": "svc", "order": 1, "files": {unit: {"source": "x"}},
+                 "actions": [["systemctl", "daemon-reload"], ["systemctl", "enable", "--now", "q2-new.service"]]}]
+        p = P({})
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, True)
+        changes = [(unit, b"[Unit]", "new", ["svc"])]
+        planned = install.pending_actions(p, mods, changes)
+        self.assertEqual(planned, [("svc", ["systemctl", "daemon-reload"])])      # as the plan shows it
+        install.do_install(p, mods, changes, "h", backups=tmp, actions=planned, resumed=set())
+        self.assertEqual(p.actions, [["systemctl", "daemon-reload"], ["systemctl", "enable", "--now", "q2-new.service"]])
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

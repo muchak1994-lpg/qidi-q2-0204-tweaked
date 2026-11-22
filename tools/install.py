@@ -624,8 +624,10 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
             record["files"][path]["installed"] = True
             save()
         print("Installed %d file(s)" % len(changes))
-        if actions is None:
-            actions = pending_actions(p, selected, changes, resumed)
+        # Look again now the files are on the printer: "enable this service" was judged "not there, nothing to do"
+        # when the plan was made, before the service file existed.
+        fresh = pending_actions(p, selected, changes, resumed)
+        actions = fresh if actions is None else list(actions) + [a for a in fresh if a not in actions]
         for mid, action in actions:
             if action[0] == "moonraker-db" and hasattr(p, "db_value"):
                 before = p.db_value(action[1], action[2])  # put back exactly this on uninstall

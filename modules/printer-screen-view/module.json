@@ -1,0 +1,38 @@
+{
+ "id": "printer-screen-view",
+ "order": 150,
+ "default": false,
+ "title": "Fluidd: a 'Printer screen' entry in the left navigation panel that opens a window showing the printer's touch screen (look only, optional)",
+ "files": {
+  "/home/qidi/q2-screen/q2_screen.py": {
+   "source": "files/q2_screen.py"
+  },
+  "/etc/systemd/system/q2-screen.service": {
+   "source": "files/q2-screen.service"
+  },
+  "/home/qidi/fluidd/assets/q2-screen-view.js": {
+   "source": "files/q2-screen-view.js"
+  },
+  "/home/qidi/fluidd/index.html": {
+   "edits": [
+    [
+     "<script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>",
+     "<script src=\"./assets/q2-screen-view.js?v=1\"></script><script type=\"module\" crossorigin src=\"./assets/index-DlFvHGAh.js\"></script>"
+    ]
+   ]
+  }
+ },
+ "note": "OPTIONAL (install with --with printer-screen-view). Adds a 'Printer screen' entry at the end of Fluidd's left navigation panel (in front of the filament drying entry); it opens a window with a live picture of the printer's own touch screen, refreshed about twice a second while the window is open. LOOK ONLY: nothing is written to the screen, there is no touch, nothing is sent to the printer. A small service (q2-screen) reads the screen (/dev/fb0, 480x272) and serves it as a PNG on 127.0.0.1:8083 only; Fluidd's own web server shows it as /webcam4/ (the unused fourth webcam address). The service reads the screen only when a picture is asked for, so it does nothing when the window is closed, and is limited to 30 MB. Reload an open Fluidd page once. Does not change Fluidd's own code (one script added in index.html, like the drying entry). Not tested during a print yet. Uninstall removes the service and the files.",
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ],
+  [
+   "systemctl",
+   "enable",
+   "--now",
+   "q2-screen.service"
+  ]
+ ]
+}

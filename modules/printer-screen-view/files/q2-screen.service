@@ -1,0 +1,19 @@
+[Unit]
+Description=QIDI Q2 - printer screen view (picture of the touch screen for Fluidd, look only)
+After=local-fs.target
+
+[Service]
+Type=simple
+# root only to read /dev/fb0; listens on 127.0.0.1 and only reads the screen, nothing else.
+ExecStart=/usr/bin/python3 /home/qidi/q2-screen/q2_screen.py
+Restart=on-failure
+RestartSec=10
+Nice=10
+MemoryMax=30M
+ProtectHome=read-only
+ProtectSystem=strict
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

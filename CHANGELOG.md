@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+- New optional module `printer-screen-view` (`--with printer-screen-view`): a "Printer screen" entry in Fluidd's left navigation
+  panel opens a window with a live picture of the printer's touch screen (about twice a second while open). Look only: no touch,
+  nothing sent to the printer. A small service reads `/dev/fb0` and serves it on 127.0.0.1 (shown through Fluidd's unused `/webcam4/`).
+  Installed and seen working on the author's printer (idle); not watched during a print yet.
+- Installer: a new systemd service is now enabled in the same run that installs its unit file (before, the first run only
+  copied the files and "enable" had to be repeated by running the installer a second time).
+
 ## 1.2.0 - 2026-11-21
 Third release. Everything listed here is installed on the author's printer. Not tested in a real print yet: the phone
 messages (ETA below 50 %, "Get a photo", filament in grams), the maintenance reminder after a real print (only forced on
