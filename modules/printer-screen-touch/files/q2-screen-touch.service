@@ -1,0 +1,19 @@
+[Unit]
+Description=QIDI Q2 - printer screen touch (presses the touch screen when the Fluidd window is clicked, optional)
+After=local-fs.target
+
+[Service]
+Type=simple
+# root only to write touch events to the Goodix panel; listens on 127.0.0.1 only.
+ExecStart=/usr/bin/python3 /home/qidi/q2-screen/q2_touch.py
+Restart=on-failure
+RestartSec=10
+Nice=10
+MemoryMax=25M
+ProtectHome=read-only
+ProtectSystem=strict
+PrivateTmp=yes
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

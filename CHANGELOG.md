@@ -5,6 +5,10 @@
   panel opens a window with a live picture of the printer's touch screen (about twice a second while open). Look only: no touch,
   nothing sent to the printer. A small service reads `/dev/fb0` and serves it on 127.0.0.1 (shown through Fluidd's unused `/webcam4/`).
   Installed and seen working on the author's printer (idle); not watched during a print yet.
+- New optional module `printer-screen-touch` (`--with printer-screen-touch`, needs `printer-screen-view`): a "Touch" button in the
+  "Printer screen" window. Off every time the window opens; when switched on, a click in the picture presses the same place on the real
+  touch screen. Separate small service (127.0.0.1 only; accepts only same-site JSON, 4 taps a second at most). Coordinates 1:1 with the
+  480x272 picture, from one test on 06.11.2026; not yet tried from the Fluidd window on the printer.
 - Installer: a new systemd service is now enabled in the same run that installs its unit file (before, the first run only
   copied the files and "enable" had to be repeated by running the installer a second time).
 

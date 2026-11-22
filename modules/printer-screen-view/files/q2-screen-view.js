@@ -87,8 +87,10 @@
     probe.onload = function () {
       if (dlg !== d) return;
       d.img.src = probe.src;
-      d.msg.textContent = tr('hint');
-      d.msg.className = 'q2s-msg';
+      if (!d.msg.dataset.q2t) {                      // the touch module keeps its own warning there
+        d.msg.textContent = tr('hint');
+        d.msg.className = 'q2s-msg';
+      }
       d.timer = setTimeout(next, REFRESH_MS);
     };
     probe.onerror = function () {
@@ -129,6 +131,10 @@
     back.addEventListener('mousedown', function (e) { if (e.target === back) close(); });
     bClose.addEventListener('click', close);
     document.addEventListener('keydown', onKey, true);
+    // lets the optional touch module (printer-screen-touch) add its button; without it nothing happens
+    try {
+      document.dispatchEvent(new CustomEvent('q2-screen-open', { detail: { img: img, foot: foot, msg: msg, close: bClose, theme: th } }));
+    } catch (e) { /* ignore */ }
     next();
   }
 
