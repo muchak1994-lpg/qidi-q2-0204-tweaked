@@ -17,10 +17,10 @@
   var TEXT = {
     en: { title: 'Printer screen', close: 'Close', loading: 'Loading the picture…',
       nopic: 'No picture from the printer screen. Is the "printer-screen-view" service running?',
-      hint: 'Look only - this window cannot touch the printer screen.' },
+      hint: 'Live picture of the printer screen.' },
     pl: { title: 'Ekran drukarki', close: 'Zamknij', loading: 'Wczytuję obraz…',
       nopic: 'Brak obrazu z ekranu drukarki. Czy usługa „printer-screen-view” działa?',
-      hint: 'Tylko podgląd - z tego okna nie da się dotykać ekranu drukarki.' }
+      hint: 'Podgląd ekranu drukarki na żywo.' }
   };
   function lang() {
     var l = '';

@@ -113,13 +113,15 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(self.post(b"not json"), 400)
         self.assertEqual(self.post({"x": 0.5}), 400)
         self.assertEqual(self.post({"x": 0.5, "y": 0.5}, {"Content-Type": "text/plain"}), 415)   # a web page cannot send this quietly
-        self.assertEqual(self.post({"x": 0.5, "y": 0.5}, {"Origin": "http://evil.example"}), 403)  # another site
+        self.assertEqual(self.post({"x": 0.5, "y": 0.5}, {"Sec-Fetch-Site": "cross-site"}), 403)  # another site
         self.assertEqual(self.post({"x": 0.5, "y": 0.5}, url=self.url.replace("tap", "other")), 404)
         self.assertEqual(self.post(b"{" + b" " * 1000 + b"}"), 413)
         self.assertEqual(self.taps, [])
 
     def test_same_origin_is_fine(self):
-        self.assertEqual(self.post({"x": 0.5, "y": 0.5}, {"Origin": "http://" + self.host}), 200)
+        # behind Fluidd's web server Host is not the browser's address (22.11.2026: a Host check refused every real tap)
+        self.assertEqual(self.post({"x": 0.5, "y": 0.5}, {"Origin": "http://100.73.132.37", "Host": "mjpgstreamer3",
+                                                          "Sec-Fetch-Site": "same-origin"}), 200)
 
     def test_get_is_not_a_tap(self):
         with self.assertRaises(urllib.error.HTTPError) as c:

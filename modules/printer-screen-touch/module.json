@@ -33,6 +33,11 @@
    "enable",
    "--now",
    "q2-screen-touch.service"
+  ],
+  [
+   "systemctl",
+   "restart",
+   "q2-screen-touch.service"
   ]
  ]
 }

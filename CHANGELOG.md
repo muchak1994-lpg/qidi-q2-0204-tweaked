@@ -8,7 +8,7 @@
 - New optional module `printer-screen-touch` (`--with printer-screen-touch`, needs `printer-screen-view`): a "Touch" button in the
   "Printer screen" window. Off every time the window opens; when switched on, a click in the picture presses the same place on the real
   touch screen. Separate small service (127.0.0.1 only; accepts only same-site JSON, 4 taps a second at most). Coordinates 1:1 with the
-  480x272 picture, from one test on 06.11.2026; not yet tried from the Fluidd window on the printer.
+  480x272 picture, from one test on 06.11.2026; tried on the printer on 22.11.2026 (all taps from the Fluidd window hit their place, up to the drying page; nothing was started).
 - Installer: a new systemd service is now enabled in the same run that installs its unit file (before, the first run only
   copied the files and "enable" had to be repeated by running the installer a second time).
 

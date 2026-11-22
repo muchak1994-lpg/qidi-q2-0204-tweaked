@@ -100,21 +100,25 @@ class Handler(BaseHTTPRequestHandler):
         self.reply(405, "taps are sent with POST")
 
     def do_POST(self):
-        if self.path != "/?action=tap":
-            return self.reply(404)
-        origin = self.headers.get("Origin")
-        if origin and origin.split("://", 1)[-1] != self.headers.get("Host"):
-            return self.reply(403, "another site")              # a page from elsewhere may not press the screen
-        if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
-            return self.reply(415, "JSON only")
         try:
             length = int(self.headers.get("Content-Length") or 0)
         except ValueError:
             return self.reply(400, "bad length")
-        if length < 1 or length > MAX_BODY:
-            return self.reply(413 if length > MAX_BODY else 400, "bad size")
+        body = self.rfile.read(min(max(length, 0), 65536))   # always read what was sent, so the answer is not lost
+        if self.path != "/?action=tap":
+            return self.reply(404)
+        # A page from another site may not press the screen. (Origin cannot be compared with Host here: Fluidd's web
+        # server passes its own upstream name as Host. Browsers send Sec-Fetch-Site on their own; a JSON POST from
+        # another site would in any case need a CORS preflight, which this service never allows.)
+        site = self.headers.get("Sec-Fetch-Site")
+        if site and site != "same-origin":
+            return self.reply(403, "another site")
+        if (self.headers.get("Content-Type") or "").split(";")[0].strip().lower() != "application/json":
+            return self.reply(415, "JSON only")
+        if length > MAX_BODY:
+            return self.reply(413, "too big")
         try:
-            data = json.loads(self.rfile.read(length))
+            data = json.loads(body)
             x, y = to_touch(data["x"], data["y"])
         except (ValueError, KeyError, TypeError):
             return self.reply(400, "bad position")
