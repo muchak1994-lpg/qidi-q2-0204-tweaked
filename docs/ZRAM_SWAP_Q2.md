@@ -1,6 +1,6 @@
 # Swap / zram na QIDI Q2 - raport z badania (2026-11-22)
 
-Plik NIEŚLEDZONY: nie commitować, nie wysyłać na GitHub (decyzja właściciela). Napisany bez żadnego kontaktu z drukarką
+Napisany bez żadnego kontaktu z drukarką
 (zero SSH, curl, Moonrakera, Klippera): tylko pliki na dysku, kod Valve Oil, archiwa z wcześniejszych sesji i strony w sieci.
 Nic nie pobrano (żadnego jądra, obrazu ani źródeł).
 

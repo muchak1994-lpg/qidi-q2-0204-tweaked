@@ -1,6 +1,6 @@
 # Audyt modeli AI w `algo_app` (QIDI Q2, firmware 01.01.02.04) - czy da się je poprawić? (2026-11-22)
 
-Plik NIEŚLEDZONY: nie commitować, nie wysyłać na GitHub. Napisany **bez żadnego kontaktu z drukarką** (zero SSH, Moonrakera, Fluidd, Klippera; druk trwał).
+Napisany **bez żadnego kontaktu z drukarką** (zero SSH, Moonrakera, Fluidd, Klippera; druk trwał).
 Źródła: oficjalna paczka QIDI 02.04 już leżąca na dysku (`work/stock/data.tar.xz`), kod `algo_app` odczytany wcześniej (folder notatek, patrz koniec),
 oraz archiwum wcześniejszych prób z października (`QIDI_Q2_historia_do_20261110.zip`: ok. 50 folderów o foreign/spaghetti). Niczego w repo nie zmieniłem.
 

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- `ai-fixes`: the pre-print foreign-object check always ends with a result line and no longer shows the internal command name. Every line now starts with
+  "PEI foreign object check:", a clean check says "nothing found.". Fixed: when the AI service ended its own 15 s window and zeroed its counters the loop
+  returned silently, so the console showed only "looking at the plate" (real print 23.11.2026).
+- `timelapse-progress-note`: the console note comes every 50 layers instead of every 20 (still also at layer 1).
 - Installer: faster (23.11.2026, measured on the real printer over Tailscale). A plan with nothing to change went from 25-29 s to about 10 s,
   installing one file from about a minute to 16 s; the first run (empty cache) from about 25 s to 17 s. The printer's files are no longer
   hashed again each time: the PC remembers a hash together with the file's identity on the printer (size, ctime in nanoseconds, inode;

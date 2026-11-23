@@ -1,6 +1,6 @@
 # Audyt pamięci `algo_app` (AI) i reszty oprogramowania Q2 - wycieki i rosnące zużycie RAM (2026-11-22)
 
-Plik NIEŚLEDZONY: nie commitować, nie wysyłać na GitHub. Napisany **bez żadnego kontaktu z drukarką** (zero SSH, curl, Moonrakera, Klippera;
+Napisany **bez żadnego kontaktu z drukarką** (zero SSH, curl, Moonrakera, Klippera;
 drukarka w tym czasie drukowała). Źródła: pliki na dysku (paczka QIDI 02.04 w `work/stock/`, archiwum `QIDI_Q2_historia_do_20261110.zip`),
 własny dezasembler bajtkodu Pythona 3.9 i trzy strony w sieci (tylko czytanie). Nic nie pobrano. Niczego w repo nie zmieniono.
 

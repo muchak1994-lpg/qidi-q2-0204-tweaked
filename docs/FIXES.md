@@ -83,7 +83,7 @@ Your calibration (`#*# SAVE_CONFIG` block) is kept: only these lines are edited 
 | `emmc-info` | Fluidd shows the real eMMC information. |
 | `gcode-history` | A multi-line console command stays one history entry. |
 | `timelapse-capture-recovery` | One failed timelapse frame no longer stops the whole timelapse. |
-| `timelapse-progress-note` | One short console note "Timelapse is on: layer N/total" at layer 1 and then every 20 layers. Not tested on a real print yet. |
+| `timelapse-progress-note` | One short console note "Timelapse is on: layer N/total" at layer 1 and then every 50 layers. Not tested on a real print yet. |
 | `phone-notifications` | OPTIONAL (installer question or `--notify yes`). Messages on your phone through the free ntfy app: print started (after the first layer), 25/50/75 % with elapsed / finish time / time left, finished, cancelled, **paused with the reason** (AI spaghetti, AI foreign object, filament runout, M0/M25 in the G-code, manual) with a camera picture and Resume / Cancel buttons, printer errors, and a print interrupted by a restart or power cut. After a print with timelapse, a button sends the video. No account or phone number needed; the channel names are random and secret. Pausing itself is unchanged (stock QIDI keeps bed and chamber heated). Not tested on a real print yet. |
 | `fluidd-fixes` | Fluidd: file and folder names with spaces/special characters, upload/download progress per file, controls usable while paused, SoC temperature, disk usage, sane ETA at print start, keeps server info on a Klipper reset, hides dialogs while disconnected. |
 | `send-and-print-guard` | Keeps Fluidd's "Upload & Print" working (checks at boot and nightly). |

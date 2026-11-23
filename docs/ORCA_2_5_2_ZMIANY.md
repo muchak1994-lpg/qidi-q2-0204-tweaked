@@ -1,6 +1,6 @@
 # OrcaSlicer 2.5.2 (21.11.2026) - co się zmieniło i co to znaczy dla Q2
 
-Raport z 22.11.2026. Plik NIEŚLEDZONY - nie commitować, nie wysyłać. Niczego nie pobrano ani nie zainstalowano;
+Raport z 22.11.2026. Niczego nie pobrano ani nie zainstalowano;
 źródła czytane przez API GitHuba (release notes `v2.5.2`, `v2.5.1`, `v2.5.0`, porównanie tagów
 `v2.5.1...v2.5.2`: 44 commity, 187 plików) oraz surowe pliki profili z tagów.
 Oznaczenia: **[DOWÓD]** = jest w release notes / diffie (podany PR lub commit), **[HIPOTEZA]** = mój wniosek.
