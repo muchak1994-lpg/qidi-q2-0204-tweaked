@@ -1,6 +1,14 @@
 # Changelog
 
-## Unreleased
+## 1.3.0 - 2026-11-23
+Fourth release. Everything listed here is installed on the author's printer except the OrcaSlicer changes (profiles and `hook` command, tested
+offline and by slicing in OrcaSlicer 2.5.2). Seen in the first real print with these modules (23.11.2026, 52 min): the phone messages at 25/50/75 %
+and the end, the print-hours counter, KAMP, the timelapse notes and video, and the AI service's memory (flat, no restart). Not tested in a real
+print yet: the brightness gate in the dark, the new "PEI foreign object check" lines, the "Get a timelapse" link buttons at the end of a print
+(link buttons tried by hand), the Fluidd console filters on screen, `algo-app-recycle`, a full first install and uninstall with the new installer
+on a printer, and the chamber-fan code from the OrcaSlicer printer profiles on a printer (only the first filament counts; a Box with mixed
+materials is not handled).
+
 - New module `fluidd-console-filters`: hides two internal lines in Fluidd's console, the echo of the timelapse's per-frame command
   (`MACRO=TIMELAPSE_TAKE_FRAME VARIABLE=takingframe`, one per layer) and the AI service's status code
   (`SAVE_VARIABLE ... qdc_ai_error_code`, e.g. `noodle=0 status=0`, written when the service restarts). Two "contains" filters in Fluidd's
