@@ -347,7 +347,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.assertIn("SAVE_VARIABLE VARIABLE=q2_notify_printing VALUE=0", self.all_gcode)
 
     def test_finish_message_has_timelapse_button_only_when_timelapse_was_on(self):
-        for tl_on, expected in ((1, "Show timelapse=video hdd500.gcode"), (0, "")):
+        for tl_on, expected in ((1, "Get a timelapse=video hdd500.gcode"), (0, "")):
             with self.subTest(tl_on=tl_on):
                 self.setUp()
                 self.state.update(started=1, next=50, tl_on=tl_on)
@@ -438,7 +438,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.printer["print_stats"].update(**self.END_WIPED)
         self.run_tick()
-        self.assertEqual(self.sent[-1][6], "Show timelapse=video hdd500.gcode")
+        self.assertEqual(self.sent[-1][6], "Get a timelapse=video hdd500.gcode")
 
     def test_a_pause_that_ends_in_standby_remembers_the_paused_numbers(self):
         self.printing(1, 0.0, 60)

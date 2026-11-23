@@ -163,7 +163,7 @@ class SendTests(unittest.TestCase):
         p.write_text("#!/bin/sh\n" + ("" if line is None else "printf '%s\\n'\n" % line.replace("\t", "\\t")))
         return p
 
-    def send_end(self, line, button="Show timelapse=video hdd500.gcode"):
+    def send_end(self, line, button="Get a timelapse=video hdd500.gcode"):
         self.out.unlink(missing_ok=True)                # one call per check, also inside a subTest loop
         (call,) = self.run_send("--tsv", "\t".join(["@@END@@", self.END_MESSAGE, "3", "", "", "", button, "", ""]),
                                 Q2_NOTIFY_ETA="sh %s" % self.end_script(line), TZ="UTC")
@@ -172,7 +172,7 @@ class SendTests(unittest.TestCase):
     def test_end_completed_is_a_finished_message_with_the_grams_and_the_timelapse_button(self):
         b = self.send_end("completed\t83\t28597")
         self.assertEqual((b["title"], b["message"]), ("Print finished", "hdd500.gcode\nprinted in 5h 07m, filament 83 g"))
-        self.assertEqual([a["label"] for a in b["actions"]], ["Show timelapse"])
+        self.assertEqual([a["label"] for a in b["actions"]], ["Get a timelapse"])
 
     def test_end_completed_without_grams_gives_metres_from_the_history(self):
         b = self.send_end("completed\t\t28597")
@@ -211,6 +211,29 @@ class SendTests(unittest.TestCase):
         self.assertEqual(self.run_send("T", "m"), [])
         self.conf.unlink()
         self.assertEqual(self.run_send("T", "m"), [])
+
+    def test_view_buttons_are_link_actions(self):
+        (call,) = self.run_send("Timelapse", "x", "--view", "Home network=http://192.168.1.5/a.mp4",
+                                "--view", "Tailscale=http://100.64.0.9/a.mp4")
+        acts = self.body(call)["actions"]
+        self.assertEqual(acts, [{"action": "view", "label": "Home network", "url": "http://192.168.1.5/a.mp4"},
+                                {"action": "view", "label": "Tailscale", "url": "http://100.64.0.9/a.mp4"}])
+
+    def test_view_buttons_work_without_a_command_channel_and_next_to_a_command_button(self):
+        self.write_conf("ENABLED=1\nNTFY_SERVER=https://ntfy.example\nEVENTS_TOPIC=evtopic\n")
+        (call,) = self.run_send("T", "x", "--view", "Open=http://h/a.mp4")
+        self.assertEqual([a["action"] for a in self.body(call)["actions"]], ["view"])
+        self.write_conf("ENABLED=1\nNTFY_SERVER=https://ntfy.example\nEVENTS_TOPIC=evtopic\nCMD_TOPIC=cmdtopic\n")
+        self.out.unlink()
+        (call,) = self.run_send("T", "x", "--action", "Resume=resume", "--view", "Open=http://h/a.mp4")
+        self.assertEqual([a["action"] for a in self.body(call)["actions"]], ["http", "view"])
+
+    def test_view_buttons_in_an_upload_go_into_the_actions_header(self):
+        pic = self.dir / "snap.jpg"
+        pic.write_bytes(b"jpg")
+        (call,) = self.run_send("T", "x", "--attach", str(pic), "--action", "Photo=photo", "--view", "Open=http://h/a.mp4")
+        header = [a for a in call if a.startswith("Actions: ")][0]
+        self.assertIn("body=photo, clear=false; view, Open, http://h/a.mp4", header)
 
     def test_a_big_upload_is_not_cut_off_after_one_minute(self):
         # 23.11.2026: the 6.4 MB timelapse video needs more than 60 s from the printer's Wi-Fi; the old limit stopped it silently

@@ -4,7 +4,9 @@
 - `phone-notifications`: a failed attachment upload is no longer silent. The upload may take up to 15 min (it is stopped after 30 s without any data) and is
   treated as failed when the server refuses it (`--fail`); then the same message goes out as plain text with "(the attachment could not be sent)".
   Found on the first real print (23.11.2026): the public ntfy.sh answers 413 ("attachment too large, or bandwidth limit reached") to a 3 MB or 6.4 MB
-  timelapse video from the printer, a 200 kB file goes through; the old 60 s limit hid it completely. The video itself still does not arrive over ntfy.sh.
+  timelapse video from the printer, a 200 kB file goes through; the old 60 s limit hid it completely.
+  So the video is no longer uploaded: the button "Get a timelapse" (was "Show timelapse") now sends a message with link buttons that open the file from the printer's
+  own web server, one per address it has ("Home network", "Tailscale"; read from the printer when the message is made). New `--view LABEL=URL` option in the sender.
 - `ai-fixes`: the pre-print foreign-object check always ends with a result line and no longer shows the internal command name. Every line now starts with
   "PEI foreign object check:", a clean check says "nothing found.". Fixed: when the AI service ended its own 15 s window and zeroed its counters the loop
   returned silently, so the console showed only "looking at the plate" (real print 23.11.2026).

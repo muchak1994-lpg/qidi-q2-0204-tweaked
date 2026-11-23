@@ -2,13 +2,14 @@
 # SPDX-License-Identifier: GPL-3.0-only
 # Q2 tweaked - phone notifications: publish one message to the ntfy channel from q2_notify.conf.
 #
-#   q2_notify_send.sh <title> <message> [--prio N] [--tags a,b] [--click URL] [--attach FILE] [--action LABEL=BODY]...
+#   q2_notify_send.sh <title> <message> [--prio N] [--tags a,b] [--click URL] [--attach FILE] [--action LABEL=BODY]... [--view LABEL=URL]...
 #   q2_notify_send.sh --tsv "<title>\t<message>\t<prio>\t<tags>\t<click>\t<attach>\t<action1>\t<action2>\t<action3>"
 #
 # --tsv is one argument with tab-separated fields (an empty field = not set); Klipper's gcode_shell_command splits a command
 # line at spaces, which would break file names with spaces. In --tsv mode the two characters \n in the message become a newline.
 # A button is shown as: LABEL, and tapping it sends BODY to the command channel ($NTFY_SERVER/$CMD_TOPIC); the message then
 # disappears, except after the button "photo" (a picture on request).
+# --view LABEL=URL is a button that opens the address in the phone's browser (no command is sent); it needs no command channel.
 # --attach takes a file, or an http(s) address that is downloaded first (a failed download only drops the picture).
 # Without --attach the message goes out as JSON (UTF-8 safe); with --attach as a file upload (PUT), where non-ASCII
 # header text is RFC 2047 encoded. Does nothing (exit 0) when the notifications are off or there is no config.
@@ -40,6 +41,7 @@ TAGS=""
 CLICK=""
 ATTACH=""
 ACTIONS=""
+VIEWS=""
 
 if [ "$1" = "--tsv" ]; then
     tsv=$2
@@ -66,6 +68,8 @@ else
             --click) CLICK=$2 ;;
             --attach) ATTACH=$2 ;;
             --action) ACTIONS="$ACTIONS$2
+" ;;
+            --view) VIEWS="$VIEWS$2
 " ;;
         esac
         shift 2 2>/dev/null || break
@@ -204,16 +208,24 @@ if [ -n "$ATTACH" ] && [ -f "$ATTACH" ]; then
     [ -n "$PRIO" ] && set -- "$@" -H "Priority: $PRIO"
     [ -n "$TAGS" ] && set -- "$@" -H "Tags: $TAGS"
     [ -n "$CLICK" ] && set -- "$@" -H "Click: $CLICK"
+    header=""
     if [ -n "$ACTIONS" ] && [ -n "$CMD_TOPIC" ]; then
-        header=""
         while IFS= read -r a; do
             [ -n "$a" ] || continue
             header="$header${header:+; }http, ${a%%=*}, $NTFY_SERVER/$CMD_TOPIC, method=POST, body=${a#*=}, clear=$(button_clears "${a#*=}")"
         done <<EOF
 $ACTIONS
 EOF
-        set -- "$@" -H "Actions: $header"
     fi
+    if [ -n "$VIEWS" ]; then
+        while IFS= read -r a; do
+            [ -n "$a" ] || continue
+            header="$header${header:+; }view, ${a%%=*}, ${a#*=}"
+        done <<EOF
+$VIEWS
+EOF
+    fi
+    [ -n "$header" ] && set -- "$@" -H "Actions: $header"
     if $CURL "$@" "$NTFY_SERVER/$EVENTS_TOPIC" >/dev/null 2>&1; then
         exit 0
     fi
@@ -231,16 +243,24 @@ if [ -n "$TAGS" ]; then
     json="$json,\"tags\":[$list]"
 fi
 [ -n "$CLICK" ] && json="$json,\"click\":\"$(json_escape "$CLICK")\""
+list=""
 if [ -n "$ACTIONS" ] && [ -n "$CMD_TOPIC" ]; then
-    list=""
     while IFS= read -r a; do
         [ -n "$a" ] || continue
         list="$list${list:+,}{\"action\":\"http\",\"label\":\"$(json_escape "${a%%=*}")\",\"url\":\"$(json_escape "$NTFY_SERVER/$CMD_TOPIC")\",\"method\":\"POST\",\"body\":\"$(json_escape "${a#*=}")\",\"clear\":$(button_clears "${a#*=}")}"
     done <<EOF
 $ACTIONS
 EOF
-    json="$json,\"actions\":[$list]"
 fi
+if [ -n "$VIEWS" ]; then
+    while IFS= read -r a; do
+        [ -n "$a" ] || continue
+        list="$list${list:+,}{\"action\":\"view\",\"label\":\"$(json_escape "${a%%=*}")\",\"url\":\"$(json_escape "${a#*=}")\"}"
+    done <<EOF
+$VIEWS
+EOF
+fi
+[ -n "$list" ] && json="$json,\"actions\":[$list]"
 json="$json}"
 $CURL -sS --max-time 15 -H "Content-Type: application/json" -d "$json" "$NTFY_SERVER" >/dev/null 2>&1
 exit 0
