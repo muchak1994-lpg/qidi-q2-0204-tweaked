@@ -5,7 +5,12 @@
   (1 MiB) instead of holding three whole copies for a moment (about 134 MB more than needed when the model is loaded in a print's second layer;
   worked out from the service's code, not measured). Same key, cipher and result file, byte for byte; a replacement for that one method, applied
   inside the service after QIDI's module is imported (no file of QIDI's is edited), only when the method still looks exactly as expected, and QIDI's
-  own method does the job if anything goes wrong. Tested offline (26 tests, including real AES); not installed or measured on a printer yet.
+  own method does the job if anything goes wrong. Tested offline (26 tests, including real AES). The block-by-block part is installed on the author's
+  printer (hook seen in the service's log, the model load itself not yet seen in a print).
+  Second part of the same module (separate off switch `Q2_STREAM_RELEASE=off`, written and tested offline with a fake clock, NOT installed yet): the
+  service gives the noodle model back 120 s after a print (QIDI's own `detector_release()`, garbage collection, `malloc_trim`) instead of keeping
+  ~100 MB until a restart; never while printing, paused or starting a print; a QIDI change to the objects it looks at makes it do nothing.
+- Ghidra scripts used for the screen-program audit are now in `tools/ghscripts/` (four small scripts and a README; no QIDI code or binary).
 
 ## 1.3.1 - 2026-11-23
 Fix release, no new features. Version 1.3.0 failed its automatic tests on Python 3.9 (and would not have run there): two places wrote files

@@ -182,15 +182,18 @@ def encrypted_file(folder, plain, aes_encrypt=None, name="model.enc"):
 def load_package():
     spec = importlib.util.spec_from_file_location("q2stream_under_test", SRC)
     module = importlib.util.module_from_spec(spec)
-    before = os.environ.get("Q2_STREAM_DECRYPT")
-    os.environ["Q2_STREAM_DECRYPT"] = "off"  # the file installs itself when imported: not in the tests' own process
+    keys = ("Q2_STREAM_DECRYPT", "Q2_STREAM_RELEASE")
+    before = {k: os.environ.get(k) for k in keys}
+    for k in keys:
+        os.environ[k] = "off"  # the file installs itself when imported: not in the tests' own process
     try:
         spec.loader.exec_module(module)
     finally:
-        if before is None:
-            del os.environ["Q2_STREAM_DECRYPT"]
-        else:
-            os.environ["Q2_STREAM_DECRYPT"] = before
+        for k in keys:
+            if before[k] is None:
+                del os.environ[k]
+            else:
+                os.environ[k] = before[k]
     return module
 
 
@@ -474,7 +477,7 @@ class ImportHook(Base):
 
     def test_off_switch_by_environment(self):
         for word in ("off", "0", "no", "false"):
-            self.assertFalse(self.q.install(environ={"Q2_STREAM_DECRYPT": word}), word)
+            self.assertFalse(self.q.install(environ={"Q2_STREAM_DECRYPT": word, "Q2_STREAM_RELEASE": word}), word)
         deal = importlib.import_module("src.detection_deal")
         self.assertFalse(hasattr(deal.DetectionDeal.decrypt_weight, "_q2stream_original"))
 

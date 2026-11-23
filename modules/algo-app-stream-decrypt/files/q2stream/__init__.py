@@ -151,6 +151,172 @@ def patch(module):
         return False
 
 
+IDLE_SECONDS = 120      # the printer must have been idle this long (in a row) before the model is given back
+POLL_SECONDS = 5
+MAX_RELEASE_ERRORS = 5  # after this many failed releases the watcher stops trying until the service restarts
+_flags = {"decrypt": True, "release": True}
+
+
+def _malloc_trim():
+    """Ask glibc to give free heap memory back to the system (a Python-level release alone leaves it in the process)."""
+    import ctypes
+    ctypes.CDLL("libc.so.6").malloc_trim(0)
+
+
+def _rss_mb():
+    try:
+        with open("/proc/self/status", "r") as handle:
+            for line in handle:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) / 1024.0
+    except Exception:
+        pass
+    return None
+
+
+def _printer_busy(inst):
+    """True unless it is certain that the printer is neither printing, beginning a print nor paused."""
+    try:
+        printer = getattr(inst, "printer", None)
+        if printer is None:
+            return True
+        for name in ("is_printing", "is_printing_begin"):
+            if getattr(printer, name, True):
+                return True
+        paused = getattr(printer, "is_paused", None)
+        if not callable(paused) or paused():
+            return True
+        return False
+    except Exception:
+        return True
+
+
+class Releaser(object):
+    """Decides, one look at a time, when the noodle model can be given back. step() never raises."""
+
+    def __init__(self, idle_seconds=IDLE_SECONDS):
+        self.idle = idle_seconds
+        self.idle_since = None
+        self.errors = 0
+
+    def step(self, inst, now):
+        """One look at the service. Returns "busy", "nothing", "waiting", "released", "error" or "off"."""
+        if self.errors >= MAX_RELEASE_ERRORS:
+            return "off"
+        if _printer_busy(inst):
+            self.idle_since = None
+            return "busy"
+        if getattr(inst, "detector", None) is None:
+            self.idle_since = None
+            return "nothing"
+        if self.idle_since is None:
+            self.idle_since = now
+            return "waiting"
+        if now - self.idle_since < self.idle:
+            return "waiting"
+        if _printer_busy(inst):  # look again right before: a print may have started meanwhile
+            self.idle_since = None
+            return "busy"
+        before = _rss_mb()
+        try:
+            inst.detector_release()  # QIDI's own method: release_model(), detector = None, gc.collect()
+            import gc
+            gc.collect()
+            _malloc_trim()
+        except Exception as exc:
+            self.errors += 1
+            self.idle_since = None
+            try:
+                _log().warning("q2stream: releasing the model failed (%r) (%d of %d)", exc, self.errors,
+                               MAX_RELEASE_ERRORS)
+            except Exception:
+                pass
+            return "error"
+        self.idle_since = None
+        after = _rss_mb()
+        try:
+            if before is not None and after is not None:
+                _log().info("q2stream: noodle model released after the print (process memory %.0f -> %.0f MB)", before, after)
+            else:
+                _log().info("q2stream: noodle model released after the print")
+        except Exception:
+            pass
+        return "released"
+
+
+def run_watcher(ref, releaser, clock=None, sleep=None, poll=POLL_SECONDS, max_loops=None):
+    """The watcher thread's loop: ref is a weak reference to the DetectionDeal. Ends when the object is gone or its
+    stop_event is set. Nothing a step does can end it (max_loops is for the tests)."""
+    import time
+    clock = clock or time.monotonic
+    sleep = sleep or time.sleep
+    loops = 0
+    warned = False
+    while max_loops is None or loops < max_loops:
+        inst = ref()
+        if inst is None:
+            return
+        try:
+            stop = getattr(inst, "stop_event", None)
+            if stop is not None and stop.is_set():
+                return
+            releaser.step(inst, clock())
+        except Exception as exc:
+            if not warned:
+                warned = True
+                try:
+                    _log().warning("q2stream: watcher step failed: %r", exc)
+                except Exception:
+                    pass
+        del inst  # never hold the object while sleeping
+        sleep(poll)
+        loops += 1
+
+
+def start_watcher(inst):
+    import threading
+    import weakref
+    thread = threading.Thread(target=run_watcher, args=(weakref.ref(inst), Releaser()), name="q2stream-release",
+                              daemon=True)
+    thread.start()
+
+
+def patch_release(module):
+    """Wrap DetectionDeal.__init__ so that every object gets a watcher thread. True when done now; False when not
+    (already done, not the class this was written for, or any problem - this function never raises)."""
+    try:
+        cls = getattr(module, "DetectionDeal", None)
+        original = getattr(cls, "__init__", None) if cls is not None else None
+        if original is None or getattr(original, "_q2stream_original", None) is not None:
+            return False
+        code = getattr(original, "__code__", None)
+        if code is None or tuple(code.co_varnames[:4]) != ("self", "config", "vi", "printer") \
+                or code.co_argcount != 4 or not callable(getattr(cls, "detector_release", None)):
+            _log().debug("q2stream: DetectionDeal is not the class the release was written for, not patched")
+            return False
+
+        def __init__(self, *args, **kwargs):
+            original(self, *args, **kwargs)
+            try:
+                start_watcher(self)
+            except Exception as exc:
+                try:
+                    _log().warning("q2stream: could not start the release watcher: %r", exc)
+                except Exception:
+                    pass
+
+        __init__._q2stream_original = original
+        cls.__init__ = __init__
+        _log().info("q2stream: the noodle model is given back %d s after a print (no restart needed)", IDLE_SECONDS)
+        return True
+    except Exception as exc:
+        try:
+            _log().warning("q2stream: release not patched: %r", exc)
+        except Exception:
+            pass
+        return False
+
+
 class _Loader(object):
     """Stands in for the real loader of src.detection_deal for the moment of its import: runs the real one, then
     patches. It puts the real loader back into the module before running it, so the module never keeps us."""
@@ -170,7 +336,10 @@ class _Loader(object):
         except Exception:
             pass
         real.exec_module(module)
-        patch(module)
+        if _flags["decrypt"]:
+            patch(module)
+        if _flags["release"]:
+            patch_release(module)
 
     def __getattr__(self, name):
         return getattr(self._real, name)
@@ -209,14 +378,19 @@ def install(environ=None):
     False when not (switched off, already there, or any problem - this function never raises)."""
     try:
         env = os.environ if environ is None else environ
-        if str(env.get("Q2_STREAM_DECRYPT", "")).strip().lower() in OFF_WORDS:
+        _flags["decrypt"] = str(env.get("Q2_STREAM_DECRYPT", "")).strip().lower() not in OFF_WORDS
+        _flags["release"] = str(env.get("Q2_STREAM_RELEASE", "")).strip().lower() not in OFF_WORDS
+        if not (_flags["decrypt"] or _flags["release"]):
             return False
         if any(getattr(f, "_q2stream_finder", False) for f in sys.meta_path):
             return False
         sys.meta_path.insert(0, _Finder())
         module = sys.modules.get(TARGET)
         if module is not None:
-            patch(module)
+            if _flags["decrypt"]:
+                patch(module)
+            if _flags["release"]:
+                patch_release(module)
         return True
     except Exception as exc:
         try:
