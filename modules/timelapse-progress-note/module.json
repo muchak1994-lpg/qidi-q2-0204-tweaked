@@ -8,5 +8,5 @@
     }
   },
   "restart": ["klipper"],
-  "note": "Fluidd's console shows an echo of a command the Moonraker timelapse component sends after every frame (SET_GCODE_VARIABLE ... takingframe VALUE=False): one line per layer, with no information in it. Hide that line with a console filter in Fluidd (it is a display setting only) and use this module so you still see that the timelapse is running: 'Timelapse is on: layer N/total' at layer 1 and then every 50 layers. The note is shown only when the timelapse is enabled for the print. It says the timelapse is on, not that every frame was saved; a failed frame capture is handled by timelapse-capture-recovery."
+  "note": "Fluidd's console shows an echo of a command the Moonraker timelapse component sends after every frame (SET_GCODE_VARIABLE ... takingframe VALUE=False): one line per layer, with no information in it. The module fluidd-console-filters hides that line with a console filter in Fluidd (it is a display setting only); use this module so you still see that the timelapse is running: 'Timelapse is on: layer N/total' at layer 1 and then every 50 layers. The note is shown only when the timelapse is enabled for the print. It says the timelapse is on, not that every frame was saved; a failed frame capture is handled by timelapse-capture-recovery."
 }

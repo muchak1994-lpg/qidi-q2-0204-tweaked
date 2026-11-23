@@ -149,12 +149,14 @@ linii z wentylatorem. Sprawdzone przez pocięcie w OrcaSlicer 2.5.2 (PLA S255, P
 warstwą 1); na drukarce jeszcze nie sprawdzone. Liczy się tylko pierwszy filament: wielokolorowy druk z Boxem idzie
 według pierwszego.
 
-Wcześniejsze wersje (1.2.0 i starsze) dodawały zamiast tego kopię `(Tweaked)` każdego filamentu. Przejście: zamknij
-OrcaSlicer, uruchom `py tools/orca_profiles.py uninstall --apply` (usuwa niezmienione kopie i stare profile drukarek,
-po kopii w zip w `backups/`), potem `py tools/orca_profiles.py install --apply`. OrcaSlicer przepisuje profile drukarek
-przy synchronizacji konta; przepisany profil liczy się jak twój i zostaje - wtedy usuń tę drukarkę `(Tweaked)` w
-OrcaSlicer przed instalacją albo wklej wartość `before_layer_change_gcode` z `orca-profiles/machine/<drukarka>.json` w
-własnym G-code drukarki → „G-code przed zmianą warstwy”.
+Wcześniejsze wersje (1.2.0 i starsze) dodawały zamiast tego kopię `(Tweaked)` każdego filamentu, a ich profile drukarek
+nie mają kodu wentylatora. Przejście: zamknij OrcaSlicer i uruchom `py tools/orca_profiles.py hook --apply`. Dopisuje kod
+wentylatora do profili drukarek `(Tweaked)` projektu, które go nie mają (po kopii w zip w `backups/`), i niczego więcej
+nie zmienia: wpisany adres drukarki i klucz API zostają, a profil z własnym „G-code przed zmianą warstwy” jest pomijany.
+(Bez `--apply` tylko wypisuje profile.) Krok OrcaSlicer w instalatorze sam o tym przypomina, gdy znajdzie taki profil, i
+mówi też, gdy twoja Orca jest starsza niż 2.5.2 (wersja, z którą kod sprawdzono) - warto ją zaktualizować. Stare kopie
+filamentów usuniesz przez `py tools/orca_profiles.py uninstall --apply` (tylko niezmienione pliki dodane przez projekt,
+po kopii w zip); zostawione nie szkodzą.
 
 ## Licencja i źródła
 

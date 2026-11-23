@@ -617,7 +617,7 @@ STATE_ACTIONS = (("chattr", "+i"), ("systemctl", "enable"), ("systemctl", "disab
 def is_state_action(action):
     """Lock a folder, enable/disable a service, set a Moonraker database entry or the time zone."""
     return (tuple(action[:2]) in STATE_ACTIONS
-            or action[0] in ("moonraker-db", "timezone", "pc-timezone", "fluidd-card"))
+            or action[0] in ("moonraker-db", "timezone", "pc-timezone", "fluidd-card", "fluidd-console-filters"))
 
 
 TZ_NAME = __import__("re").compile(r"^[A-Za-z][A-Za-z0-9_+-]*(/[A-Za-z0-9_+-]+){0,2}$")
@@ -691,11 +691,29 @@ def fluidd_layouts_with_card(current, card):
     return layouts if changed else None
 
 
+def fluidd_console_filters_with(current, wanted):
+    """Fluidd's saved console filters plus the `wanted` ones ({"id", "name", "value"}; type "contains", on), or None when all of
+    them are already there. A filter with the same id is left as it is, also one the user switched off; the user's own filters
+    keep their place; a saved value that is not a list of filters is replaced."""
+    try:
+        saved = json.loads(current) if current else []
+    except ValueError:
+        saved = []
+    filters = [f for f in saved if isinstance(f, dict)] if isinstance(saved, list) else []
+    have = {f.get("id") for f in filters}
+    added = [{"id": w["id"], "enabled": True, "name": w["name"], "type": "contains", "value": w["value"]}
+             for w in wanted if w["id"] not in have]
+    if not added and filters == saved:
+        return None
+    return filters + added
+
+
 def resolve_action(p, action):
     """Turn an action that depends on the PC or on the printer's current settings into a plain one.
 
     ["pc-timezone"] -> ["timezone", <the PC's zone>]
     ["fluidd-card", <card>] -> ["moonraker-db", "fluidd", "layout.layouts", <layouts with the card on>]
+    ["fluidd-console-filters", <JSON list of {"id","name","value"}>] -> ["moonraker-db", "fluidd", "console.consoleFilters", <filters>]
     None when there is nothing to do (or the PC's zone is not known)."""
     if action[0] == "pc-timezone":
         zone = pc_timezone()
@@ -703,6 +721,10 @@ def resolve_action(p, action):
             print("Time zone %s of this PC is not known to the printer - left as it is." % zone)
             zone = None
         return ["timezone", zone] if zone else None
+    if action[0] == "fluidd-console-filters":
+        current = p.db_value("fluidd", "console.consoleFilters") if hasattr(p, "db_value") else None
+        filters = fluidd_console_filters_with(current, json.loads(action[1]))
+        return None if filters is None else ["moonraker-db", "fluidd", "console.consoleFilters", json.dumps(filters)]
     if action[0] == "fluidd-card":
         current = p.db_value("fluidd", "layout.layouts") if hasattr(p, "db_value") else None
         layouts = fluidd_layouts_with_card(current, action[1])

@@ -1,0 +1,13 @@
+{
+  "id": "fluidd-console-filters",
+  "order": 119,
+  "title": "Fluidd console: hide the internal technical lines (timelapse echo, AI status code)",
+  "files": {},
+  "actions": [
+    [
+      "fluidd-console-filters",
+      "[{\"id\": \"tweaked-timelapse-frame\", \"name\": \"Timelapse frame (hidden by Tweaked)\", \"value\": \"MACRO=TIMELAPSE_TAKE_FRAME VARIABLE=takingframe\"}, {\"id\": \"tweaked-ai-code\", \"name\": \"AI status code (hidden by Tweaked)\", \"value\": \"VARIABLE=qdc_ai_error_code\"}]"
+    ]
+  ],
+  "note": "Fluidd's console shows two lines nobody needs: the echo of a command the timelapse sends after every frame (one line per layer), and the AI service's status code (SAVE_VARIABLE ... qdc_ai_error_code, e.g. noodle=0 status=0) every time it restarts. This adds two 'contains' filters to Fluidd's console filters (Fluidd settings > Console, stored in Moonraker's database on the printer, so every browser) which only HIDE those lines from the display; nothing is deleted from the printer's log. Your own filters stay, a filter you switch off stays off, and uninstall puts the saved list back as it was. The readable messages stay: 'Timelapse is on: layer N/total' (timelapse-progress-note) and 'PEI foreign object check: ...'. Reload an open Fluidd page once."
+}

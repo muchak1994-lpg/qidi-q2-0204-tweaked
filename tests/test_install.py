@@ -504,6 +504,72 @@ class NewActionsTest(unittest.TestCase):
         self.assertEqual(WINDOWS_TO_IANA["Central European Standard Time"], "Europe/Warsaw")
 
 
+class ConsoleFilterTest(unittest.TestCase):
+    """Fluidd's console shows internal lines nobody needs (a timelapse echo per layer, the AI's status code at every restart).
+    The module fluidd-console-filters adds hide-filters to Fluidd's saved settings without touching the user's own."""
+    WANTED = [{"id": "tweaked-timelapse-frame", "name": "Timelapse frame (hidden by Tweaked)",
+               "value": "MACRO=TIMELAPSE_TAKE_FRAME VARIABLE=takingframe"},
+              {"id": "tweaked-ai-code", "name": "AI status code (hidden by Tweaked)", "value": "VARIABLE=qdc_ai_error_code"}]
+    KEY = ("fluidd", "console.consoleFilters")
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.saved = firmware.load_index
+        firmware.load_index = lambda: {"files": {}}
+        self.mods = [{"id": "filters", "order": 1, "files": {},
+                      "actions": [["fluidd-console-filters", json.dumps(self.WANTED)]]}]
+
+    def tearDown(self):
+        firmware.load_index = self.saved
+
+    def ids(self, p):
+        return [f["id"] for f in json.loads(p.db[self.KEY])]
+
+    def test_fresh_printer_gets_both_filters_as_contains_and_enabled(self):
+        p = FakePrinter({})
+        install.do_install(p, self.mods, [], "h", backups=self.tmp)
+        filters = json.loads(p.db[self.KEY])
+        self.assertEqual([f["id"] for f in filters], ["tweaked-timelapse-frame", "tweaked-ai-code"])
+        for f in filters:
+            self.assertEqual((f["type"], f["enabled"]), ("contains", True))
+        self.assertEqual(filters[1]["value"], "VARIABLE=qdc_ai_error_code")
+
+    def test_the_users_own_filters_stay_and_come_back_on_uninstall(self):
+        own = [{"id": "mine", "enabled": True, "name": "Mine", "type": "contains", "value": "xyz"}]
+        p = FakePrinter({})
+        p.db[self.KEY] = json.dumps(own)
+        backup = install.do_install(p, self.mods, [], "h", backups=self.tmp)
+        self.assertEqual(self.ids(p), ["mine", "tweaked-timelapse-frame", "tweaked-ai-code"])
+        install.do_uninstall(p, backup)
+        self.assertEqual(json.loads(p.db[self.KEY]), own)
+
+    def test_uninstall_on_a_printer_that_had_no_filters_removes_the_entry(self):
+        p = FakePrinter({})
+        backup = install.do_install(p, self.mods, [], "h", backups=self.tmp)
+        install.do_uninstall(p, backup)
+        self.assertNotIn(self.KEY, p.db)
+
+    def test_a_filter_the_user_switched_off_stays_off_and_nothing_is_added_twice(self):
+        off = [{"id": "tweaked-ai-code", "enabled": False, "name": "x", "type": "contains", "value": "VARIABLE=qdc_ai_error_code"}]
+        self.assertEqual([f["id"] for f in install.fluidd_console_filters_with(json.dumps(off), self.WANTED)],
+                         ["tweaked-ai-code", "tweaked-timelapse-frame"])
+        self.assertFalse(install.fluidd_console_filters_with(json.dumps(off), self.WANTED)[0]["enabled"])
+
+    def test_nothing_to_do_when_both_are_there(self):
+        p = FakePrinter({})
+        install.do_install(p, self.mods, [], "h", backups=self.tmp)
+        self.assertIsNone(install.fluidd_console_filters_with(p.db[self.KEY], self.WANTED))
+        self.assertEqual(install.pending_actions(p, self.mods, []), [])
+
+    def test_an_unreadable_saved_value_is_replaced_not_crashed_on(self):
+        for junk in ("not json", json.dumps({"a": 1}), json.dumps([1, "x", None])):
+            result = install.fluidd_console_filters_with(junk, self.WANTED)
+            self.assertEqual([f["id"] for f in result][-2:], ["tweaked-timelapse-frame", "tweaked-ai-code"], junk)
+
+    def test_the_action_is_a_state_action(self):
+        self.assertTrue(install.is_state_action(["fluidd-console-filters", "[]"]))
+
+
 class SSHActionTest(unittest.TestCase):
     """Commands the real printer gets for module actions."""
     def run_action(self, argv):

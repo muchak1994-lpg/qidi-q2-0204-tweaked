@@ -158,12 +158,14 @@ QIDI uses 100% for PETG and nylon; 75% and 25% are this project's choice. Other 
 no fan line. Checked by slicing in OrcaSlicer 2.5.2 (PLA S255, PETG S191, PA S64, ABS nothing, once before layer 1);
 not yet checked on a printer. Only the first filament counts: a multi-colour print with the Box follows the first one.
 
-Earlier versions (1.2.0 and older) added a `(Tweaked)` copy of every filament instead. To move over: close OrcaSlicer,
-run `py tools/orca_profiles.py uninstall --apply` (removes the unchanged copies and the old printer profiles, after a zip
-backup in `backups/`), then `py tools/orca_profiles.py install --apply`. OrcaSlicer rewrites printer profiles when it
-syncs an account; a profile it rewrote counts as yours and is left alone - then delete that `(Tweaked)` printer in
-OrcaSlicer before installing, or paste the `before_layer_change_gcode` value from
-`orca-profiles/machine/<printer>.json` into the printer's Custom G-code → "Before layer change G-code".
+Earlier versions (1.2.0 and older) added a `(Tweaked)` copy of every filament instead, and their printer profiles have no
+fan code. To move over: close OrcaSlicer and run `py tools/orca_profiles.py hook --apply`. It adds the fan code to the
+project's `(Tweaked)` printer profiles that have none (after a zip backup in `backups/`) and changes nothing else: the
+printer address and API key you entered stay, and a profile with your own "Before layer change G-code" is left alone.
+(Without `--apply` it only lists the profiles.) The installer's OrcaSlicer step points this out when it finds such a
+profile, and also says when your OrcaSlicer is older than 2.5.2, the version the code was checked with - updating
+OrcaSlicer is worth it. The old filament copies can be removed with `py tools/orca_profiles.py uninstall --apply`
+(removes only unchanged files the project added, after a zip backup); they do no harm if left.
 
 ## License and credits
 

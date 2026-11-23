@@ -21,6 +21,7 @@ Usage:
     python tools/orca_profiles.py install            (dry run)
     python tools/orca_profiles.py install --apply
     python tools/orca_profiles.py uninstall --apply
+    python tools/orca_profiles.py hook --apply       (chamber-fan code into printer profiles from version 1.2.0 or older)
 
 OrcaSlicer must be closed while installing or uninstalling.
 Standard library only, Python 3.9+.
@@ -37,6 +38,7 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from orca_machine_hook import machine_fan_gcode  # noqa: E402
 
 # The 03.02 project uses the same manifest name: the printer and process profiles are identical, so either project
 # can see and remove what the other added.
@@ -52,6 +54,10 @@ BACKUP_KINDS = KINDS + ("filament",)
 BAD_FILENAME_CHARS = '<>:"/\\|?*'
 HOW_TO_ADD = "py tools/orca_profiles.py install --apply"
 FORBIDDEN_KEYS = ("print_host", "printhost_apikey", "print_host_webui")
+HOOK_KEY = "before_layer_change_gcode"
+HOW_TO_HOOK = "py tools/orca_profiles.py hook --apply"
+CHECKED_WITH_ORCA = "2.5.2"    # the OrcaSlicer version the fan code was checked with (sliced, M106 P3 lines read)
+ORCA_RELEASES = "https://github.com/OrcaSlicer/OrcaSlicer/releases"
 
 
 def sha256(path):
@@ -143,6 +149,10 @@ def pick_user_dir(root, wanted):
                  "close it and run this again (or pass --orca-dir)." % user)
     if len(dirs) == 1:
         return dirs[0]
+    active = orca_conf(root).get("preset_folder")  # the folder OrcaSlicer itself is using (an account number when signed in)
+    for d in dirs:
+        if active and d.name == active:
+            return d
     print("OrcaSlicer has several user folders (\"default\" or an account number):")
     for i, d in enumerate(dirs, 1):
         print("  %d) %s" % (i, d.name))
@@ -152,6 +162,39 @@ def pick_user_dir(root, wanted):
     if not answer.isdigit() or not 1 <= int(answer) <= len(dirs):
         sys.exit("No folder chosen, nothing changed.")
     return dirs[int(answer) - 1]
+
+
+def orca_conf(root):
+    """OrcaSlicer.conf as a dict ({} when missing or unreadable). The file is JSON followed by a '# MD5 checksum' line."""
+    try:
+        text = (Path(root) / "OrcaSlicer.conf").read_text(encoding="utf-8")
+        data = json.JSONDecoder().raw_decode(text.lstrip())[0]
+        return data if isinstance(data, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+
+def version_tuple(text):
+    try:
+        return tuple(int(part) for part in str(text).split(".")[:3])
+    except ValueError:
+        return None
+
+
+def profiles_without_hook(user_dir, files):
+    """The project's printer profiles that are in the Orca user folder but have no before-layer code ([Path])."""
+    found = []
+    for kind, name, _ in files:
+        dest = user_dir / kind / name
+        if kind != "machine" or not name.endswith(".json") or not dest.is_file():
+            continue
+        try:
+            data = json.loads(dest.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        if isinstance(data, dict) and not str(data.get(HOOK_KEY, "")).strip():
+            found.append(dest)
+    return found
 
 
 def load_manifest(user_dir):
@@ -264,6 +307,42 @@ def cmd_install(args, user_dir, files):
     print("Done. Start OrcaSlicer: printers \"... (Tweaked)\", processes \"[TL] ...\".")
 
 
+def cmd_hook(args, user_dir, files):
+    """Chamber-fan code into the project's printer profiles that lack it (profiles added by version 1.2.0 or older).
+    Only the one key is added; the printer address, the API key and every other setting stay. A profile that already has
+    its own before-layer code is left alone."""
+    todo = profiles_without_hook(user_dir, files)
+    print("Orca user folder:", user_dir)
+    print("Printer profiles without the chamber-fan code: %d" % len(todo))
+    for path in todo:
+        print("  would add it to:" if not args.apply else "  to change:", path.stem)
+    if not args.apply:
+        print("Dry run - nothing changed. Add --apply to do it (OrcaSlicer must be closed)." if todo
+              else "Nothing to add.")
+        return
+    if not todo:
+        print("Nothing to add.")
+        return
+    require_closed(args)
+    print("Backup:", backup(user_dir))
+    code = machine_fan_gcode()
+    for path in todo:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        data[HOOK_KEY] = code
+        path.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        info = path.with_suffix(".info")
+        if info.is_file():  # a newer update time, so OrcaSlicer (and its cloud sync) keeps this version
+            lines = info.read_text(encoding="utf-8").splitlines()
+            stamp = "updated_time = %d" % int(time.time())
+            lines = [stamp if line.startswith("updated_time") else line for line in lines]
+            if stamp not in lines:
+                lines.append(stamp)
+            info.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+        print("  added the fan code:", path.stem)
+    print("Done. Start OrcaSlicer; the code is in the printer profile under Printer settings > Machine G-code > "
+          "Before layer change G-code.")
+
+
 def cmd_uninstall(args, user_dir, files):
     manifest = load_manifest(user_dir)
     if not manifest["files"]:
@@ -327,6 +406,26 @@ def _offer(mode, read, root):
         return
     print()
     user_dir = pick_user_dir(root, None)
+    try:
+        _offer_add(mode, read, user_dir, files)
+    finally:
+        _hints(root, user_dir, files)
+
+
+def _hints(root, user_dir, files):
+    """After the step: profiles from version 1.2.0 or older without the fan code, and an OrcaSlicer older than the one checked."""
+    todo = profiles_without_hook(user_dir, files)
+    if todo:
+        print("OrcaSlicer: these printer profiles have no chamber-fan code (versions up to 1.2.0 did not add it):\n  "
+              + "\n  ".join(p.stem for p in todo)
+              + "\n  Add it (your printer address and other settings stay; close OrcaSlicer first): " + HOW_TO_HOOK)
+    version = orca_conf(root).get("version")
+    if version and version_tuple(version) and version_tuple(version) < version_tuple(CHECKED_WITH_ORCA):
+        print("OrcaSlicer %s is installed; the profiles were checked with %s. It is worth it to update OrcaSlicer: %s"
+              % (version, CHECKED_WITH_ORCA, ORCA_RELEASES))
+
+
+def _offer_add(mode, read, user_dir, files):
     plan_add = install_plan(user_dir, files)[0]
     if not plan_add:
         print("OrcaSlicer: the project's profiles are already there.")
@@ -351,7 +450,7 @@ def _offer(mode, read, root):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description="Add (never overwrite) the QIDI Q2 02.04 Tweaked OrcaSlicer profiles.")
-    parser.add_argument("command", choices=("status", "install", "uninstall"))
+    parser.add_argument("command", choices=("status", "install", "uninstall", "hook"))
     parser.add_argument("--apply", action="store_true", help="really change files (default: dry run)")
     parser.add_argument("--orca-dir", help="OrcaSlicer data folder (default: auto-detect)")
     parser.add_argument("--user-dir", help='user profile folder inside user/ ("default" or an account number)')
@@ -365,7 +464,8 @@ def main(argv=None):
     if problems or not files:
         sys.exit("Profile files in this repository are not valid:\n  " + "\n  ".join(problems or ["none found"]))
     user_dir = pick_user_dir(root, args.user_dir)
-    {"status": cmd_status, "install": cmd_install, "uninstall": cmd_uninstall}[args.command](args, user_dir, files)
+    {"status": cmd_status, "install": cmd_install, "uninstall": cmd_uninstall,
+     "hook": cmd_hook}[args.command](args, user_dir, files)
 
 
 if __name__ == "__main__":

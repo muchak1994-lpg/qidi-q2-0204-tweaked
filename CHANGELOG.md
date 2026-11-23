@@ -1,6 +1,17 @@
 # Changelog
 
 ## Unreleased
+- New module `fluidd-console-filters`: hides two internal lines in Fluidd's console, the echo of the timelapse's per-frame command
+  (`MACRO=TIMELAPSE_TAKE_FRAME VARIABLE=takingframe`, one per layer) and the AI service's status code
+  (`SAVE_VARIABLE ... qdc_ai_error_code`, e.g. `noodle=0 status=0`, written when the service restarts). Two "contains" filters in Fluidd's
+  console filters (Moonraker database, so every browser); the lines are only hidden from the display, the log keeps them. Your own filters
+  and a filter you switched off stay; uninstall puts the saved list back. The readable lines stay ("Timelapse is on: layer N/total",
+  "PEI foreign object check: ...").
+- OrcaSlicer: for printer profiles added by 1.2.0 or older (no fan code) there is `py tools/orca_profiles.py hook --apply`: it adds the
+  fan code to the project's `(Tweaked)` printer profiles that have none, keeps print_host, the API key and everything else, leaves a profile with
+  its own before-layer code alone, makes a zip backup first and bumps the profile's `updated_time`. The installer's OrcaSlicer step now says
+  when it finds such a profile and when OrcaSlicer is older than 2.5.2 (the version the code was checked with). When OrcaSlicer has several user
+  folders the installer takes the one named in `OrcaSlicer.conf` (`preset_folder`) instead of stopping to ask.
 - OrcaSlicer: the chamber fan (M106 P3) per material now comes from the printer profiles `Qidi Q2 ... (Tweaked)`
   (`before_layer_change_gcode`, once before layer 1, from the first filament's type: PLA/TPU 100 %, PETG 75 %, PA 25 %,
   ABS/ASA/PC none - the same values as before), not from 331 `(Tweaked)` copies of the library filaments. OrcaSlicer lists
