@@ -1,0 +1,15 @@
+{
+ "id": "algo-app-stream-decrypt",
+ "order": 156,
+ "default": false,
+ "title": "AI service: the AI model is decrypted block by block, not in three whole copies (optional, runs inside the service)",
+ "files": {
+  "/usr/local/bin/algo_app/_internal/cv2/q2stream/__init__.py": {
+   "source": "files/q2stream/__init__.py"
+  }
+ },
+ "restart": [
+  "algo_app"
+ ],
+ "note": "OPTIONAL. Install with: --with algo-app-stream-decrypt. When a print reaches its second layer the AI service loads its 44.6 MB encrypted model: QIDI's method reads it whole, decrypts it into a second copy, removes the padding into a third copy and only then writes the temporary file the model is loaded from, so for a moment the service holds about 134 MB more than it needs (from the code; not measured on the printer yet). This module adds one folder to OpenCV's package inside the AI service (_internal/cv2/q2stream/); OpenCV's loader imports it at the end of 'import cv2', and it replaces that one method (after QIDI's module has been imported) by one that reads, decrypts and writes 1 MiB at a time: same key, same cipher, same file, same result byte for byte, a peak of a few MB. It only replaces the method when it still looks exactly like the one it was written for (otherwise a warning in the log and nothing changes), and if anything goes wrong in the new method QIDI's own method does the job. No file of QIDI's or OpenCV's is edited, no key or model is stored in this project, and 'main' stays the original. Log lines in /var/log/algo_app/app_*.log: 'q2stream: DetectionDeal.decrypt_weight now decrypts ...' when the service starts and 'q2stream: model decrypted in N block(s) ...' each time the model is loaded in a print. Off switch: a systemd environment Q2_STREAM_DECRYPT=off leaves everything as it was. Takes effect when the AI service restarts (the installer does that). Does not lower the memory the service uses during the print (the model is still loaded once per print); it removes the short peak at its start. Uninstall removes the file; an empty folder cv2/q2stream/__pycache__ may stay behind and does nothing. Not installed or measured on the printer yet."
+}

@@ -142,7 +142,10 @@ Usunięcie tylko tego modułu: `sudo rm -rf /usr/local/bin/algo_app/_internal/cv
 * Droga 2: `main` pozostaje oryginałem (suma kontrolna jak dotąd), wyłączana plikiem bez restartu, usuwana jednym `rm`; zależy od mechanizmu loadera OpenCV (stabilny od lat, plik 02.04 = koło 4.12.0.88). Droga 1: zmienia `main`; ryzyko "zabezpieczeń pakietów" i każda aktualizacja QIDI trzeba przepakować.
 * Oba rozwiązania **nie zmieniają** liczby klatek ani czasu modelu; droga 2 dodaje ułamek ms na klatkę.
 
-## 9. Część D (projekt, nie zainstalowane, nie ma kodu w repo): drugi krok - ładowanie modelu bez potrójnej kopii i zwalnianie po druku
+## 9. Część D: drugi krok - ładowanie modelu bez potrójnej kopii i zwalnianie po druku
+
+**Stan 23.11.2026:** hak 1 + hak 2 (ładowanie porcjami) są napisane jako osobny moduł opcjonalny `algo-app-stream-decrypt` (`modules/algo-app-stream-decrypt/`, testy `tests/test_algo_stream_decrypt.py`, 26 testów na atrapie szyfru CBC i - gdy jest pakiet `cryptography` - na prawdziwym AES). Moduł jest oddzielony od bramki jasności (własny folder `cv2/q2stream/`, własny wyłącznik `Q2_STREAM_DECRYPT=off`); gdy cokolwiek pójdzie źle, robotę robi oryginalna metoda QIDI. **NIE zainstalowany na drukarce, NIE zmierzony na drukarce.** Hak 3 (zwalnianie modelu po druku bez restartu) NIE jest napisany; to robi dziś `algo-app-recycle` restartem usługi.
+Odstępstwo od opisu niżej: hak 1 w wersji (a) - wyszukiwarka `sys.meta_path` z opakowanym ładowaczem, który przed uruchomieniem modułu oddaje oryginalny ładowacz (moduł nie zostaje z naszym ładowaczem). Odcisk zgodności: dokładne nazwy zmiennych lokalnych i wymagane nazwy użyte w metodzie (bez dokładnego porównania `co_names`, żeby drobna różnica kolejności nie wyłączała poprawki bez powodu).
 
 Źródło: dezasemblacja `DetectionDeal` (`algo_app_tools/dis/src__detection_deal.txt`); klucz szyfrowania to stała ustawiana w `DetectionDeal.__init__` (`self.encryption_key`) - **nasz kod ma go czytać z `self`, nigdy nie zapisywać w pliku**.
 
