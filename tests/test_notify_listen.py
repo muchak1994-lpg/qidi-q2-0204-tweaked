@@ -137,6 +137,11 @@ class ListenTests(unittest.TestCase):
                 self.assertEqual(call[call.index("--attach") + 1], "http://127.0.0.1/webcam/?action=snapshot")
                 self.assertEqual(self.posts([]), [])
 
+    def test_photo_message_has_no_icon_and_offers_another_photo(self):
+        (call,) = self.sends(self.listen(["photo"], state="printing"))
+        self.assertNotIn("--tags", call)
+        self.assertEqual(call[call.index("--action") + 1], "Get another photo=photo")
+
     def test_photo_without_a_print_file_says_so(self):
         self.extra_env = {"FAKE_FILE": ""}
         (call,) = self.sends(self.listen(["photo"], state="standby"))

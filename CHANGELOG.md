@@ -1,6 +1,43 @@
 # Changelog
 
 ## Unreleased
+- Installer: faster (23.11.2026, measured on the real printer over Tailscale). A plan with nothing to change went from 25-29 s to about 10 s,
+  installing one file from about a minute to 16 s; the first run (empty cache) from about 25 s to 17 s. The printer's files are no longer
+  hashed again each time: the PC remembers a hash together with the file's identity on the printer (size, ctime in nanoseconds, inode;
+  `work/hash-cache-<printer>.json`) and hashes only files whose identity changed, in parallel chunks; `--rehash` ignores the memory for one run.
+  Also fewer round trips: all service checks in one command, config files read in one command, owner/mode of the backed-up files in one
+  command, and a written file is verified in the same command as the write. Modules are unchanged (still one by one, `--skip` works per module).
+- New optional module `algo-app-gate`: brightness gate for the AI service. With the case light off the camera frame is almost uniform dark
+  grey with the toolhead's green/red LEDs, and the noodle model read the LEDs as noodle in about 3 % of the dark frames (lab, 978 real
+  frames: 20 false positives on 652 dark frames at MEDIUM, 0 on 326 light frames); the service counts them for the whole print and never
+  forgets them. One file of our own, `cv2/q2gate/__init__.py`, is loaded by OpenCV's own loader; the wrapper around `cv2.VideoCapture`
+  hands a frame with mean grey below 22 to the models as a uniform frame (19), every other frame untouched. No QIDI file is changed;
+  remove = delete the file. Log lines start with `q2gate`; off without restart: `echo off > /etc/q2-algo-gate.conf`. Note: the wrapper is
+  never a subclass - a Python subclass of `cv2.VideoCapture` crashes the printer's OpenCV 4.12 (aarch64) with `free(): invalid pointer`
+  (measured; a first version did it and the service restarted every few seconds). Measured at rest: CPU 7.2 % of one core vs 6.9-7.0 %
+  without the gate, free RAM the same. Seen on the idle printer; not seen in a real print yet.
+- Phone notifications: the end of a print is now reported correctly (22.11.2026). On the QIDI printer print_stats jumps to "standby"
+  and is wiped the moment a print ends, so a finished print was reported as "Print cancelled ... layer 0/0 after 0 min". The macro now
+  remembers file name, layer, time and filament while the print runs and sends both texts; the sender asks Moonraker's history
+  (`q2_notify_eta.py --end`) and picks "Print finished" (with time, grams or metres of filament, timelapse button), "Print cancelled",
+  "Print stopped" (error, shutdown) or, without an answer, "Print ended". Tested with a pretend Moonraker; a real print end not seen yet.
+- `printer-screen-touch`: dragging in the "Printer screen" window now scrolls the printer's screen (a swipe: press, move, release),
+  and the browser's own "drag the picture" is switched off. The moving part is not proven on the real touch panel yet (only the tap was).
+- New optional modules for the AI service's memory (all three came from the memory audit of 22.11.2026; not proven over many prints):
+  `algo-app-oom-priority` (default on: the kernel's out-of-memory killer takes `algo_app` first and protects Klipper and Moonraker),
+  `algo-app-malloc` (`--with`: `MALLOC_ARENA_MAX=2`, effect not measured) and `algo-app-recycle` (`--with`: restarts `algo_app` two
+  minutes after a print when it is over 130 MB, never starts a stopped one, never touches a printing or paused printer).
+- `ai-fixes`: the pre-print foreign-object check (M4050) no longer judges the first 6 seconds (the camera is badly exposed right after
+  the light comes on; on real frames of an empty plate that was the only false alarm). The check still takes its 20 s.
+- Phone notifications (ntfy), message texts reworked after the first real print (22.11.2026):
+  * No more icons: every message goes out without tags (no rocket, camera, hourglass, check mark, warning, wrench, tada, movie camera
+    in front of or under the title). Priorities stay, so a pause still rings louder.
+  * "Print started" now says how long the print will take: the slicer's whole estimate and the finish time (e.g. "estimated 4h 58m, done at 19:51").
+    Left out when the print file carries no estimate.
+  * The "Camera" message (the reply to "Get a photo") now has its own button "Get another photo", so the next picture needs no
+    scrolling back to the first message. The message stays after the tap, like the first one.
+  * Pause and cancel messages no longer say "Layer 0/0": before the first layer they say "Before the first layer" (e.g. the check for foreign
+    objects at the start), with the layer numbers they show "Layer 12/100, 12%". Not seen on a real printer yet (tests only).
 - New optional module `printer-screen-view` (`--with printer-screen-view`): a "Printer screen" entry in Fluidd's left navigation
   panel opens a window with a live picture of the printer's touch screen (about twice a second while open). Look only: no touch,
   nothing sent to the printer. A small service reads `/dev/fb0` and serves it on 127.0.0.1 (shown through Fluidd's unused `/webcam4/`).

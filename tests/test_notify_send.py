@@ -138,6 +138,72 @@ class SendTests(unittest.TestCase):
         (call,) = self.run_send("Print 50%", "left 30 min, done at @@+1836@@", TZ="UTC", Q2_NOTIFY_NOW="1000000000")
         self.assertEqual(self.body(call)["message"], "left 30 min, done at 02:17")   # 01:46:40 + 30:36
 
+    def eta_script(self, seconds):                    # stands in for q2_notify_eta.py: the same answer for every argument
+        p = self.dir / "eta.sh"
+        p.write_text("#!/bin/sh\necho %s\n" % seconds)
+        return p
+
+    def test_est_token_gives_the_whole_estimate_and_the_finish_time(self):
+        # the macros pass a line break as the two characters \n; the sender turns it into a real one
+        (call,) = self.run_send("--tsv", "\t".join(["Print started", "hdd500.gcode\\n@@EST:900@@", "3"]),
+                                Q2_NOTIFY_ETA="sh %s" % self.eta_script("11100"), TZ="UTC", Q2_NOTIFY_NOW="1000000000")
+        self.assertEqual(self.body(call)["message"], "hdd500.gcode\nestimated 3h 05m, done at 04:51")
+
+    def test_est_token_without_an_estimate_leaves_no_empty_line(self):
+        (call,) = self.run_send("--tsv", "\t".join(["Print started", "hdd500.gcode\\n100 layers\\n@@EST:900@@", "3"]), Q2_NOTIFY_ETA="true", TZ="UTC")
+        self.assertEqual(self.body(call)["message"], "hdd500.gcode\n100 layers")
+
+    # ---- the end of a print: the macro cannot tell finished from cancelled (QIDI wipes print_stats), Moonraker's history can ----
+    END_MESSAGE = "hdd500.gcode\\nprinted in 5h 07m, filament @@FIL:28000@@||hdd500.gcode\\nstopped at layer 98/120 after 5h 07m"
+
+    def end_script(self, line):                       # stands in for `q2_notify_eta.py --end`: status, grams, millimetres (tab separated)
+        p = self.dir / "end.sh"
+        p.write_text("#!/bin/sh\n" + ("" if line is None else "printf '%s\\n'\n" % line.replace("\t", "\\t")))
+        return p
+
+    def send_end(self, line, button="Show timelapse=video hdd500.gcode"):
+        self.out.unlink(missing_ok=True)                # one call per check, also inside a subTest loop
+        (call,) = self.run_send("--tsv", "\t".join(["@@END@@", self.END_MESSAGE, "3", "", "", "", button, "", ""]),
+                                Q2_NOTIFY_ETA="sh %s" % self.end_script(line), TZ="UTC")
+        return self.body(call)
+
+    def test_end_completed_is_a_finished_message_with_the_grams_and_the_timelapse_button(self):
+        b = self.send_end("completed\t83\t28597")
+        self.assertEqual((b["title"], b["message"]), ("Print finished", "hdd500.gcode\nprinted in 5h 07m, filament 83 g"))
+        self.assertEqual([a["label"] for a in b["actions"]], ["Show timelapse"])
+
+    def test_end_completed_without_grams_gives_metres_from_the_history(self):
+        b = self.send_end("completed\t\t28597")
+        self.assertEqual(b["message"], "hdd500.gcode\nprinted in 5h 07m, filament 28.5 m")
+
+    def test_end_completed_without_any_history_numbers_keeps_the_macros_filament_token(self):
+        b = self.send_end("completed\t\t")
+        self.assertEqual(b["message"], "hdd500.gcode\nprinted in 5h 07m, filament 28.0 m")      # 28000 mm, from the macro's memory
+
+    def test_end_cancelled_is_a_cancelled_message_without_buttons(self):
+        b = self.send_end("cancelled\t7\t2442")
+        self.assertEqual((b["title"], b["message"]), ("Print cancelled", "hdd500.gcode\nstopped at layer 98/120 after 5h 07m"))
+        self.assertNotIn("actions", b)
+
+    def test_end_with_another_status_is_a_stopped_message(self):
+        for status in ("error", "klippy_shutdown", "interrupted"):
+            with self.subTest(status):
+                b = self.send_end(status + "\t\t")
+                self.assertEqual(b["title"], "Print stopped")
+                self.assertEqual(b["message"], "hdd500.gcode\nstopped at layer 98/120 after 5h 07m")
+                self.assertNotIn("actions", b)
+
+    def test_end_without_an_answer_from_moonraker_says_only_that_it_ended(self):
+        b = self.send_end(None)
+        self.assertEqual((b["title"], b["message"]), ("Print ended", "hdd500.gcode\nstopped at layer 98/120 after 5h 07m"))
+        self.assertNotIn("actions", b)
+
+    def test_end_message_without_the_separator_is_sent_whole(self):
+        (call,) = self.run_send("--tsv", "\t".join(["@@END@@", "hdd500.gcode\\nended", "3"]),
+                                Q2_NOTIFY_ETA="sh %s" % self.end_script("completed\t83\t28597"), TZ="UTC")
+        b = self.body(call)
+        self.assertEqual((b["title"], b["message"]), ("Print finished", "hdd500.gcode\nended"))
+
     def test_disabled_or_missing_conf_sends_nothing(self):
         self.write_conf("ENABLED=0\nNTFY_SERVER=https://ntfy.example\nEVENTS_TOPIC=e\nCMD_TOPIC=c\n")
         self.assertEqual(self.run_send("T", "m"), [])

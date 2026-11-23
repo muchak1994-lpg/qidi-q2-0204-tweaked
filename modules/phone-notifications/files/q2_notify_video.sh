@@ -30,11 +30,11 @@ waited=0
 told=0
 while ! find_video; do
     if [ "$told" = 0 ]; then
-        $SEND "Timelapse" "$NAME: the timelapse is rendering, the video follows" --prio 2 --tags movie_camera
+        $SEND "Timelapse" "$NAME: the timelapse is rendering, the video follows" --prio 2
         told=1
     fi
     if [ "$waited" -ge "$TIMEOUT" ]; then
-        $SEND "Timelapse" "$NAME: the timelapse is not ready (gave up after $((TIMEOUT / 60)) min); it stays on the printer" --prio 2 --tags movie_camera
+        $SEND "Timelapse" "$NAME: the timelapse is not ready (gave up after $((TIMEOUT / 60)) min); it stays on the printer" --prio 2
         exit 0
     fi
     sleep "$POLL"
@@ -43,8 +43,8 @@ done
 
 size=$(wc -c < "$found")
 if [ "$size" -gt "$MAX" ]; then
-    $SEND "Timelapse" "$NAME: the video is too large to send ($((size / 1048576)) MB); it stays on the printer" --prio 2 --tags movie_camera
+    $SEND "Timelapse" "$NAME: the video is too large to send ($((size / 1048576)) MB); it stays on the printer" --prio 2
     exit 0
 fi
-$SEND "Timelapse" "$NAME" --prio 3 --tags movie_camera --attach "$found"
+$SEND "Timelapse" "$NAME" --prio 3 --attach "$found"
 exit 0

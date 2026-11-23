@@ -55,7 +55,7 @@ handle() {
         photo)
             name=$(print_file)
             [ -n "$name" ] || name="No print file loaded"
-            $SEND "Camera" "$name" --prio 3 --tags camera --attach "$SNAPSHOT" >/dev/null 2>&1 &
+            $SEND "Camera" "$name" --prio 3 --attach "$SNAPSHOT" --action "Get another photo=photo" >/dev/null 2>&1 &
             ;;
         "video "*)
             name=${line#video }

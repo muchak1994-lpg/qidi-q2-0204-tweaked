@@ -220,7 +220,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertEqual(len(self.sent), 1)
         self.assertEqual(self.sent[0][0], "Print started")
-        self.assertEqual(self.sent[0][1], "hdd500.gcode\\n100 layers")
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\n100 layers\\n@@EST:60@@")   # the sender expands the token to the estimate
 
     def test_start_without_layer_info_after_two_minutes(self):
         self.printing(0, 0.0, 60)               # a file from a slicer that sends no layer numbers
@@ -230,7 +230,7 @@ class NotifyMacroTests(unittest.TestCase):
         self.printer["print_stats"]["info"]["total_layer"] = 0
         self.run_tick()
         self.assertEqual([f[0] for f in self.sent], ["Print started"])
-        self.assertEqual(self.sent[0][1], "hdd500.gcode")
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\n@@EST:130@@")
 
     def test_milestones_25_50_75_once_each(self):
         self.printing(1, 0.0, 60)
@@ -362,6 +362,109 @@ class NotifyMacroTests(unittest.TestCase):
         self.run_tick()
         self.assertEqual(self.sent[-1][0], "Print cancelled")
         self.assertEqual(self.sent[-1][6], "")
+
+    # ---- no icons, honest layer text (owner, 22.11.2026) ----
+    def test_no_message_carries_tags_so_the_phone_shows_no_icons(self):
+        self.state.update(started=1, next=25, tl_on=1)
+        self.pause()
+        self.run_tick()                                                      # pause
+        self.printing(30, 0.26, 1200)
+        self.run_tick()                                                      # 25 %
+        self.state.update(started=0)
+        self.printing(1, 0.0, 60)
+        self.run_tick()                                                      # start
+        self.printer["print_stats"].update(state="complete", print_duration=3000)
+        self.state.update(started=1, tl_on=1)
+        self.run_tick()                                                      # finished
+        self.state.update(started=1)
+        self.printer["print_stats"].update(state="cancelled", print_duration=600)
+        self.run_tick()                                                      # cancelled
+        self.assertGreaterEqual(len(self.sent), 5)
+        for f in self.sent:
+            self.assertEqual(f[3], "", f)
+
+    def test_interrupted_message_has_no_tags(self):
+        self.state.update(boot_checked=0)
+        self.printer["save_variables"]["variables"]["q2_notify_printing"] = 1
+        self.printer["print_stats"].update(state="standby")
+        self.run_tick()
+        self.assertEqual(self.sent[0][0], "Print interrupted")
+        self.assertEqual(self.sent[0][3], "")
+
+    def test_pause_before_the_first_layer_does_not_say_layer_0_of_0(self):
+        self.printer["print_stats"].update(state="paused", info={"current_layer": 0, "total_layer": 0})
+        self.run_tick()
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\nBefore the first layer")
+        self.assertNotIn("0/0", self.sent[0][1])
+
+    def test_pause_with_layer_info_names_layer_and_progress(self):
+        self.pause()
+        self.printer["display_status"]["progress"] = 0.12
+        self.run_tick()
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\nLayer 12/100, 12%")
+
+    def test_pause_with_layer_but_no_total_says_just_the_layer(self):
+        self.printer["print_stats"].update(state="paused", info={"current_layer": 7, "total_layer": 0})
+        self.run_tick()
+        self.assertEqual(self.sent[0][1], "hdd500.gcode\\nLayer 7")
+
+    def test_cancel_before_the_first_layer_says_so(self):
+        self.state.update(started=1, next=25)
+        self.printer["print_stats"].update(state="cancelled", print_duration=300, info={"current_layer": 0, "total_layer": 0})
+        self.run_tick()
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nstopped before the first layer after 5 min")
+
+    # ---- the end of a print on the QIDI printer (22.11.2026): print_stats jumps to "standby" and is wiped (no file name, no
+    # layers, no time, no filament), and a finished print looks like a cancelled one. The truth is in Moonraker's history; the
+    # macro sends both texts, from what it remembered while the print ran, and the sender picks one ----
+    END_WIPED = dict(state="standby", filename="", print_duration=0.0, filament_used=0.0,
+                     info={"current_layer": None, "total_layer": None})
+
+    def test_standby_after_a_print_is_decided_by_the_sender_from_the_history(self):
+        self.printing(98, 0.98, 3600)
+        self.printer["print_stats"].update(filament_used=12345.6)
+        self.run_tick()                                                      # start (remembers the numbers)
+        self.printer["print_stats"].update(**self.END_WIPED)
+        self.run_tick()
+        self.assertEqual(self.sent[-1], ["@@END@@",
+                                         "hdd500.gcode\\nprinted in 1h 00m, filament @@FIL:12345@@||hdd500.gcode\\nstopped at layer 98/100 after 1h 00m",
+                                         "3", "", "", "", "", "", ""])
+        self.assertEqual((self.state["started"], self.state["next"]), (0, 25))
+        self.assertIn("SAVE_VARIABLE VARIABLE=q2_notify_printing VALUE=0", self.all_gcode)
+
+    def test_standby_end_keeps_the_timelapse_button_with_the_remembered_file_name(self):
+        self.printer["gcode_macro TIMELAPSE_TAKE_FRAME"] = {"enable": True}
+        self.printing(5, 0.05, 300)
+        self.run_tick()
+        self.printer["print_stats"].update(**self.END_WIPED)
+        self.run_tick()
+        self.assertEqual(self.sent[-1][6], "Show timelapse=video hdd500.gcode")
+
+    def test_a_pause_that_ends_in_standby_remembers_the_paused_numbers(self):
+        self.printing(1, 0.0, 60)
+        self.run_tick()
+        self.pause(print_duration=1500)                                      # layer 12/100
+        self.run_tick()
+        self.printer["print_stats"].update(**self.END_WIPED)
+        self.run_tick()
+        self.assertEqual(self.sent[-1][0], "@@END@@")
+        self.assertIn("||hdd500.gcode\\nstopped at layer 12/100 after 25 min", self.sent[-1][1])
+
+    def test_a_wiped_complete_state_also_uses_the_remembered_numbers(self):
+        self.printing(99, 0.99, 7200)
+        self.run_tick()
+        self.printer["print_stats"].update(state="complete", filename="", print_duration=0.0, info={"current_layer": 0, "total_layer": 0})
+        self.run_tick()
+        self.assertEqual(self.sent[-1][0], "Print finished")
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nprinted in 2h 00m")
+
+    def test_a_wiped_cancelled_state_also_uses_the_remembered_numbers(self):
+        self.printing(40, 0.4, 1800)
+        self.run_tick()
+        self.printer["print_stats"].update(state="cancelled", filename="", print_duration=0.0, info={"current_layer": 0, "total_layer": 0})
+        self.run_tick()
+        self.assertEqual(self.sent[-1][0], "Print cancelled")
+        self.assertEqual(self.sent[-1][1], "hdd500.gcode\\nstopped at layer 40/100 after 30 min")
 
     def test_folder_in_the_file_name_is_dropped(self):
         self.pause(filename="models/hdd500.gcode")

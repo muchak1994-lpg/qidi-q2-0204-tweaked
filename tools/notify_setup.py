@@ -182,7 +182,7 @@ def configure(p, mode="ask", read=input, secrets_fn=secrets.token_urlsafe, backu
     if changed:
         p._run("systemctl restart moonraker", sudo=True, check=False)
     p._run("sh %s 'Phone notifications are on' 'Test message from the installer. Buttons and messages work from now on.' "
-           "--prio 3 --tags tada" % SEND, sudo=True, check=False)
+           "--prio 3" % SEND, sudo=True, check=False)
     print("Phone notifications are set up. The channel name is saved in this file on your PC (keep it private): %s"
           % (note or "(could not be saved - it is shown below)"))
     tailscale_setup.show_private(

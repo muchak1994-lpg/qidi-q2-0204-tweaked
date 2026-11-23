@@ -25,7 +25,7 @@ class Recorder:
         self.log = []
 
     def ask(self, question):
-        mid = next(i for i in OPTIONAL if i in question)
+        mid = max((i for i in OPTIONAL if i in question), key=len)  # longest id: one id can be the start of another
         self.log.append(("ask", mid))
         return self.answers.get(mid, False)
 

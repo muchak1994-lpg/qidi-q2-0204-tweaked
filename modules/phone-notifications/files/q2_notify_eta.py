@@ -4,6 +4,7 @@
 #
 #   q2_notify_eta.py <print time so far in seconds>
 #   q2_notify_eta.py --weight <filament used so far in mm>
+#   q2_notify_eta.py --end        -> "status<TAB>grams<TAB>millimetres" of the print that has just ended (Moonraker's history)
 #
 # Time left: prints (estimated_time of the print file from Moonraker) - (print time so far), never below 0 - the same number the
 # printer screen shows up to 50 % progress. Prints nothing when there is no estimate or Moonraker does not answer;
@@ -14,6 +15,7 @@
 import json
 import os
 import sys
+import time
 import urllib.parse
 import urllib.request
 
@@ -30,8 +32,42 @@ def metadata():
     return name, get("/server/files/metadata?filename=" + urllib.parse.quote(name))
 
 
+def last_job():
+    """The newest finished job of Moonraker's history (status, whole grams or '', whole millimetres), or None. On the QIDI
+    printer print_stats is wiped the moment a print ends (state standby, no file name, no counters) and a finished print looks
+    like a cancelled one; the history has the truth. Waits a little for a job that is still being written, and ignores a
+    job that ended more than 10 minutes ago (the history of an earlier print)."""
+    tries = int(os.environ.get("Q2_NOTIFY_END_TRIES", "8"))
+    pause = float(os.environ.get("Q2_NOTIFY_END_PAUSE", "1"))
+    for i in range(tries):
+        try:
+            jobs = get("/server/history/list?limit=1&order=desc")["jobs"]
+            job = jobs[0] if jobs else None
+            if job and job.get("status") != "in_progress" and time.time() - float(job.get("end_time") or 0) < 600:
+                used = float(job.get("filament_used") or 0)
+                meta = job.get("metadata") or {}
+                grams = ""
+                try:
+                    total, weight = float(meta["filament_total"]), float(meta["filament_weight_total"])
+                    if total > 0 and weight > 0:
+                        grams = "%d" % round(weight * min(used / total, 1.0))
+                except (KeyError, TypeError, ValueError):
+                    pass
+                return str(job["status"]), grams, "%d" % used
+        except Exception:
+            pass
+        if i + 1 < tries:
+            time.sleep(pause)
+    return None
+
+
 def main():
     try:
+        if sys.argv[1] == "--end":
+            job = last_job()
+            if job:
+                print("\t".join(job))
+            return
         weight = sys.argv[1] == "--weight"
         value = float(sys.argv[-1])
         name, meta = metadata()

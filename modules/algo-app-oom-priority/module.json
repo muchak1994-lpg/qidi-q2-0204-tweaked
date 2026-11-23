@@ -1,0 +1,28 @@
+{
+ "id": "algo-app-oom-priority",
+ "order": 121,
+ "title": "Out of memory: the AI service is stopped first, Klipper and Moonraker are protected",
+ "files": {
+  "/etc/systemd/system/algo_app.service.d/q2-algo-oom.conf": {
+   "source": "files/q2-algo-oom-algo_app.conf"
+  },
+  "/etc/systemd/system/klipper.service.d/q2-algo-oom.conf": {
+   "source": "files/q2-algo-oom-protect.conf"
+  },
+  "/etc/systemd/system/moonraker.service.d/q2-algo-oom.conf": {
+   "source": "files/q2-algo-oom-protect.conf"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ]
+ ],
+ "restart": [
+  "algo_app",
+  "klipper",
+  "moonraker"
+ ],
+ "note": "Insurance only: it does not lower memory use. The kernel kills by 'badness + OOMScoreAdjust'. algo_app gets +500 (it restarts itself after 15 s), Klipper and Moonraker get -300. Before: all three were 0 (checked on the printer 22.11). Takes effect when the services restart (the installer does that). Remove by uninstalling the module."
+}

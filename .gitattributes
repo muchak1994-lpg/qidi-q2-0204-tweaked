@@ -1,3 +1,5 @@
 # Shell scripts run on the printer: always LF, whatever the checkout's autocrlf setting.
 *.sh text eol=lf
 *.service text eol=lf
+# Files of our modules that are copied to the printer: always LF, so the hashes in modules/LOCK.json are the same on every system.
+modules/*/files/** text eol=lf

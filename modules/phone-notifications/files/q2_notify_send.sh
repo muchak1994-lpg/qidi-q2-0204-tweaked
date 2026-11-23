@@ -101,6 +101,29 @@ expand_eta() {  # @@ETA:ELAPSED:FALLBACK@@ becomes "<time left> left, done at @@
     done
     printf '%s' "$msg"
 }
+expand_est() {  # @@EST:ELAPSED@@ becomes "estimated <the slicer's whole estimate>, done at @@+SECONDS@@" (SECONDS = the estimate minus
+                # ELAPSED); without an estimate the token and the line break in front of it are removed
+    msg=$1
+    while :; do
+        tok=$(printf '%s' "$msg" | sed -n 's/.*\(@@EST:[0-9][0-9]*@@\).*/\1/p' | head -n 1)
+        [ -n "$tok" ] || break
+        el=${tok#@@EST:}; el=${el%@@}
+        total=$($ETA 0 2>/dev/null | head -n 1 | tr -cd '0-9')
+        left=$($ETA "$el" 2>/dev/null | head -n 1 | tr -cd '0-9')
+        if [ -n "$total" ] && [ "$total" -gt 0 ] && [ -n "$left" ]; then
+            m=$((total / 60))
+            if [ "$m" -ge 60 ]; then text=$(printf '%dh %02dm' $((m / 60)) $((m % 60))); else text="$m min"; fi
+            new=$(printf '%s' "$msg" | sed "s/$tok/estimated $text, done at @@+$left@@/")
+        else
+            # the line break is already a real newline here (--tsv turned the two characters \n into one): hide it from sed
+            nlc=$(printf '\001')
+            new=$(printf '%s' "$msg" | tr '\n' '\001' | sed -e "s/$nlc$tok//" -e "s/$tok//" | tr '\001' '\n')
+        fi
+        [ "$new" = "$msg" ] && break    # never loop for ever if a token could not be replaced
+        msg=$new
+    done
+    printf '%s' "$msg"
+}
 expand_fil() {  # @@FIL:MM@@ becomes the filament used: grams (the slicer's weight in proportion, from Moonraker) or, without
                 # that, metres computed from MM millimetres
     msg=$1
@@ -116,6 +139,32 @@ expand_fil() {  # @@FIL:MM@@ becomes the filament used: grams (the slicer's weig
     done
     printf '%s' "$msg"
 }
+expand_end() {  # title @@END@@: the end of a print. On the QIDI printer print_stats is wiped at the end (state standby), so the macro
+                # cannot tell a finished print from a cancelled one; it sends both texts as "FINISHED||CANCELLED" and Moonraker's
+                # history (q2_notify_eta.py --end: status, grams, millimetres) decides which one goes out
+    [ "$TITLE" = "@@END@@" ] || return 0
+    res=$($ETA --end 2>/dev/null | head -n 1)
+    status=$(printf '%s' "$res" | cut -s -d "$TAB" -f 1)
+    grams=$(printf '%s' "$res" | cut -s -d "$TAB" -f 2 | tr -cd '0-9.')
+    mm=$(printf '%s' "$res" | cut -s -d "$TAB" -f 3 | tr -cd '0-9')
+    case "$MESSAGE" in
+        *"||"*) done_text=${MESSAGE%%"||"*}; stop_text=${MESSAGE#*"||"} ;;
+        *) done_text=$MESSAGE; stop_text=$MESSAGE ;;
+    esac
+    case "$status" in
+        completed)
+            TITLE="Print finished"
+            if [ -n "$grams" ]; then fil="$grams g"
+            elif [ -n "$mm" ]; then fil="$((mm / 1000)).$(((mm % 1000) / 100)) m"
+            else fil=""; fi
+            if [ -n "$fil" ]; then MESSAGE=$(printf '%s' "$done_text" | sed "s/@@FIL:[0-9]*@@/$fil/"); else MESSAGE=$done_text; fi ;;
+        cancelled) TITLE="Print cancelled"; MESSAGE=$stop_text; ACTIONS="" ;;
+        '') TITLE="Print ended"; MESSAGE=$stop_text; ACTIONS="" ;;     # Moonraker did not answer: do not claim more than we know
+        *) TITLE="Print stopped"; MESSAGE=$stop_text; ACTIONS="" ;;    # error, klippy_shutdown, interrupted ...
+    esac
+}
+expand_end
+MESSAGE=$(expand_est "$MESSAGE")
 MESSAGE=$(expand_eta "$MESSAGE")
 MESSAGE=$(expand_fil "$MESSAGE")
 MESSAGE=$(expand_clock "$MESSAGE")

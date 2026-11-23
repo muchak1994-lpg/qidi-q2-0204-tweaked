@@ -1,0 +1,21 @@
+{
+ "id": "algo-app-malloc",
+ "order": 122,
+ "default": false,
+ "title": "AI service: fewer glibc memory arenas (MALLOC_ARENA_MAX=2)",
+ "files": {
+  "/etc/systemd/system/algo_app.service.d/q2-algo-malloc.conf": {
+   "source": "files/q2-algo-malloc.conf"
+  }
+ },
+ "actions": [
+  [
+   "systemctl",
+   "daemon-reload"
+  ]
+ ],
+ "restart": [
+  "algo_app"
+ ],
+ "note": "OPTIONAL and NOT MEASURED. Install with: --with algo-app-malloc. The AI service (Python, many threads) may keep freed memory in several malloc arenas; one setting limits them to 2. Typical gain is 0 to a few dozen MB; the cost is slightly slower allocation. Meant to be tried on one print and compared with the memory log of algo_app (/var/log/algo_app, 'process mem' lines). Remove by uninstalling the module."
+}

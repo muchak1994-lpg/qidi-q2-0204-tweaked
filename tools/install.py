@@ -28,9 +28,12 @@ import os
 import io
 import json
 import posixpath
+import re
 import shlex
 import sys
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -68,8 +71,68 @@ class InstallError(Exception):
 
 
 # ------------------------------------------------------------------ printer
+HASH_CHUNK = 40      # files per sha256sum command
+HASH_WORKERS = 3     # commands that run at the same time (separate SSH channels)
+FIND_FORMAT = "'%p|%s|%C@|%i\n'"   # path | size | ctime (nanoseconds) | inode: the printer's own identity of a file
+
+
+class HashCache:
+    """What the printer's files hashed to last time, kept on the PC (work/hash-cache-<printer>.json).
+
+    A file counts as unchanged only when its identity (size, ctime in nanoseconds, inode) is exactly what it was when the hash was
+    taken. ctime changes on every write, rename or chmod and cannot be set with touch; anything else is hashed again. path=None:
+    only in memory. A file that cannot be read or is not the expected shape is ignored."""
+
+    def __init__(self, path=None):
+        self.path = Path(path) if path else None
+        self.data = {}
+        self.dirty = False
+        if self.path and self.path.is_file():
+            try:
+                loaded = json.loads(self.path.read_text(encoding="utf-8"))
+                if isinstance(loaded, dict):
+                    self.data = {k: v for k, v in loaded.items()
+                                 if isinstance(v, dict) and isinstance(v.get("key"), str) and isinstance(v.get("sha"), str)}
+            except (OSError, ValueError):
+                self.data = {}
+
+    def get(self, path, key):
+        entry = self.data.get(path)
+        return entry["sha"] if entry and entry["key"] == key else None
+
+    def put(self, path, key, digest):
+        if self.data.get(path) != {"key": key, "sha": digest}:
+            self.data[path] = {"key": key, "sha": digest}
+            self.dirty = True
+
+    def drop(self, path):
+        if self.data.pop(path, None) is not None:
+            self.dirty = True
+
+    def save(self):
+        if not (self.path and self.dirty):
+            return
+        try:
+            self.path.parent.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_name(self.path.name + ".tmp")
+            tmp.write_text(json.dumps(self.data, indent=0), encoding="utf-8")
+            tmp.replace(self.path)
+            self.dirty = False
+        except OSError:
+            pass  # a cache is a help, never a reason to stop
+
+
+def hash_cache_file(printer_id, host):
+    """work/hash-cache-<printer>.json for this printer."""
+    name = re.sub(r"[^0-9A-Za-z_.-]", "_", printer_id or host)
+    return REPO / "work" / ("hash-cache-%s.json" % name)
+
+
 class SSHPrinter:
     """Operations on the real printer over SSH. sudo uses the SSH password (None: sudo needs none)."""
+    hash_cache = None
+    rehash = False
+    _units = None
 
     def __init__(self, host, user, password, port=22, client=None):
         import printer
@@ -150,17 +213,62 @@ class SSHPrinter:
         out = self._run("sha256sum %s 2>/dev/null || true" % shlex.quote(path), sudo=True).decode()
         return out.split()[0] if out.strip() else None
 
-    def sha_many(self, paths):
-        """{path: sha256 or None} in one round trip."""
-        result = {p: None for p in paths}
+    def use_hash_cache(self, cache, rehash=False):
+        """Remember hashes between runs (see HashCache); rehash: ignore what is remembered this time."""
+        self.hash_cache, self.rehash = cache, rehash
+
+    def file_keys(self, paths):
+        """{path: "size|ctime|inode"} of the files that exist, in one command."""
+        keys = {}
         paths = list(paths)
-        for i in range(0, len(paths), 200):
-            chunk = " ".join(shlex.quote(p) for p in paths[i:i + 200])
-            out = self._run("sha256sum %s 2>/dev/null || true" % chunk, sudo=True).decode()
+        for i in range(0, len(paths), 300):
+            chunk = " ".join(shlex.quote(p) for p in paths[i:i + 300])
+            out = self._run("find -L %s -maxdepth 0 -printf %s 2>/dev/null; true" % (chunk, FIND_FORMAT), sudo=True).decode()
             for line in out.splitlines():
-                digest, _, path = line.partition("  ")
+                parts = line.rsplit("|", 3)  # the path comes first and may itself contain a "|"
+                if len(parts) == 4:
+                    keys[parts[0]] = "|".join(parts[1:])
+        return keys
+
+    def _hash_chunk(self, chunk):
+        out = self._run("sha256sum %s 2>/dev/null || true" % " ".join(shlex.quote(p) for p in chunk), sudo=True).decode()
+        found = {}
+        for line in out.splitlines():
+            digest, _, path = line.partition("  ")
+            found[path] = digest
+        return found
+
+    def sha_many(self, paths):
+        """{path: sha256 or None}. With a hash cache only files whose identity changed are hashed (in parallel chunks)."""
+        paths = list(paths)
+        result = {p: None for p in paths}
+        cache, keys, todo = self.hash_cache, {}, paths
+        if cache is not None:
+            keys = self.file_keys(paths)
+            todo = []
+            for path in paths:
+                if path not in keys:
+                    cache.drop(path)  # not there (any more)
+                    continue
+                cached = None if self.rehash else cache.get(path, keys[path])
+                if cached:
+                    result[path] = cached
+                else:
+                    todo.append(path)
+        chunks = [todo[i:i + HASH_CHUNK] for i in range(0, len(todo), HASH_CHUNK)]
+        if len(chunks) > 1:
+            with ThreadPoolExecutor(max_workers=HASH_WORKERS) as pool:
+                found_all = list(pool.map(self._hash_chunk, chunks))
+        else:
+            found_all = [self._hash_chunk(c) for c in chunks]
+        for found in found_all:
+            for path, digest in found.items():
                 if path in result:
                     result[path] = digest
+                    if cache is not None and path in keys:
+                        cache.put(path, keys[path], digest)
+        if cache is not None:
+            cache.save()
         return result
 
     def read(self, path):
@@ -176,15 +284,28 @@ class SSHPrinter:
             self.staging = self._run("mktemp -d /tmp/q2t.XXXXXXXX").decode().strip()
         tmp = posixpath.join(self.staging, "upload")
         self.sftp.putfo(io.BytesIO(data), tmp)
-        self._run("mkdir -p %s && install -o %s -g %s -m %s %s %s && rm -f %s" % (
-            shlex.quote(posixpath.dirname(path)), owner, group, mode, tmp, shlex.quote(path), tmp), sudo=True)
-        if self.sha(path) != sha(data):
+        self._units = None  # what was remembered about services may be out of date now
+        # one command: write, then print the digest and the identity of the file as it is on the printer
+        out = self._run("mkdir -p %s && install -o %s -g %s -m %s %s %s && rm -f %s && sha256sum %s && find -L %s -maxdepth 0 -printf %s" % (
+            shlex.quote(posixpath.dirname(path)), owner, group, mode, tmp, shlex.quote(path), tmp,
+            shlex.quote(path), shlex.quote(path), FIND_FORMAT), sudo=True).decode().splitlines()
+        if not out or out[0].partition("  ")[0] != sha(data):
             raise InstallError("verification failed after writing " + path)
+        if self.hash_cache is not None:
+            parts = out[1].rsplit("|", 3) if len(out) > 1 else []
+            if len(parts) == 4:
+                self.hash_cache.put(path, "|".join(parts[1:]), sha(data))
+            else:
+                self.hash_cache.drop(path)
 
     def remove(self, path):
+        self._units = None
+        if self.hash_cache is not None:
+            self.hash_cache.drop(path)
         self._run("rm -f %s" % shlex.quote(path), sudo=True)
 
     def action(self, argv, check=True):
+        self._units = None  # an action may change a service: ask again next time
         if argv[0] == "moonraker-db":
             # ["moonraker-db", namespace, key, JSON value(, JSON value on uninstall)]: one Moonraker database entry
             body = json.dumps({"namespace": argv[1], "key": argv[2], "value": json.loads(argv[3])})
@@ -220,6 +341,55 @@ class SSHPrinter:
     def timezone(self):
         return self._run("timedatectl show -p Timezone --value 2>/dev/null || true").decode().strip() or None
 
+    def prefetch_units(self, units):
+        """Ask about all these services in ONE command; needs() then answers from it until something is written."""
+        units = sorted(set(units))
+        if not units:
+            return
+        out = self._run("for u in %s; do p=$(systemctl cat \"$u\" >/dev/null 2>&1 && echo present || echo missing); "
+                        "e=$(systemctl is-enabled \"$u\" 2>/dev/null); a=$(systemctl is-active \"$u\" 2>/dev/null); "
+                        "echo \"$u|$p|$e|$a\"; done" % " ".join(shlex.quote(u) for u in units), sudo=True).decode()
+        states = {}
+        for line in out.splitlines():
+            parts = (line.split("|") + ["", "", ""])[:4]
+            states[parts[0]] = (parts[1], parts[2], parts[3])
+        self._units = dict(self._units or {}, **states)
+
+    def _unit_state(self, unit):
+        if not self._units or unit not in self._units:
+            self.prefetch_units([unit])
+        return (self._units or {}).get(unit, ("missing", "", ""))
+
+    def read_many(self, paths):
+        """{path: bytes or None (not there)} for several files in ONE command."""
+        paths = list(paths)
+        if not paths:
+            return {}
+        out = self._run("for f in %s; do echo \"@@$f\"; if [ -f \"$f\" ]; then base64 -w0 \"$f\"; echo; else echo MISSING; fi; done"
+                        % " ".join(shlex.quote(p) for p in paths), sudo=True).decode()
+        result, current = {p: None for p in paths}, None
+        for line in out.splitlines():
+            if line.startswith("@@") and line[2:] in result and current is None:
+                current = line[2:]
+            elif current is not None:
+                result[current] = None if line == "MISSING" else base64.b64decode(line)
+                current = None
+        return result
+
+    def stat_many(self, paths):
+        """{path: [owner, group, mode] or None} for several files in ONE command."""
+        paths = list(paths)
+        result = {p: None for p in paths}
+        if not paths:
+            return result
+        out = self._run("stat -c '%%n|%%U|%%G|%%a' %s 2>/dev/null || true" % " ".join(shlex.quote(p) for p in paths),
+                        sudo=True).decode()
+        for line in out.splitlines():
+            parts = line.rsplit("|", 3)
+            if len(parts) == 4 and parts[0] in result:
+                result[parts[0]] = parts[1:]
+        return result
+
     def needs(self, argv):
         """False when a state-type action is already in effect (so it is skipped)."""
         if argv[0] == "timezone":
@@ -231,11 +401,7 @@ class SSHPrinter:
             out = self._run("lsattr -d %s 2>/dev/null || true" % shlex.quote(argv[2]), sudo=True).decode()
             return not out.strip() or "i" not in out.split()[0]
         if argv[:2] == ["systemctl", "enable"] or argv[:2] == ["systemctl", "disable"]:
-            unit = argv[-1]
-            out = self._run("systemctl cat %s >/dev/null 2>&1 && echo present || echo missing; "
-                            "systemctl is-enabled %s 2>/dev/null; systemctl is-active %s 2>/dev/null; true"
-                            % ((shlex.quote(unit),) * 3), sudo=True).decode().split()
-            present, enabled, active = (out + ["", "", ""])[:3]
+            present, enabled, active = self._unit_state(argv[-1])
             if present == "missing":
                 return False  # this printer has no such service: nothing to do (and nothing to undo)
             if argv[1] == "enable":
@@ -244,6 +410,7 @@ class SSHPrinter:
         return True
 
     def restart(self, name):
+        self._units = None
         self._run("systemctl restart %s" % SERVICES[name], sudo=True)
 
     def http_json(self, url_path):
@@ -262,6 +429,8 @@ class SSHPrinter:
         self._run("rm -rf %s; rmdir %s 2>/dev/null; true" % (shlex.quote(path), shlex.quote(THR_SAVE_DIR)), sudo=True)
 
     def close(self):
+        if self.hash_cache is not None:
+            self.hash_cache.save()
         if self.staging:
             self._run("rm -rf %s" % shlex.quote(self.staging), sudo=True, check=False)
             self.staging = None
@@ -346,11 +515,15 @@ def plan(p, selected, built=None):
     history = load_history()
     by_id = {m["id"]: m for m in selected}
     changes, problems = Plan(), []
-    shas = p.sha_many(sorted(files)) if hasattr(p, "sha_many") else {f: p.sha(f) for f in files}
+    on_printer = {path for path in files
+                  if any(by_id[mid].get("files", {}).get(path, {}).get("base") == "printer" for mid in owners[path])}
+    hashed = sorted(set(files) - on_printer)  # the others are read and edited, not compared by hash
+    shas = p.sha_many(hashed) if hasattr(p, "sha_many") else {f: p.sha(f) for f in hashed}
+    reads = p.read_many(sorted(on_printer)) if hasattr(p, "read_many") else {}
     for path in sorted(files):
         mods = [by_id[mid] for mid in owners[path]]
-        if any(m.get("files", {}).get(path, {}).get("base") == "printer" for m in mods):
-            current = p.read(path)
+        if path in on_printer:
+            current = reads[path] if path in reads else p.read(path)
             if current is None:
                 problems.append("%s is missing" % path)
                 continue
@@ -558,6 +731,9 @@ def pending_actions(p, selected, changes, resumed=()):
     modules whose files change in this run."""
     touched = {mid for _, _, _, mods in changes for mid in mods} | set(resumed)
     out = []
+    units = [a[-1] for m in selected for a in m.get("actions", []) if a[:2] in (["systemctl", "enable"], ["systemctl", "disable"])]
+    if units and hasattr(p, "prefetch_units"):
+        p.prefetch_units(units)  # one command instead of one per service
     for m in selected:
         for action in m.get("actions", []):
             if is_state_action(action):
@@ -599,6 +775,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
         stock = firmware.extract_many(stock)
     else:
         stock = {}
+    stats = p.stat_many([path for path, _, kind, _ in changes if kind != "new"]) if hasattr(p, "stat_many") else None
     for n, (path, new, kind, mods) in enumerate(changes, 1):
         progress("Backup", n, len(changes))
         entry = {"modules": mods, "kind": kind, "new_sha256": sha(new)}
@@ -607,7 +784,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
             target = backup / "files" / path.lstrip("/")
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(old)
-            entry.update(old_sha256=sha(old), stat=p.stat(path))
+            entry.update(old_sha256=sha(old), stat=stats[path] if stats is not None else p.stat(path))
         record["files"][path] = entry
     (backup / "modules.json").write_text(json.dumps(
         {m["id"]: {k: v for k, v in m["files"].items() if v.get("base") == "printer"} for m in selected},
@@ -1083,6 +1260,8 @@ def main(argv=None):
                     help="install: optional phone notifications through ntfy (ask = ask in the window)")
     ap.add_argument("--orca", choices=("ask", "yes", "no"), default="ask",
                     help="install: add the project's OrcaSlicer profiles on this computer (ask = ask in the window)")
+    ap.add_argument("--rehash", action="store_true",
+                    help="hash every file on the printer again this time (normally only files that changed are hashed)")
     ap.add_argument("--backup", help="uninstall: backup folder (default: newest for this printer)")
     ap.add_argument("--from-stock", action="store_true",
                     help="uninstall without a PC backup, using the originals from the official 02.04 package")
@@ -1094,6 +1273,8 @@ def main(argv=None):
     p = None
     try:
         p = SSHPrinter.open(args.host, args.user, args.port)
+        if isinstance(p, SSHPrinter):
+            p.use_hash_cache(HashCache(hash_cache_file(_printer_id(p), args.host)), rehash=args.rehash)
         check_printer(p, require_idle=args.command != "plan")
         if args.command == "uninstall":
             if args.from_stock:

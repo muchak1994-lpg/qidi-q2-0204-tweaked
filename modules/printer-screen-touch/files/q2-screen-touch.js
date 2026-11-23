@@ -7,11 +7,14 @@
  * window or leaving the page disarms it. While armed, a click in the picture sends the place (0..1 of the picture) to
  * the service, which presses the same place on the real touch screen. A click is refused when the picture is missing,
  * of the wrong size, or older than 1.5 s (so nothing is pressed "blind" on a screen that has changed since).
- * Nothing else is sent anywhere.
+ * A drag across the picture (8 screen pixels or more) is sent as a swipe (from, to, time), so that lists on the screen scroll;
+ * the browser's own "drag the picture" is always switched off. Nothing else is sent anywhere.
  */
 (function () {
   'use strict';
-  var URLS = { arm: '/webcam3/?action=arm', disarm: '/webcam3/?action=disarm', tap: '/webcam3/?action=tap' };
+  var URLS = { arm: '/webcam3/?action=arm', disarm: '/webcam3/?action=disarm', tap: '/webcam3/?action=tap',
+    swipe: '/webcam3/?action=swipe' };
+  var SWIPE_MIN_PX = 8;           // a move of at least this many screen pixels is a drag (swipe), less is a click (tap)
   var RENEW_MS = 20000;           // the service keeps the arming for 60 s
   var MAX_AGE_MS = 1500;          // oldest picture a click may be based on
   var TEXT = {
@@ -52,6 +55,7 @@
       btn.textContent = enabled ? tr('on') : tr('off');
       btn.style.background = enabled ? '#fb8c00' : 'rgba(128,128,128,.35)';
       img.style.cursor = enabled ? 'crosshair' : '';
+      img.style.touchAction = enabled ? 'none' : '';      /* touch-action: a finger drag is ours, the page does not scroll */
       img.style.outline = enabled ? '3px solid #fb8c00' : '';
       if (enabled) say(tr('warn'), false); else say('', false);
     }
@@ -105,7 +109,46 @@
       }).catch(function (err) { say(tr('armfail') + err.message, true); })
         .then(function () { busy = false; });
     });
+    // Dragging: the browser's own "drag the picture" must never start (it was the only thing a drag did), and with touch on a
+    // drag across the picture is sent as a swipe (press, move, release) so that the screen's lists scroll.
+    img.draggable = false;
+    img.style.userSelect = 'none';
+    img.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    var drag = null, swiped = false;
+    function place(e, r) {
+      return { x: Math.min(Math.max((e.clientX - r.left) / r.width, 0), 1), y: Math.min(Math.max((e.clientY - r.top) / r.height, 0), 1) };
+    }
+    img.addEventListener('pointerdown', function (e) {
+      if (!enabled || busy || gone || e.button > 0) return;
+      var r = img.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      drag = { id: e.pointerId, from: place(e, r), t: Date.now() };
+      try { img.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      e.preventDefault();
+    });
+    img.addEventListener('pointercancel', function () { drag = null; });
+    img.addEventListener('pointerup', function (e) {
+      if (!drag || drag.id !== e.pointerId) return;
+      var d = drag, r = img.getBoundingClientRect();
+      drag = null;
+      if (!enabled || busy || gone || !r.width || !r.height) return;
+      var to = place(e, r);
+      if (Math.hypot((to.x - d.from.x) * 480, (to.y - d.from.y) * 272) < SWIPE_MIN_PX) return;   // a click: the click handler taps
+      swiped = true;                                  // the click that follows this release is not a tap
+      setTimeout(function () { swiped = false; }, 100);
+      if (!fresh()) { say(tr('stale'), true); return; }
+      busy = true;
+      send('swipe', { x1: Math.round(d.from.x * 10000) / 10000, y1: Math.round(d.from.y * 10000) / 10000,
+        x2: Math.round(to.x * 10000) / 10000, y2: Math.round(to.y * 10000) / 10000, ms: Date.now() - d.t })
+        .then(function () { if (enabled) say(tr('warn'), false); })
+        .catch(function (err) {
+          if (/HTTP 403/.test(err.message) && enabled) { setOff(false); say(tr('expired'), true); }
+          else say(tr('fail') + err.message, true);
+        })
+        .then(function () { setTimeout(function () { busy = false; }, 300); });
+    });
     img.addEventListener('click', function (e) {
+      if (swiped) { swiped = false; return; }
       if (!enabled || busy || gone) return;
       if (!fresh()) { say(tr('stale'), true); return; }
       var r = img.getBoundingClientRect();

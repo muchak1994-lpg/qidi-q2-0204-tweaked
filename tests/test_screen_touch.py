@@ -98,6 +98,56 @@ class EventTests(unittest.TestCase):
             q2_touch.write_tap(f, 10, 20, sleep=lambda s: None)
         self.assertEqual(decode(f.data.getvalue())[-4:], RELEASE)
 
+    # --- swipe (scrolling): press, move in steps, release (23.11.2026: a drag in the window could not scroll the screen) ---
+    def test_swipe_events_press_move_in_steps_release(self):
+        out, waits = io.BytesIO(), []
+        q2_touch.write_swipe(out, (100, 200), (100, 80), 0.4, steps=4, sleep=waits.append)
+        evs = decode(out.getvalue())
+        EV_SYN, EV_KEY, EV_ABS = 0, 1, 3
+        self.assertEqual(evs[:8], [(EV_ABS, 0x2f, 0), (EV_ABS, 0x39, 4242), (EV_ABS, 0x35, 100), (EV_ABS, 0x36, 200),
+                                   (EV_ABS, 0x30, 10), (EV_KEY, 0x14a, 1), (EV_ABS, 0, 100), (EV_ABS, 1, 200)])
+        self.assertEqual(evs[8], (EV_SYN, 0, 0))
+        moves = evs[9:-4]
+        self.assertEqual(len(moves), 4 * 5)                                  # each step: X, Y (multi-touch), X, Y, SYN
+        ys = [m[2] for m in moves if m[:2] == (EV_ABS, 0x36)]
+        self.assertEqual(ys, [170, 140, 110, 80])                            # even steps, the last one is the end point
+        self.assertEqual([m[2] for m in moves if m[:2] == (EV_ABS, 0x35)], [100] * 4)
+        self.assertEqual(evs[-4:], RELEASE)
+        self.assertEqual(waits, [0.1] * 4)
+
+    def test_swipe_release_is_sent_when_the_wait_is_interrupted(self):
+        for exc in (SystemExit, KeyboardInterrupt, RuntimeError):
+            out = io.BytesIO()
+
+            def boom(_s, exc=exc):
+                raise exc()
+            with self.assertRaises(exc):
+                q2_touch.write_swipe(out, (10, 20), (10, 200), 0.4, steps=4, sleep=boom)
+            self.assertEqual(decode(out.getvalue())[-4:], RELEASE, exc)
+
+    def test_swipe_release_is_tried_when_a_move_write_fails(self):
+        class Flaky:
+            def __init__(self):
+                self.n, self.data = 0, io.BytesIO()
+
+            def write(self, b):
+                self.n += 1
+                if self.n == 12:                 # the third move event fails
+                    raise OSError("write failed")
+                self.data.write(b)
+        f = Flaky()
+        with self.assertRaises(OSError):
+            q2_touch.write_swipe(f, (10, 20), (10, 200), 0.4, steps=4, sleep=lambda s: None)
+        self.assertEqual(decode(f.data.getvalue())[-4:], RELEASE)
+
+    def test_swipe_points_and_time_are_checked(self):
+        self.assertEqual(q2_touch.to_swipe(0.5, 0.8, 0.5, 0.2, 400), ((240, 218), (240, 54), 0.4))
+        self.assertEqual(q2_touch.to_swipe(0, 0, 1, 1, 5)[2], q2_touch.SWIPE_MIN_SECONDS)       # too quick: slowed down
+        self.assertEqual(q2_touch.to_swipe(0, 0, 1, 1, 60000)[2], q2_touch.SWIPE_MAX_SECONDS)   # too slow: cut
+        for bad in ((2, 0, 0, 0, 300), (0, 0, 0, -1, 300), (0, 0, "a", 0, 300), (0, 0, 0, 0, "x"), (0, 0, 0, 0, None), (0, 0, 0, 0, float("nan"))):
+            with self.assertRaises(ValueError):
+                q2_touch.to_swipe(*bad)
+
     def test_sigterm_handler_exits_so_that_finally_runs(self):
         with self.assertRaises(SystemExit):
             q2_touch.on_term(15, None)
@@ -116,9 +166,10 @@ class DeviceTests(unittest.TestCase):
 
 class ServiceTests(unittest.TestCase):
     def setUp(self):
-        self.taps, self.clock = [], [100.0]
-        self.orig = (q2_touch.inject, q2_touch.now)
+        self.taps, self.swipes, self.clock = [], [], [100.0]
+        self.orig = (q2_touch.inject, q2_touch.now, q2_touch.inject_swipe)
         q2_touch.inject = lambda x, y: self.taps.append((x, y))
+        q2_touch.inject_swipe = lambda a, b, s: self.swipes.append((a, b, s))
         q2_touch.now = lambda: self.clock[0]
         q2_touch.last_tap[0] = 0.0
         q2_touch.armed_until[0] = 0.0
@@ -129,7 +180,7 @@ class ServiceTests(unittest.TestCase):
     def tearDown(self):
         self.server.shutdown()
         self.server.server_close()
-        q2_touch.inject, q2_touch.now = self.orig
+        q2_touch.inject, q2_touch.now, q2_touch.inject_swipe = self.orig
 
     def post(self, body, headers=None, url=None, header=True):
         h = {"Content-Type": "application/json"}
@@ -189,6 +240,49 @@ class ServiceTests(unittest.TestCase):
         self.clock[0] += 1
         self.assertEqual(self.tap(), 200)
         self.assertEqual(len(self.taps), 2)
+
+    # --- swipe ---
+    def swipe(self, body=None, headers=None, **kw):
+        body = body if body is not None else {"x1": 0.5, "y1": 0.8, "x2": 0.5, "y2": 0.2, "ms": 400}
+        return self.post(body, headers, url=self.url.replace("tap", "swipe"), **kw)
+
+    def test_swipe_is_injected_when_armed(self):
+        self.assertEqual(self.arm(), 200)
+        self.assertEqual(self.swipe(), 200)
+        self.assertEqual(self.swipes, [((240, 218), (240, 54), 0.4)])
+        self.assertEqual(self.taps, [])
+
+    def test_swipe_needs_arming_and_the_header_like_a_tap(self):
+        self.assertEqual(self.swipe(), 403)                                  # not armed
+        self.arm()
+        self.assertEqual(self.swipe(header=False), 403)
+        self.assertEqual(self.swipe(headers={"Sec-Fetch-Site": "cross-site"}), 403)
+        self.assertEqual(self.swipe(headers={"Content-Type": "text/plain"}), 415)
+        self.clock[0] += q2_touch.ARM_SECONDS + 1
+        self.assertEqual(self.swipe(), 403)                                  # arming ran out
+        self.assertEqual(self.swipes, [])
+
+    def test_swipe_bad_numbers_refused(self):
+        self.arm()
+        for body in ({"x1": 2, "y1": 0, "x2": 0, "y2": 0, "ms": 300}, {"x1": 0.5}, {"x1": 0, "y1": 0, "x2": 1, "y2": 1, "ms": "x"}):
+            self.assertEqual(self.swipe(body), 400, body)
+        self.assertEqual(self.swipes, [])
+
+    def test_swipes_and_taps_share_the_rate_limit(self):
+        self.arm()
+        self.assertEqual(self.swipe(), 200)
+        self.assertEqual(self.swipe(), 429)
+        self.assertEqual(self.tap(), 429)
+        self.clock[0] += 5
+        self.assertEqual(self.tap(), 200)
+        self.assertEqual((len(self.swipes), len(self.taps)), (1, 1))
+
+    def test_swipe_without_a_touch_panel(self):
+        def none(a, b, s):
+            raise OSError("no touch panel")
+        q2_touch.inject_swipe = none
+        self.arm()
+        self.assertEqual(self.swipe(), 503)
 
     def test_no_panel_found(self):
         def none(x, y):
@@ -329,6 +423,14 @@ class ModuleTests(unittest.TestCase):
             self.assertIn(part, js)
         self.assertLess(js.index("action=arm"), js.index("action=tap"))
 
+    def test_window_scrolls_by_dragging(self):
+        # 23.11.2026: dragging in the picture started the browser's "drag the image" instead of scrolling the screen
+        js = read(MOD / "files" / "q2-screen-touch.js")
+        for part in ("/webcam3/?action=swipe", "pointerdown", "pointerup", "pointercancel", "setPointerCapture", "dragstart",
+                     "preventDefault", "touch-action", "draggable"):
+            self.assertIn(part, js)
+        self.assertIn("swiped", js)                       # a drag must not also count as a click (tap)
+
     def test_window_refuses_a_click_on_a_stale_picture(self):
         js = read(MOD / "files" / "q2-screen-touch.js")
         self.assertIn("img.complete", js)
@@ -342,8 +444,8 @@ class ModuleTests(unittest.TestCase):
 
     def test_script_versions_are_bumped(self):
         # The version number must be higher than the one a browser may have cached (1 before the audit fixes,
-        # 2 after them; the touch script went to 3 with the shorter texts).
-        for folder, js, version in ((MOD, "q2-screen-touch.js", 3), (VIEW, "q2-screen-view.js", 2)):
+        # 2 after them; the touch script went to 3 with the shorter texts and to 4 with the drag-to-scroll).
+        for folder, js, version in ((MOD, "q2-screen-touch.js", 4), (VIEW, "q2-screen-view.js", 2)):
             text = read(folder / "module.json")
             self.assertNotIn(js + "?v=1\\", text)
             self.assertIn(js + "?v=%d\\" % version, text)

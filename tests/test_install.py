@@ -532,8 +532,10 @@ class SSHActionTest(unittest.TestCase):
         self.assertIsNone(self.id_for(""))
 
     def needs_for(self, reply):
+        # the printer answers the one-command probe with "unit|present|enabled|active" per service
+        line = "usbdevice.service|" + "|".join(reply.split()) + "\n"
         p = install.SSHPrinter.__new__(install.SSHPrinter)
-        p._run = lambda command, sudo=False, check=True: reply.encode()
+        p._run = lambda command, sudo=False, check=True: line.encode()
         return p.needs(["systemctl", "disable", "--now", "usbdevice.service"])
 
     def test_disable_skipped_when_service_missing(self):  # e.g. no ADB service on this printer

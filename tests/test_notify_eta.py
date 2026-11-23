@@ -12,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import time
 import unittest
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
@@ -23,12 +24,17 @@ ETA = FILES / "q2_notify_eta.py"
 SEND = FILES / "q2_notify_send.sh"
 
 
-def serve(filename, estimated, **meta):
-    """A stand-in Moonraker: print_stats says which file is printing, metadata gives its estimate."""
+def serve(filename, estimated, history=None, **meta):
+    """A stand-in Moonraker: print_stats says which file is printing, metadata gives its estimate.
+    history = list of answers of /server/history/list (each a list of jobs); the last one repeats."""
+    answers = list(history or [])
+
     class H(BaseHTTPRequestHandler):
         def do_GET(self):
             u = urlparse(self.path)
-            if u.path == "/printer/objects/query":
+            if u.path == "/server/history/list" and answers:
+                body = {"result": {"count": 1, "jobs": answers.pop(0) if len(answers) > 1 else answers[0]}}
+            elif u.path == "/printer/objects/query":
                 body = {"result": {"status": {"print_stats": {"filename": filename}}}}
             elif u.path == "/server/files/metadata" and parse_qs(u.query).get("filename") == [filename]:
                 body = {"result": dict(estimated_time=estimated, **meta)}
@@ -95,6 +101,46 @@ class EtaHelperTests(unittest.TestCase):
 
     def test_moonraker_unreachable_prints_nothing_and_exits_0(self):
         self.assertEqual(run_eta(100, "http://127.0.0.1:9"), "")
+
+    # ---- --end: how the last print really ended (print_stats is wiped at the end on the QIDI printer; the history is not) ----
+    @staticmethod
+    def job(status, ago=30, used=28597.3, total=28520.0, weight=83.0, **extra):
+        meta = {"filament_total": total, "filament_weight_total": weight}
+        meta.update(extra)
+        return {"job_id": "000008", "filename": "Mirka.gcode.3mf", "status": status, "end_time": time.time() - ago,
+                "filament_used": used, "metadata": meta}
+
+    def end(self, history, **env):
+        srv, url = serve("", 0, history=history)
+        self.addCleanup(srv.shutdown)
+        r = subprocess.run([sys.executable, "-I", str(ETA), "--end"], capture_output=True, text=True, timeout=60,
+                           env=dict(os.environ, Q2_MOONRAKER=url, Q2_NOTIFY_END_TRIES="3", Q2_NOTIFY_END_PAUSE="0.05", **env))
+        self.assertEqual(r.returncode, 0, r.stderr)
+        return r.stdout.rstrip("\n")
+
+    def test_end_completed_gives_status_grams_and_millimetres(self):
+        self.assertEqual(self.end([[self.job("completed")]]), "completed\t83\t28597")      # grams capped at the slicer's weight
+
+    def test_end_cancelled_gives_the_grams_used_so_far(self):
+        self.assertEqual(self.end([[self.job("cancelled", used=2442.7)]]), "cancelled\t7\t2442")
+
+    def test_end_without_the_slicer_numbers_has_an_empty_grams_field(self):
+        self.assertEqual(self.end([[self.job("completed", total=0, weight=0)]]), "completed\t\t28597")
+
+    def test_end_waits_while_the_job_is_still_being_written(self):
+        running = self.job("in_progress", ago=0)
+        self.assertEqual(self.end([[running], [running], [self.job("completed")]]), "completed\t83\t28597")
+
+    def test_end_ignores_an_old_job_of_an_earlier_print(self):
+        self.assertEqual(self.end([[self.job("completed", ago=3 * 3600)]]), "")
+
+    def test_end_prints_nothing_without_history(self):
+        self.assertEqual(self.end([[]]), "")
+
+    def test_end_prints_nothing_when_moonraker_is_unreachable(self):
+        r = subprocess.run([sys.executable, "-I", str(ETA), "--end"], capture_output=True, text=True, timeout=60,
+                           env=dict(os.environ, Q2_MOONRAKER="http://127.0.0.1:9", Q2_NOTIFY_END_TRIES="2", Q2_NOTIFY_END_PAUSE="0.05"))
+        self.assertEqual((r.returncode, r.stdout.strip()), (0, ""))
 
 
 @unittest.skipIf(sys.platform == "win32", "shell script for the printer; run in WSL/Linux")

@@ -64,6 +64,7 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 - Your calibration in `printer.cfg` is kept: only our lines are edited.
 - The backup goes to `backups/` on your PC. Keep that folder.
 - A module can be left out with `--skip MODULE` (list: `py tools/build.py --list`).
+- The installer remembers on the PC (`work/hash-cache-<printer>.json`) what the printer's files hashed to and hashes again only files that changed; `--rehash` hashes everything again for one run.
 - The Ethernet MAC fix takes effect after the next reboot.
 
 ### Toolhead accelerometer check (read only)

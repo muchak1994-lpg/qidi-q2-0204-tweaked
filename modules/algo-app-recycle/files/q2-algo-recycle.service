@@ -1,0 +1,15 @@
+[Unit]
+Description=QIDI Q2 - restart the AI service after a finished print to give its memory back (optional)
+After=local-fs.target moonraker.service
+
+[Service]
+Type=simple
+# root only to restart algo_app; the script never starts a stopped service.
+ExecStart=/bin/sh /usr/local/lib/q2-algo-recycle/q2_algo_recycle.sh
+Restart=on-failure
+RestartSec=15
+Nice=19
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target
