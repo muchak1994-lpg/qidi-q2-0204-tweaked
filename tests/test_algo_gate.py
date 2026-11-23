@@ -335,6 +335,7 @@ class ImportTwice(GateBase):
         self.assertEqual(len([c for c in self.cv2.VideoCapture.__mro__ if c.__dict__.get("_q2gate_class")]), 1)
 
 
+@unittest.skipIf(np is None, "numpy is needed")
 class Switches(unittest.TestCase):
     def setUp(self):
         SCRIPTED.clear()
@@ -458,6 +459,7 @@ class Memory(GateBase):
             self.assertNotIsInstance(value, np.ndarray)
 
 
+@unittest.skipIf(np is None, "numpy is needed")
 class NeverSubclassTheCapture(unittest.TestCase):
     """cv2.VideoCapture of OpenCV 4.12 on the printer (aarch64) crashes the process (free(): invalid pointer) as soon as an
     instance of a Python SUBCLASS of it is freed (measured 22.11.2026: plain object fine, subclass 5 of 5 crashes). The gate
@@ -478,6 +480,7 @@ class NeverSubclassTheCapture(unittest.TestCase):
         cap.release()
 
 
+@unittest.skipIf(np is None, "numpy is needed")
 class WrapperFallback(unittest.TestCase):
     def test_class_that_cannot_be_subclassed_is_wrapped_instead(self):
         SCRIPTED.clear()
