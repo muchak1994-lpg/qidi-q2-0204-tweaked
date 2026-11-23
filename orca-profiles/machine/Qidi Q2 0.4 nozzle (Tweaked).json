@@ -13,5 +13,6 @@
         "Direct Drive Standard"
     ],
     "printer_settings_id": "Qidi Q2 0.4 nozzle (Tweaked)",
-    "version": "2.4.0.19"
+    "version": "2.4.0.19",
+    "before_layer_change_gcode": "{if layer_num == 0}\n{if filament_type[initial_tool] == \"PLA\" or filament_type[initial_tool] == \"PLA+\" or filament_type[initial_tool] == \"PLA-CF\" or filament_type[initial_tool] == \"PLA-AERO\" or filament_type[initial_tool] == \"PLA Silk\" or filament_type[initial_tool] == \"TPU\" or filament_type[initial_tool] == \"TPU-AMS\"}\nM106 P3 S255\n{elsif filament_type[initial_tool] == \"PETG\" or filament_type[initial_tool] == \"PETG-CF\" or filament_type[initial_tool] == \"PETG HF\" or filament_type[initial_tool] == \"PET-CF\" or filament_type[initial_tool] == \"PCTG\" or filament_type[initial_tool] == \"PCTG-CF\" or filament_type[initial_tool] == \"PCTG-GF\"}\nM106 P3 S191\n{elsif filament_type[initial_tool] == \"PA\" or filament_type[initial_tool] == \"PA6\" or filament_type[initial_tool] == \"PA-CF\" or filament_type[initial_tool] == \"PA-GF\" or filament_type[initial_tool] == \"PA6-CF\" or filament_type[initial_tool] == \"PPA-CF\" or filament_type[initial_tool] == \"PPA-GF\"}\nM106 P3 S64\n{endif}\n{endif}"
 }

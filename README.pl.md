@@ -129,12 +129,13 @@ Na macOS/Linux zamiast `py` wpisz `python3`. Jeśli jesteś zalogowany do konta 
 
 Profile **nie zawierają adresu drukarki ani klucza API** — połączenie ustaw sam w OrcaSlicer (ołówek przy drukarce → Połączenie).
 
-### Profile filamentów: wentylator komory według materiału
+### Profile drukarek: wentylator komory według materiału
 
 Profile filamentów QIDI dla Q2 włączają wentylator obiegu komory (M106 P3) podczas druku dla PLA, PETG, TPU i nylonu;
 ogólna biblioteka filamentów OrcaSlicer (SUNLU, eSUN, Polymaker, ... `@System`) zostawia go wyłączonego dla każdego
-materiału. W `orca-profiles/filament/` jest kopia `(Tweaked)` każdego filamentu z biblioteki, którego można użyć na Q2
-(331): bierze wszystko z oryginału i ustawia tylko wentylator komory:
+materiału. Profile drukarek projektu `Qidi Q2 ... (Tweaked)` ustawiają go za ciebie: raz, przed pierwszą warstwą
+(`before_layer_change_gcode`, w profilu QIDI puste), według typu pierwszego filamentu. Wybierasz więc zwykłe filamenty
+z biblioteki, a wentylator idzie za materiałem:
 
 | Materiał | Podczas druku | Po druku |
 |---|---|---|
@@ -144,13 +145,16 @@ materiału. W `orca-profiles/filament/` jest kopia `(Tweaked)` każdego filament
 | ABS, ASA, PC | 0% – jak QIDI: te trzymają ciepło w komorze | 0% |
 
 QIDI daje 100% dla PETG i nylonu; 75% i 25% to wybór tego projektu. Inne materiały (PP, PVA, HIPS, ...) nie mają
-profilu. Instalator i `orca_profiles.py install` dodają kopie `(Tweaked)` filamentów włączonych w twojej Orce (tych
-zaznaczonych w „Dodaj/usuń filamenty”); włącz tam kolejne i uruchom jeszcze raz albo zaimportuj pojedyncze:
-OrcaSlicer → **Plik → Importuj → Importuj konfiguracje...** → otwórz `orca-profiles/filament/<marka>/` i zaznacz jeden
-lub kilka plików `.json`. Pokazują się tylko przy wybranej drukarce Q2. Usunięcie: `orca_profiles.py uninstall
---apply` (te, które dodał) albo w OrcaSlicer: ustawienia filamentu → usuń profil. Lista wszystkich:
-`orca-profiles/filament/index.tsv`. Filament, którego twoja wersja OrcaSlicer jeszcze nie zna, jest przy imporcie
-pomijany.
+linii z wentylatorem. Sprawdzone przez pocięcie w OrcaSlicer 2.5.2 (PLA S255, PETG S191, PA S64, ABS nic, raz przed
+warstwą 1); na drukarce jeszcze nie sprawdzone. Liczy się tylko pierwszy filament: wielokolorowy druk z Boxem idzie
+według pierwszego.
+
+Wcześniejsze wersje (1.2.0 i starsze) dodawały zamiast tego kopię `(Tweaked)` każdego filamentu. Przejście: zamknij
+OrcaSlicer, uruchom `py tools/orca_profiles.py uninstall --apply` (usuwa niezmienione kopie i stare profile drukarek,
+po kopii w zip w `backups/`), potem `py tools/orca_profiles.py install --apply`. OrcaSlicer przepisuje profile drukarek
+przy synchronizacji konta; przepisany profil liczy się jak twój i zostaje - wtedy usuń tę drukarkę `(Tweaked)` w
+OrcaSlicer przed instalacją albo wklej wartość `before_layer_change_gcode` z `orca-profiles/machine/<drukarka>.json` w
+własnym G-code drukarki → „G-code przed zmianą warstwy”.
 
 ## Licencja i źródła
 

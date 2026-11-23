@@ -139,12 +139,13 @@ On macOS/Linux use `python3` instead of `py`. If you are logged in to an Orca ac
 
 The profiles contain **no printer address or API key** — set the connection in OrcaSlicer yourself (pencil icon next to the printer → Connection).
 
-### Filament profiles: chamber fan per material
+### Printer profiles: chamber fan per material
 
 QIDI's own Q2 filament profiles run the chamber circulation fan (M106 P3) during the print for PLA, PETG, TPU and
 nylon; the generic OrcaSlicer filament library (SUNLU, eSUN, Polymaker, ... `@System`) leaves it off for every
-material. `orca-profiles/filament/` has a `(Tweaked)` copy of every library filament usable on the Q2 (331): it takes
-everything from the original and only sets the chamber fan:
+material. The project's printer profiles `Qidi Q2 ... (Tweaked)` set it for you: once, before the first layer
+(`before_layer_change_gcode`, empty in QIDI's profile), from the filament type of the first filament. So you pick
+ordinary library filaments and the fan follows the material:
 
 | Material | During the print | After the print |
 |---|---|---|
@@ -153,13 +154,16 @@ everything from the original and only sets the chamber fan:
 | Nylon (PA, PA-CF, PA-GF, PPA) | 25% - a little air exchange, the chamber stays warm | 0% |
 | ABS, ASA, PC | 0% - as QIDI: these keep the chamber warm | 0% |
 
-QIDI uses 100% for PETG and nylon; 75% and 25% are this project's choice. Other materials (PP, PVA, HIPS, ...) get no
-profile. The installer and `orca_profiles.py install` add the `(Tweaked)` copies of the filaments enabled in your
-OrcaSlicer (the ones you ticked under "Add/Remove filaments"); enable more there and run it again, or import single
-ones: OrcaSlicer → **File → Import → Import Configs...** → open `orca-profiles/filament/<brand>/` and select one or
-more `.json` files. They show only with a Q2 printer selected. To remove one: `orca_profiles.py uninstall --apply`
-(the ones it added), or in OrcaSlicer: the filament's settings → delete preset. The list of all of them:
-`orca-profiles/filament/index.tsv`. A filament your OrcaSlicer version does not know yet is skipped on import.
+QIDI uses 100% for PETG and nylon; 75% and 25% are this project's choice. Other materials (PP, PVA, HIPS, ...) get
+no fan line. Checked by slicing in OrcaSlicer 2.5.2 (PLA S255, PETG S191, PA S64, ABS nothing, once before layer 1);
+not yet checked on a printer. Only the first filament counts: a multi-colour print with the Box follows the first one.
+
+Earlier versions (1.2.0 and older) added a `(Tweaked)` copy of every filament instead. To move over: close OrcaSlicer,
+run `py tools/orca_profiles.py uninstall --apply` (removes the unchanged copies and the old printer profiles, after a zip
+backup in `backups/`), then `py tools/orca_profiles.py install --apply`. OrcaSlicer rewrites printer profiles when it
+syncs an account; a profile it rewrote counts as yours and is left alone - then delete that `(Tweaked)` printer in
+OrcaSlicer before installing, or paste the `before_layer_change_gcode` value from
+`orca-profiles/machine/<printer>.json` into the printer's Custom G-code → "Before layer change G-code".
 
 ## License and credits
 

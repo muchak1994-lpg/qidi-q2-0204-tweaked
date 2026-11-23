@@ -3,9 +3,8 @@
 # Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
 """QIDI Q2 02.04 Tweaked - OrcaSlicer profiles (add-only).
 
-Adds the project's printer and process profiles to OrcaSlicer's user folder, and the "(Tweaked)"
-filament profiles (chamber fan per material, orca-profiles/filament/) of the filaments enabled in
-OrcaSlicer. Other filaments: import them in OrcaSlicer, or enable them there and run this again.
+Adds the project's printer and process profiles to OrcaSlicer's user folder. The printer profiles also set
+the chamber fan from the filament type, so the ordinary OrcaSlicer filaments need no copy of their own.
 It never overwrites or deletes a file it did not add itself:
 
 * a file with the same name that already exists is skipped and reported;
@@ -38,16 +37,19 @@ import zipfile
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-import orca_filaments  # noqa: E402
 
+# The 03.02 project uses the same manifest name: the printer and process profiles are identical, so either project
+# can see and remove what the other added.
 PROJECT = "qidi-q2-0204-tweaked"
 MANIFEST_NAME = "." + PROJECT + "-orca-manifest.json"
 REPO = Path(__file__).resolve().parent.parent
 SRC = REPO / "orca-profiles"
 BACKUPS = REPO / "backups"
 KINDS = ("machine", "process")
+# "filament" is only zipped, never written to: versions up to 1.2.0 added "(Tweaked)" filament copies, and uninstall still removes
+# the unchanged ones recorded in the manifest.
 BACKUP_KINDS = KINDS + ("filament",)
-FILAMENT_SRC = SRC / "filament"
+BAD_FILENAME_CHARS = '<>:"/\\|?*'
 HOW_TO_ADD = "py tools/orca_profiles.py install --apply"
 FORBIDDEN_KEYS = ("print_host", "printhost_apikey", "print_host_webui")
 
@@ -100,33 +102,9 @@ def source_files():
     return files
 
 
-def enabled_filaments(root):
-    """Names of the filaments enabled in OrcaSlicer (OrcaSlicer.conf, "filaments"); [] when unknown."""
-    try:
-        text = (Path(root) / "OrcaSlicer.conf").read_text(encoding="utf-8")
-        data = json.loads("\n".join(line for line in text.splitlines() if not line.startswith("#")))
-    except (OSError, ValueError):
-        return []
-    names = data.get("filaments") if isinstance(data, dict) else None
-    return [n for n in names if isinstance(n, str)] if isinstance(names, list) else []
-
-
-def filament_files(enabled):
-    """[(kind, filename, path)] of our filament profiles (.json + .info) made from the given Orca filaments."""
-    index = FILAMENT_SRC / orca_filaments.INDEX_NAME
-    if not index.is_file():
-        return []
-    wanted, files = set(enabled), []
-    for line in index.read_text(encoding="utf-8").splitlines():
-        fields = line.split("\t")
-        if not line.strip() or line.startswith("#") or len(fields) < 2:
-            continue  # blank, comment, or a line edited by hand without its tab
-        rel, inherits = fields[:2]
-        if inherits in wanted:
-            path = FILAMENT_SRC / rel
-            for f in (path, path.with_suffix(".info")):
-                files.append(("filament", f.name, f))
-    return files
+def file_name(name):
+    """The preset name with characters Windows does not allow in file names replaced (Orca reads "name")."""
+    return "".join("-" if c in BAD_FILENAME_CHARS else c for c in name)
 
 
 def check_sources(files):
@@ -142,7 +120,7 @@ def check_sources(files):
             problems.append("%s/%s: invalid JSON (%s)" % (kind, name, exc))
             continue
         stem = name[:-5]
-        if orca_filaments.file_name(str(data.get("name"))) != stem:
+        if file_name(str(data.get("name"))) != stem:
             problems.append("%s/%s: name field %r differs from file name" % (kind, name, data.get("name")))
         for key in FORBIDDEN_KEYS:
             if key in data:
@@ -283,8 +261,7 @@ def cmd_install(args, user_dir, files):
         manifest["files"][rel] = hashlib.sha256(data).hexdigest()
         print("  added:", rel)
     save_manifest(user_dir, manifest)
-    print("Done. Start OrcaSlicer: printers \"... (Tweaked)\", processes \"[TL] ...\" and filaments "
-          "\"... (Tweaked)\" are in the lists.")
+    print("Done. Start OrcaSlicer: printers \"... (Tweaked)\", processes \"[TL] ...\".")
 
 
 def cmd_uninstall(args, user_dir, files):
@@ -343,7 +320,7 @@ def _offer(mode, read, root):
         print("\nOrcaSlicer: no profiles folder on this computer - step skipped "
               "(after installing OrcaSlicer: %s)." % HOW_TO_ADD)
         return
-    files = source_files() + filament_files(enabled_filaments(root))
+    files = source_files()
     problems = check_sources(files)
     if problems:
         print("OrcaSlicer profiles skipped, the project files are not valid:\n  " + "\n  ".join(problems))
@@ -360,9 +337,9 @@ def _offer(mode, read, root):
             kind = rel.split("/")[0]
             count[kind] = count.get(kind, 0) + 1
     print("OrcaSlicer profiles from this project (only added, nothing of yours is changed):\n"
-          "  printers \"Qidi Q2 ... (Tweaked)\": %d, timelapse processes \"[TL] ...\": %d,\n"
-          "  filaments you use, with the chamber fan set per material: %d"
-          % (count.get("machine", 0), count.get("process", 0), count.get("filament", 0)))
+          "  printers \"Qidi Q2 ... (Tweaked)\" (they also set the chamber fan from the filament type): %d,\n"
+          "  timelapse processes \"[TL] ...\": %d"
+          % (count.get("machine", 0), count.get("process", 0)))
     if mode == "ask" and not ask("Add them to OrcaSlicer?", True, read):
         print("Not added. Any time later:", HOW_TO_ADD)
         return
@@ -383,7 +360,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     root = Path(args.orca_dir) if args.orca_dir else default_orca_root()
-    files = source_files() + filament_files(enabled_filaments(root))
+    files = source_files()
     problems = check_sources(files)
     if problems or not files:
         sys.exit("Profile files in this repository are not valid:\n  " + "\n  ".join(problems or ["none found"]))

@@ -1,6 +1,13 @@
 # Changelog
 
 ## Unreleased
+- OrcaSlicer: the chamber fan (M106 P3) per material now comes from the printer profiles `Qidi Q2 ... (Tweaked)`
+  (`before_layer_change_gcode`, once before layer 1, from the first filament's type: PLA/TPU 100 %, PETG 75 %, PA 25 %,
+  ABS/ASA/PC none - the same values as before), not from 331 `(Tweaked)` copies of the library filaments. OrcaSlicer lists
+  user presets flat, so the copies filled the list; the ordinary grouped filaments are used now. `orca-profiles/filament/`
+  and `tools/orca_filaments.py` are gone, `tools/orca_machine_hook.py` writes the hook into the four printer profiles
+  (taken over from the 03.02 port). `orca_profiles.py uninstall` still removes the old copies (unchanged ones) after a zip backup.
+  Checked by slicing in OrcaSlicer 2.5.2 only (not on a printer); only the first filament counts.
 - `phone-notifications`: a failed attachment upload is no longer silent. The upload may take up to 15 min (it is stopped after 30 s without any data) and is
   treated as failed when the server refuses it (`--fail`); then the same message goes out as plain text with "(the attachment could not be sent)".
   Found on the first real print (23.11.2026): the public ntfy.sh answers 413 ("attachment too large, or bandwidth limit reached") to a 3 MB or 6.4 MB

@@ -6,6 +6,7 @@
 Run:  python tests/test_orca_profiles.py
 """
 import contextlib
+import hashlib
 import io
 import json
 import shutil
@@ -13,6 +14,7 @@ import sys
 import tempfile
 import unittest
 import unittest.mock
+import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -96,6 +98,27 @@ class OrcaProfilesTest(unittest.TestCase):
             if rel != edited_rel:
                 self.assertFalse((self.user / rel).exists(), rel)
 
+    def test_old_filament_copies_of_an_earlier_version_are_backed_up_before_uninstall_removes_them(self):
+        # Versions up to 1.2.0 added "(Tweaked)" filament copies (chamber fan per material) and recorded them in the manifest;
+        # now the printer profiles set the fan. Uninstall still removes those copies (when unchanged) - after zipping them.
+        (self.user / "filament").mkdir()
+        old = self.user / "filament" / "SUNLU PETG (Tweaked).json"
+        old.write_text('{"name": "SUNLU PETG (Tweaked)"}', encoding="utf-8")
+        edited = self.user / "filament" / "eSUN PLA+ (Tweaked).json"
+        edited.write_text('{"name": "I changed this"}', encoding="utf-8")
+        digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()  # noqa: E731
+        manifest = {"project": op.PROJECT, "files": {"filament/SUNLU PETG (Tweaked).json": digest(old),
+                                                     "filament/eSUN PLA+ (Tweaked).json": "0" * 64}}
+        (self.user / op.MANIFEST_NAME).write_text(json.dumps(manifest), encoding="utf-8")
+        out = run("uninstall", "--apply", *self.common)
+        self.assertIn("keep (you edited it): filament/eSUN PLA+ (Tweaked).json", out)
+        self.assertFalse(old.exists())
+        self.assertTrue(edited.exists())
+        zips = sorted(set(op.BACKUPS.glob("*.zip")) - self.backups_before)
+        self.assertEqual(len(zips), 1)
+        with zipfile.ZipFile(zips[0]) as zf:
+            self.assertIn("filament/SUNLU PETG (Tweaked).json", zf.namelist())
+
     def test_several_user_folders_need_a_choice(self):
         (self.root / "user" / "123456").mkdir()
         # No one to answer (stdin is not a terminal): it must stop, not wait. Set here,
@@ -107,8 +130,8 @@ class OrcaProfilesTest(unittest.TestCase):
         self.assertIn("Added by this project", run("status", "--user-dir", "default", *self.common))
 
 
-class FilamentTest(unittest.TestCase):
-    """Filament profiles for the filaments enabled in OrcaSlicer, and the installer's OrcaSlicer step."""
+class InstallStepTest(unittest.TestCase):
+    """The OrcaSlicer step of the installer (and install/uninstall into an Orca user folder)."""
 
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
@@ -129,36 +152,17 @@ class FilamentTest(unittest.TestCase):
             if not any(op.BACKUPS.iterdir()):
                 op.BACKUPS.rmdir()
 
-    def petg(self):
-        return self.user / "filament" / "SUNLU PETG (Tweaked).json"
+    def marker(self):
+        return self.user / "machine" / "Qidi Q2 0.4 nozzle (Tweaked).json"
 
-    def test_enabled_filaments(self):
-        self.assertEqual(op.enabled_filaments(self.root), ["SUNLU PETG @System", "Not In Our List @System"])
-        self.assertEqual(op.enabled_filaments(self.tmp), [])  # no OrcaSlicer.conf
-        (self.tmp / "OrcaSlicer.conf").write_text("not json", encoding="utf-8")
-        self.assertEqual(op.enabled_filaments(self.tmp), [])
-        names = [n for _, n, _ in op.filament_files(["SUNLU PETG @System", "Not In Our List @System"])]
-        self.assertEqual(names, ["SUNLU PETG (Tweaked).json", "SUNLU PETG (Tweaked).info"])
-
-    def test_hand_edited_index_lines_are_skipped(self):  # audit 20.11.2026
-        saved = op.FILAMENT_SRC
-        op.FILAMENT_SRC = self.tmp
-        try:
-            (self.tmp / op.orca_filaments.INDEX_NAME).write_text(
-                "# comment\n   \nno tab here\nA/x.json\tX @System\n", encoding="utf-8")
-            self.assertEqual([n for _, n, _ in op.filament_files(["X @System"])], ["x.json", "x.info"])
-        finally:
-            op.FILAMENT_SRC = saved
-
-    def test_install_adds_only_enabled_filaments_and_uninstall_removes_them(self):
+    def test_install_adds_printer_and_process_profiles_and_uninstall_removes_them(self):
         run("install", "--apply", *self.common)
-        self.assertEqual(sorted(p.name for p in (self.user / "filament").iterdir()),
-                         ["SUNLU PETG (Tweaked).info", "SUNLU PETG (Tweaked).json"])
-        data = json.loads(self.petg().read_text(encoding="utf-8"))
-        self.assertEqual(data["during_print_exhaust_fan_speed"], ["75"])
-        self.assertTrue(self.user.joinpath("machine").is_dir())
+        self.assertTrue(self.marker().exists())
+        self.assertFalse((self.user / "filament").exists())  # no filament copies any more
+        hooked = json.loads(self.marker().read_text(encoding="utf-8"))
+        self.assertIn("M106 P3 S255", hooked["before_layer_change_gcode"])
         run("uninstall", "--apply", *self.common)
-        self.assertEqual(list((self.user / "filament").iterdir()), [])
+        self.assertFalse(self.marker().exists())
 
     def offer(self, answer, running=False):
         out = io.StringIO()
@@ -169,18 +173,18 @@ class FilamentTest(unittest.TestCase):
 
     def test_offer_no_changes_nothing(self):
         out = self.offer("n")
-        self.assertIn("filaments you use, with the chamber fan set per material: 1", out)
-        self.assertFalse(self.petg().exists())
+        self.assertIn("they also set the chamber fan from the filament type): 4", out)
+        self.assertFalse(self.marker().exists())
         self.assertFalse((self.user / "machine").exists())
 
     def test_offer_while_orca_is_open_changes_nothing(self):
         self.assertIn("Close it", self.offer("", running=True))
-        self.assertFalse(self.petg().exists())
+        self.assertFalse(self.marker().exists())
         self.assertIn("Close it", self.offer("", running=None))
 
     def test_offer_yes_adds_then_has_nothing_left(self):
         self.offer("")
-        self.assertTrue(self.petg().exists())
+        self.assertTrue(self.marker().exists())
         self.assertIn("already there", self.offer(""))
 
     def test_offer_without_orca_or_with_mode_no(self):
@@ -189,7 +193,7 @@ class FilamentTest(unittest.TestCase):
             op.offer("ask", read=lambda prompt: self.fail("must not ask"), root=self.tmp / "none")
             op.offer("no", read=lambda prompt: self.fail("must not ask"), root=self.root)
         self.assertIn("no profiles folder", out.getvalue())
-        self.assertFalse(self.petg().exists())
+        self.assertFalse(self.marker().exists())
 
 
 class OrcaRunningTest(unittest.TestCase):
