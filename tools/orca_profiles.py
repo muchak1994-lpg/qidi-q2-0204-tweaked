@@ -164,6 +164,12 @@ def pick_user_dir(root, wanted):
     return dirs[int(answer) - 1]
 
 
+def write_lf(path, text):
+    """Write text with plain LF line ends (Path.write_text has no newline argument before Python 3.10)."""
+    with open(path, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
+
+
 def orca_conf(root):
     """OrcaSlicer.conf as a dict ({} when missing or unreadable). The file is JSON followed by a '# MD5 checksum' line."""
     try:
@@ -329,7 +335,7 @@ def cmd_hook(args, user_dir, files):
     for path in todo:
         data = json.loads(path.read_text(encoding="utf-8"))
         data[HOOK_KEY] = code
-        path.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        write_lf(path, json.dumps(data, indent=4, ensure_ascii=False) + "\n")
         info = path.with_suffix(".info")
         if info.is_file():  # a newer update time, so OrcaSlicer (and its cloud sync) keeps this version
             lines = info.read_text(encoding="utf-8").splitlines()
@@ -337,7 +343,7 @@ def cmd_hook(args, user_dir, files):
             lines = [stamp if line.startswith("updated_time") else line for line in lines]
             if stamp not in lines:
                 lines.append(stamp)
-            info.write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+            write_lf(info, "\n".join(lines) + "\n")
         print("  added the fan code:", path.stem)
     print("Done. Start OrcaSlicer; the code is in the printer profile under Printer settings > Machine G-code > "
           "Before layer change G-code.")

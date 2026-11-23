@@ -49,7 +49,8 @@ def write_machine_hook(folder=None):
     for path in sorted(Path(folder or MACHINES).glob("*.json")):
         data = json.loads(path.read_text(encoding="utf-8"))
         data["before_layer_change_gcode"] = machine_fan_gcode()
-        path.write_text(json.dumps(data, indent=4, ensure_ascii=False) + "\n", encoding="utf-8", newline="\n")
+        with open(path, "w", encoding="utf-8", newline="\n") as fh:  # Path.write_text has no newline before Python 3.10
+            fh.write(json.dumps(data, indent=4, ensure_ascii=False) + "\n")
 
 
 if __name__ == "__main__":
