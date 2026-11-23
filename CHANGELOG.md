@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.3.1 - 2026-11-23
+Fix release, no new features. Version 1.3.0 failed its automatic tests on Python 3.9 (and would not have run there): two places wrote files
+with `Path.write_text(..., newline=...)`, which only exists from Python 3.10. They now use `open(..., newline="\n")`, which works from 3.9
+(`tools/orca_profiles.py` for the `hook` command and profile copies, `tools/orca_machine_hook.py` for the maintainer's profile generator).
+A new test (`tests/test_py39_compat.py`) scans tools, tests and module files for this mistake. Nothing else changed since 1.3.0, so everything
+the 1.3.0 notes say about what is and is not tested still applies.
+
 ## 1.3.0 - 2026-11-23
 Fourth release. Everything listed here is installed on the author's printer except the OrcaSlicer changes (profiles and `hook` command, tested
 offline and by slicing in OrcaSlicer 2.5.2). Seen in the first real print with these modules (23.11.2026, 52 min): the phone messages at 25/50/75 %
