@@ -197,7 +197,9 @@ case "$ATTACH" in  # an address: fetch the picture first (e.g. the camera snapsh
 esac
 
 if [ -n "$ATTACH" ] && [ -f "$ATTACH" ]; then
-    set -- -sS --max-time 60 -T "$ATTACH" -H "Filename: $(basename "$ATTACH")" \
+    # A video of several MB takes minutes from the printer's Wi-Fi (6.4 MB took over 60 s, 23.11.2026): the whole upload may run
+    # up to 15 min, but one that moves nothing for 30 s is stopped.
+    set -- -sS --fail --max-time 900 --speed-time 30 --speed-limit 1000 -T "$ATTACH" -H "Filename: $(basename "$ATTACH")" \
         -H "Title: $(header_text "$TITLE")" -H "Message: $(header_text "$MESSAGE")"
     [ -n "$PRIO" ] && set -- "$@" -H "Priority: $PRIO"
     [ -n "$TAGS" ] && set -- "$@" -H "Tags: $TAGS"
@@ -212,8 +214,11 @@ $ACTIONS
 EOF
         set -- "$@" -H "Actions: $header"
     fi
-    $CURL "$@" "$NTFY_SERVER/$EVENTS_TOPIC" >/dev/null 2>&1
-    exit 0
+    if $CURL "$@" "$NTFY_SERVER/$EVENTS_TOPIC" >/dev/null 2>&1; then
+        exit 0
+    fi
+    # The upload failed (timeout, no connection): say so in plain text instead of staying silent. The buttons stay on this text.
+    MESSAGE="$MESSAGE (the attachment could not be sent)"
 fi
 
 json="{\"topic\":\"$(json_escape "$EVENTS_TOPIC")\",\"title\":\"$(json_escape "$TITLE")\",\"message\":\"$(json_escape "$MESSAGE")\""

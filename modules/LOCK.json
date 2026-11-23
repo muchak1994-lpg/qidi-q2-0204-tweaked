@@ -68,7 +68,7 @@
  "/home/qidi/printer_data/config/q2_electronics_temperature_approx.cfg": "24d73da67858a65b299be398761ff2d96e0c3e5c1531bf02519904746aa1b1ea",
  "/home/qidi/q2-notify/q2_notify_eta.py": "570c8863c653097792f0e4cb79f76604b8710093bee79948d7bf7592c2baa45c",
  "/home/qidi/q2-notify/q2_notify_listen.sh": "55d139755da57a9fbbda1a6ad61f216a4ff09e10340bbcce98a39f98da0d3b10",
- "/home/qidi/q2-notify/q2_notify_send.sh": "91289bad8288d16e2060228151461f3eed532723177936e6c62ac959e4144c9f",
+ "/home/qidi/q2-notify/q2_notify_send.sh": "1267b3fa44c3e13e2a3fdb459b576f164fb053a56a12b34aba6150d535457b81",
  "/home/qidi/q2-notify/q2_notify_video.sh": "bfb0b7df5630aa8ace8c1e00587e1b19c393274cb1102df0d23b31d0975d0aad",
  "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_ARC4.abi3.so": "53dd7c72c871ab6cf7aab397e6c725f23681120fe284790e03a6cc599a0ed85d",
  "/usr/local/bin/algo_app/_internal/Crypto/Cipher/_Salsa20.abi3.so": "6a8cd3b23d6266ff42179875257c0e3879750b6e16f0ac7402688d4070763470",

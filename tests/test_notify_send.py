@@ -20,6 +20,8 @@ FAKE_CURL = """#!/usr/bin/env python3
 import json, os, sys
 with open(os.environ["FAKE_CURL_OUT"], "a") as f:
     f.write(json.dumps(sys.argv[1:]) + "\\n")
+if "-T" in sys.argv and os.environ.get("FAKE_CURL_FAIL_UPLOAD"):
+    sys.exit(28)                      # curl: operation timed out
 if "-o" in sys.argv and not os.environ.get("FAKE_CURL_NO_DOWNLOAD"):
     with open(sys.argv[sys.argv.index("-o") + 1], "wb") as f:
         f.write(b"jpg")
@@ -209,6 +211,39 @@ class SendTests(unittest.TestCase):
         self.assertEqual(self.run_send("T", "m"), [])
         self.conf.unlink()
         self.assertEqual(self.run_send("T", "m"), [])
+
+    def test_a_big_upload_is_not_cut_off_after_one_minute(self):
+        # 23.11.2026: the 6.4 MB timelapse video needs more than 60 s from the printer's Wi-Fi; the old limit stopped it silently
+        vid = self.dir / "t.mp4"
+        vid.write_bytes(b"x" * 1000)
+        (call,) = self.run_send("Timelapse", "name", "--attach", str(vid))
+        self.assertGreaterEqual(int(call[call.index("--max-time") + 1]), 600)
+        self.assertIn("--speed-time", call)                          # a stalled upload still ends, after 30 s of nothing
+        self.assertIn("--speed-limit", call)
+
+    def test_a_refusal_from_the_server_counts_as_a_failed_upload(self):
+        # 23.11.2026: ntfy.sh answers 413 ("attachment too large, or bandwidth limit reached") to a 3 MB file; without --fail curl
+        # would end with 0 and the message would be taken for delivered
+        vid = self.dir / "t.mp4"
+        vid.write_bytes(b"x" * 1000)
+        (call,) = self.run_send("Timelapse", "name", "--attach", str(vid))
+        self.assertIn("--fail", call)
+
+    def test_a_failed_upload_still_sends_a_text_that_says_so(self):
+        vid = self.dir / "t.mp4"
+        vid.write_bytes(b"x" * 1000)
+        up, text = self.run_send("Timelapse", "my print", "--attach", str(vid), FAKE_CURL_FAIL_UPLOAD="1")
+        self.assertIn("-T", up)
+        self.assertNotIn("-T", text)
+        b = self.body(text)
+        self.assertEqual(b["title"], "Timelapse")
+        self.assertIn("my print", b["message"])
+        self.assertIn("could not be sent", b["message"])
+
+    def test_a_successful_upload_sends_no_extra_text(self):
+        vid = self.dir / "t.mp4"
+        vid.write_bytes(b"x" * 1000)
+        self.assertEqual(len(self.run_send("Timelapse", "my print", "--attach", str(vid))), 1)
 
     def test_curl_has_max_time(self):
         (call,) = self.run_send("T", "m")
