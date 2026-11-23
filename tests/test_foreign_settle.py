@@ -19,6 +19,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 MODULE = ROOT / "modules" / "ai-fixes" / "module.json"
+NOTHING = "PEI foreign object check: nothing found."
+FOUND = "PEI foreign object check: object found on the plate; waiting for Stop/Continue."
 TARGET = "/home/qidi/klipper/klippy/extras/ai_func_manager.py"
 
 
@@ -45,8 +47,9 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives):
+    def __init__(self, positives, reset_at=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
+        self.reset_at = reset_at                                     # second at which the AI zeroes its counters
         self.sd = types.SimpleNamespace(current_file=object(), file_position=0, has_run_m4050=False, must_pause_work=False,
                                         work_timer=None, do_resume=lambda: None, do_cancel=lambda: None)
         pause = types.SimpleNamespace(is_paused=False, sd_paused=False, pause_command_sent=False)
@@ -61,6 +64,8 @@ class Rig:
         self.t = max(self.t, until)
 
     def get(self, url, **kw):
+        if self.reset_at is not None and self.t >= self.reset_at:
+            return Reply({"frame_detect_pos_count": 0, "foreign_count": 0})
         frames = int(self.t)                                         # one frame per second since the start
         return Reply({"frame_detect_pos_count": 10 + frames,
                       "foreign_count": sum(1 for p in self.positives if int(p) < frames)})
@@ -84,7 +89,7 @@ class SettleTests(unittest.TestCase):
     def test_a_positive_in_the_first_seconds_is_ignored(self):
         rig = Rig(positives=[2.0])                                   # the badly exposed first frame
         m = rig.run()
-        self.assertIn("M4050: no positive detection; continuing (not proof of an empty bed).", rig.messages)
+        self.assertIn(NOTHING, rig.messages)
         self.assertFalse(rig.sd.must_pause_work)
         self.assertEqual(rig.notices, [])
         self.assertIsNone(m._foreign_preflight)
@@ -92,7 +97,7 @@ class SettleTests(unittest.TestCase):
     def test_a_positive_after_the_first_seconds_still_stops_the_print(self):
         rig = Rig(positives=[9.0])
         m = rig.run()
-        self.assertIn("M4050: foreign object detected; waiting for Stop/Continue.", rig.messages)
+        self.assertIn(FOUND, rig.messages)
         self.assertTrue(rig.sd.must_pause_work)
         self.assertEqual(len(rig.notices), 1)
         self.assertEqual(m._foreign_preflight["phase"], "held")
@@ -100,12 +105,12 @@ class SettleTests(unittest.TestCase):
     def test_the_first_seconds_do_not_hide_a_later_positive(self):
         rig = Rig(positives=[2.0, 10.0])                             # early one ignored, the real one counts
         rig.run()
-        self.assertIn("M4050: foreign object detected; waiting for Stop/Continue.", rig.messages)
+        self.assertIn(FOUND, rig.messages)
 
     def test_a_positive_straight_after_the_settle_time_counts(self):
         rig = Rig(positives=[7.0])
         rig.run()
-        self.assertIn("M4050: foreign object detected; waiting for Stop/Continue.", rig.messages)
+        self.assertIn(FOUND, rig.messages)
 
     def test_the_whole_check_does_not_take_longer_than_before(self):
         rig = Rig(positives=[])
@@ -118,6 +123,33 @@ class SettleTests(unittest.TestCase):
         rig = Rig(positives=[1.0])
         rig.run()
         self.assertEqual(rig.posts[-1][1], {"state": False})
+
+    def test_the_user_never_sees_the_internal_command_name(self):
+        for rig in (Rig(positives=[]), Rig(positives=[9.0]), Rig(positives=[], reset_at=15.0)):
+            rig.run()
+            self.assertTrue(rig.messages)
+            self.assertFalse([m for m in rig.messages if "M4050" in m], rig.messages)
+            self.assertTrue(all(m.startswith("PEI foreign object check:") for m in rig.messages), rig.messages)
+
+    def test_a_clean_check_says_plainly_that_nothing_was_found(self):
+        rig = Rig(positives=[])
+        rig.run()
+        self.assertIn(NOTHING, rig.messages)
+        self.assertFalse([m for m in rig.messages if "not proof" in m])   # no hedging: the line states what the AI reported
+
+    def test_the_result_is_also_given_when_the_ai_ends_its_own_window_and_zeroes_its_counters(self):
+        # Real print 23.11.2026: the AI's own 15 s window ended ("pei and foreign check flag off: over time") before our 20 s
+        # did, and the console showed only "inspecting" and then nothing.
+        rig = Rig(positives=[], reset_at=15.0)
+        rig.run()
+        self.assertIn(NOTHING, rig.messages)
+        self.assertEqual(rig.posts[-1][1], {"state": False})
+
+    def test_a_positive_before_the_reset_is_still_a_positive(self):
+        rig = Rig(positives=[9.0], reset_at=15.0)
+        rig.run()
+        self.assertIn(FOUND, rig.messages)
+        self.assertNotIn(NOTHING, rig.messages)
 
 
 if __name__ == "__main__":
