@@ -498,6 +498,33 @@ def load_history():
     return history
 
 
+def optional_mix_results(path):
+    """SHA-256 of `path` for every mix of OUR modules that edit it, applied to the 02.04 original.
+
+    A file that several optional modules edit (the Fluidd web page) is only recognised by hash. The installer used to
+    know the result of all modules together and of earlier releases, so a printer that has just some of the optional
+    modules (for example the drying button and the screen window without the touch button) was refused although every
+    byte was ours. Only used when the file matches nothing else."""
+    mods = [m for m in build.load_modules()
+            if path in m.get("files", {}) and m["files"][path].get("edits")
+            and "source" not in m["files"][path] and "generator" not in m["files"][path]
+            and m["files"][path].get("base") != "printer"]
+    if not mods or len(mods) > 8:
+        return set()
+    original = firmware.extract_many([path])[path]
+    found = set()
+    for mask in range(1, 1 << len(mods)):
+        data = original
+        try:
+            for i, m in enumerate(mods):
+                if mask >> i & 1:
+                    data = build.apply_edits(data, m["files"][path]["edits"], "%s: %s" % (m["id"], path))
+        except build.BuildError:
+            continue
+        found.add(sha(data))
+    return found
+
+
 OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community fixes, manual edits), put the "
                    "official 01.01.02.04 back first - re-install it from USB, see docs/RECOVERY.md option 2 - "
                    "and run the installer again."
@@ -551,7 +578,7 @@ def plan(p, selected, built=None):
             changes.append((path, new, "new", owners[path]))
         elif current == index.get(path, {}).get("sha256"):
             changes.append((path, new, "replace", owners[path]))
-        elif current in history.get(path, []):
+        elif current in history.get(path, []) or current in optional_mix_results(path):
             changes.append((path, new, "upgrade", owners[path]))  # an earlier version of ours
         else:
             problems.append("%s is neither the 02.04 original nor a version of ours (its SHA-256 is %s)" % (path, current))

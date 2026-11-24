@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Installer: a Fluidd web page (`index.html`) with just SOME of our optional modules (for example the drying button and the screen window without the touch button) was refused with "neither the 02.04 original nor a version of ours", although every byte was ours; the installer knew only the result of all modules together and of earlier releases. It now also accepts every mix of our modules that edit that file (found by a user: his file is the original plus the two script tags, SHA-256 214c6c1a...). Tested with synthetic modules and with the real files offline; not yet seen on his printer. A file with anything else in it is still refused.
 - `fluidd-console-filters`: the filter for the screen-state echo never matched (Fluidd adds the `$ ` in front of a command only when it draws the line, the filters see the raw text); it now looks for `SMART_STATUS MODE=`. The installer replaces the old value, but only when it is exactly the one this project shipped before; a value you wrote stays. Labels of existing filters are refreshed too (switch on/off is never touched). Not yet seen on a printer.
 - New module `update-notice` (installed by default, `--skip update-notice` leaves it out): once a day the printer asks GitHub for the latest published release
   (one HTTPS request, generic name `q2-update-notice`, nothing about you) and, when it is newer than the installed version, shows one

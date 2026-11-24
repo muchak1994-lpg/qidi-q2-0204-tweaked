@@ -350,6 +350,31 @@ class InstallTest(unittest.TestCase):
         install.do_uninstall(self.p, backup)
         self.assertEqual(self.p.db[key], '"mine"')  # exactly the earlier value, not the factory one
 
+    def test_any_mix_of_our_optional_modules_on_one_file_counts_as_ours(self):
+        # Two optional modules edit the same web file. A printer that has only A+B (not C) is ours, not a stranger's file -
+        # the installer used to know only the result of ALL modules, so such a printer was refused (a user's report).
+        path = "/home/qidi/fluidd/index.html"
+        STOCK[path] = b"<head>" + bytes([10]) + b"<script main></script>" + bytes([10]) + b"</head>" + bytes([10])
+        anchor = "<script main></script>"
+        mods = [{"id": n, "order": i, "files": {path: {"edits": [[anchor, "<script %s></script>%s" % (n, anchor)]]}}}
+                for i, n in enumerate(("a", "b", "c"), 1)]
+        try:
+            ab = build.build(mods[:2], stock_reader=lambda p: STOCK[p])[0][path]
+            self.p.files[path] = [ab, "qidi", "qidi", "644"]
+            saved = install.build.load_modules
+            install.build.load_modules = lambda: mods
+            try:
+                built = build.build(mods[:1], stock_reader=lambda p: STOCK[p])  # the installer runs with A only
+                changes = {c[0]: c for c in install.plan(self.p, mods[:1], built=built)}
+                self.assertEqual(changes[path][2], "upgrade")
+                self.p.files[path] = [b"<head>by hand</head>", "qidi", "qidi", "644"]  # a real stranger still stops it
+                with self.assertRaisesRegex(install.InstallError, "neither the 02.04 original"):
+                    install.plan(self.p, mods[:1], built=built)
+            finally:
+                install.build.load_modules = saved
+        finally:
+            STOCK.pop(path, None)
+
     def test_upgrade_from_an_earlier_version_of_ours(self):
         fan = "/home/qidi/klipper/klippy/extras/fan.py"
         cfg = "/home/qidi/printer_data/config/printer.cfg"
