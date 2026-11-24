@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+## 1.4.0 - 2026-11-24
+Sixth release: the installer is simpler and less strict about our own files. Everything else is as in 1.3.2. Seen on the author's printer: the installer change (below); the rest of the testing status is that of 1.3.2 - not yet tested in a real print are the brightness gate in the dark, a print on another kernel or with swap, and prints of 10 hours or more.
+
 - Installer, simpler and less strict about OUR files: a text file that our modules edit (the Fluidd web page, Klipper and Moonraker `.py` files) is now also accepted when it is the 02.04 original everywhere EXCEPT in the places our modules edit, whatever stands in those places. Until now such a file had to match the SHA-256 of a result we had produced, so a printer with only some of the optional modules, or with an older release of one edit, was refused (found by a user). The hash list stays as the first, quick check and is still used for the binary files; this is only a second check after it, so nothing that was accepted before is refused now. A change anywhere else in the file (another tool, a hand edit, a different Fluidd) still stops the installer. Checked offline on the real 02.04 files: every file that releases 1.0.0 to 1.3.2 can produce, for each module alone and for all together (246 files), is recognised; 600 random single-byte changes outside our places are all refused. Tried on the author's printer (24.11.2026): `index.html` set to the file of the user's report (original plus drying and screen-view scripts, SHA-256 214c6c1a...), `plan` with the full set and without the screen modules both accepted it as ours, and a normal install put the file back to the all-modules version (same SHA-256 as before the test).
 
 ## 1.3.2 - 2026-11-24
