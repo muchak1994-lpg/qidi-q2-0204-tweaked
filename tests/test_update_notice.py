@@ -187,7 +187,7 @@ class SafetyTest(Case):
         self.fake.release_status = 200
         self.assertEqual(n.step(n.next_fetch + 1), "announced")
 
-    def test_one_request_per_day_not_more(self):
+    def test_one_request_per_interval_not_more(self):
         n = self.notice()
         self.assertEqual(self.due(n), "announced")
         gets = [h for h in self.fake.hits if h[1].startswith("/release")]
@@ -196,7 +196,7 @@ class SafetyTest(Case):
         self.assertEqual(n.step(t - 1), "waiting")
         self.assertEqual(len([h for h in self.fake.hits if h[1].startswith("/release")]), 1)
         self.assertGreaterEqual(n.next_fetch - (t - self.m.CHECK_EVERY), 0)
-        self.assertGreaterEqual(self.m.CHECK_EVERY, 20 * 3600)
+        self.assertEqual(self.m.CHECK_EVERY, 12 * 3600)  # twice a day; never more often than that
 
     def test_request_carries_nothing_about_the_owner(self):
         self.due(self.notice())

@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- `update-notice` looks for a new release every 12 hours instead of once a day (still one small request to GitHub's public 'latest release' address each time; a new release is shown at most one message per version, as before). Tested offline; takes effect when the module is installed.
 
 ## 1.4.0 - 2026-11-24
 Sixth release: the installer is simpler and less strict about our own files. Everything else is as in 1.3.2. Seen on the author's printer: the installer change (below); the rest of the testing status is that of 1.3.2 - not yet tested in a real print are the brightness gate in the dark, a print on another kernel or with swap, and prints of 10 hours or more.

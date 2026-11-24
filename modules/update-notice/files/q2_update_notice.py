@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
-"""update-notice: once a day asks GitHub for the latest release of this project and, when it is newer than the version
+"""update-notice: every 12 hours asks GitHub for the latest release of this project and, when it is newer than the version
 installed on the printer, shows ONE message per release (red line in the Fluidd console, the window on the printer screen
 and, when phone-notifications is installed, a phone message). It never downloads or installs anything.
 
@@ -24,7 +24,7 @@ MOONRAKER = "http://127.0.0.1:7125"
 STATE_DIR = "/var/lib/q2-update-notice"
 USER_AGENT = "q2-update-notice"
 FIRST_DELAY = 300        # seconds after the service starts before the first look
-CHECK_EVERY = 24 * 3600  # one request per day
+CHECK_EVERY = 12 * 3600  # one request every 12 hours
 RETRY_FETCH = 3600       # GitHub did not answer: try again in an hour
 BUSY_RETRY = 600         # a print is running (or Moonraker is silent): ask again in 10 minutes
 LOOP_SECONDS = 10
