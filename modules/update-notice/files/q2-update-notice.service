@@ -1,0 +1,19 @@
+[Unit]
+Description=QIDI Q2 - tell the owner once when a newer Tweaked release exists (optional)
+After=local-fs.target network-online.target moonraker.service
+
+[Service]
+Type=simple
+# No root needed: it only asks GitHub and Moonraker and writes its own small state folder.
+User=qidi
+StateDirectory=q2-update-notice
+Environment=Q2_UPDATE_DIR=/var/lib/q2-update-notice
+ExecStartPre=+/bin/cp /usr/local/lib/q2-update-notice/VERSION /var/lib/q2-update-notice/VERSION
+ExecStart=/usr/bin/python3 /usr/local/lib/q2-update-notice/q2_update_notice.py
+Restart=on-failure
+RestartSec=60
+Nice=19
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=multi-user.target

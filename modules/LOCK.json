@@ -13,6 +13,7 @@
  "/etc/systemd/system/q2-notify-listen.service": "d57bee3e9dcc2b91951fa4393b3c36d9633bd5cac6fb790c9bdd7ad9c64e4e39",
  "/etc/systemd/system/q2-screen-touch.service": "10367862ff675321c6c0ba3c83b963e3bf7adbc52d41ba686c36bebc60d9acab",
  "/etc/systemd/system/q2-screen.service": "9ee288929daeac08a44f667f1f179018a2b61150c36a9cdfd7a52f4aff9fe568",
+ "/etc/systemd/system/q2-update-notice.service": "77f11142e47eaf8a7ed61513be818c838e18a2442bbc799707672a7c583dae3c",
  "/etc/systemd/system/qidi-tuning.service.d/q2-calm.conf": "ca9e2c336c1a7579866a1284801a94a4e15d75a566c30ac2d4985fd34ad06237",
  "/home/qidi/QIDI_Client/bin/qidiclient": "06e0473e2cd1c494b5984d77b1db623a4955f5ff21764182a0b2c5915fe3dab7",
  "/home/qidi/fix-fluidd-upload-print.sh": "0ef45fcfb5e2e2aa8e0c4e83d6e3448449a6d527a0a7e59e64be990079dfa5db",
@@ -228,5 +229,7 @@
  "/usr/local/bin/algo_app/main": "7a28cb9843188c2a7e45d22396a2aa6fe739f85e53d8d3365a09b3bb1154293c",
  "/usr/local/lib/q2-algo-recycle/q2_algo_recycle.sh": "214283bba70164e005c17e3d8ddfd7c9173c3dc4277cd1bf89099008dc2980bc",
  "/usr/local/lib/q2-screen/q2_screen.py": "a2fe4b564a7cb54ca30cbb2fc2202493c4d6a26470b7829c0bffc2cf16a6fd92",
- "/usr/local/lib/q2-screen/q2_touch.py": "acc299816bcb415a459a85729f9793e683c1388096778cd46877f4d5df8c8c68"
+ "/usr/local/lib/q2-screen/q2_touch.py": "acc299816bcb415a459a85729f9793e683c1388096778cd46877f4d5df8c8c68",
+ "/usr/local/lib/q2-update-notice/VERSION": "10e2e117b01523891ca271a615ae36e9d5e52348fd7d642f66727602c1b8dcbe",
+ "/usr/local/lib/q2-update-notice/q2_update_notice.py": "6c872d62926ec7ef1bcf4a4610059d2ea3a14557bfd4f66f17cbaabfcc7bd586"
 }

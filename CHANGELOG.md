@@ -1,6 +1,12 @@
 # Changelog
 
 ## Unreleased
+- New optional module `update-notice` (`--with update-notice`): once a day the printer asks GitHub for the latest published release
+  (one HTTPS request, generic name `q2-update-notice`, nothing about you) and, when it is newer than the installed version, shows one
+  message per release (Fluidd console, printer screen, and phone when phone-notifications is installed): "New TWEAKED version X.Y.Z
+  (currently A.B.C). Download and install with the help of a computer." It never downloads or installs anything, never speaks during a
+  print, accepts only plain-digit tags, and has an off switch file. Tested offline against fake GitHub and Moonraker servers (19 tests);
+  not installed on a printer yet. Release step: `modules/update-notice/files/VERSION` must equal `VERSION` (a test checks it).
 - New optional module `algo-app-stream-decrypt` (`--with algo-app-stream-decrypt`): the AI service decrypts its 44.6 MB model block by block
   (1 MiB) instead of holding three whole copies for a moment (about 134 MB more than needed when the model is loaded in a print's second layer;
   worked out from the service's code, not measured). Same key, cipher and result file, byte for byte; a replacement for that one method, applied
