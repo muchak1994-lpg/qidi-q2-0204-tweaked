@@ -1,8 +1,8 @@
 {
  "id": "update-notice",
  "order": 160,
- "default": false,
- "title": "The printer tells you once when a newer Tweaked release exists (optional)",
+ "default": true,
+ "title": "The printer tells you once when a newer Tweaked release exists",
  "files": {
   "/usr/local/lib/q2-update-notice/q2_update_notice.py": {
    "source": "files/q2_update_notice.py"
@@ -31,5 +31,5 @@
    "q2-update-notice.service"
   ]
  ],
- "note": "OPTIONAL. Install with: --with update-notice. Once a day (the first look 5 minutes after the service starts) the printer asks GitHub for the latest published release of this project - one HTTPS request to the public 'latest release' address, with the generic name 'q2-update-notice', nothing about you or the printer. When that release is newer than the version installed here, it shows ONE message per release: a red line in the Fluidd console, the window on the printer screen and, when phone-notifications is installed, a phone message (no buttons): 'New TWEAKED version X.Y.Z (currently A.B.C). Download and install with the help of a computer.' It never downloads or installs anything: updating stays a manual step from the PC. Never while a print runs or is paused (it asks again every 10 minutes), a silent Moonraker counts as busy, drafts and pre-releases are ignored, and only a tag of plain digits is accepted, so nothing from the internet reaches a G-code line. The version it compares with is the file /usr/local/lib/q2-update-notice/VERSION, which is written by the installer together with the module (so it is as current as your last install). Off switch without uninstalling: create the file /var/lib/q2-update-notice/disabled (sudo touch). Uses ~10 MB while it runs (a Python loop that sleeps). Uninstall removes the service and the files."
+ "note": "Installed by default (leave it out with --skip update-notice). Once a day (the first look 5 minutes after the service starts) the printer asks GitHub for the latest published release of this project - one HTTPS request to the public 'latest release' address, with the generic name 'q2-update-notice', nothing about you or the printer. When that release is newer than the version installed here, it shows ONE message per release: a red line in the Fluidd console, the window on the printer screen and, when phone-notifications is installed, a phone message (no buttons): 'New TWEAKED version X.Y.Z (currently A.B.C). Download and install with the help of a computer.' It never downloads or installs anything: updating stays a manual step from the PC. Never while a print runs or is paused (it asks again every 10 minutes), a silent Moonraker counts as busy, drafts and pre-releases are ignored, and only a tag of plain digits is accepted, so nothing from the internet reaches a G-code line. The version it compares with is the file /usr/local/lib/q2-update-notice/VERSION, which is written by the installer together with the module (so it is as current as your last install). Off switch without uninstalling: create the file /var/lib/q2-update-notice/disabled (sudo touch). Uses ~10 MB while it runs (a Python loop that sleeps). Uninstall removes the service and the files."
 }

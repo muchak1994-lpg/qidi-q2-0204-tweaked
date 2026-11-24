@@ -239,7 +239,7 @@ class ModuleTest(unittest.TestCase):
 
     def test_module_json_and_files(self):
         m = json.loads((MOD / "module.json").read_text(encoding="utf-8"))
-        self.assertFalse(m["default"])
+        self.assertTrue(m["default"])  # on for everyone; --skip update-notice leaves it out
         self.assertEqual(set(m["files"]), {
             "/usr/local/lib/q2-update-notice/q2_update_notice.py",
             "/usr/local/lib/q2-update-notice/VERSION",

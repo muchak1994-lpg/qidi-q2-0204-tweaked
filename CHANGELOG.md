@@ -1,7 +1,7 @@
 # Changelog
 
 ## Unreleased
-- New optional module `update-notice` (`--with update-notice`): once a day the printer asks GitHub for the latest published release
+- New module `update-notice` (installed by default, `--skip update-notice` leaves it out): once a day the printer asks GitHub for the latest published release
   (one HTTPS request, generic name `q2-update-notice`, nothing about you) and, when it is newer than the installed version, shows one
   message per release (Fluidd console, printer screen, and phone when phone-notifications is installed): "New TWEAKED version X.Y.Z
   (currently A.B.C). Download and install with the help of a computer." It never downloads or installs anything, never speaks during a
