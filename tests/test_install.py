@@ -391,6 +391,16 @@ class InstallTest(unittest.TestCase):
         with self.assertRaises(install.InstallError):
             install.plan(self.p, MODS, built=self.built)
 
+    def test_unknown_file_message_helps_to_find_the_cause(self):
+        odd = b"someone else's version\r\n"
+        self.p.files["/home/qidi/klipper/klippy/extras/fan.py"][0] = odd
+        with self.assertRaises(install.InstallError) as ctx:
+            install.plan(self.p, MODS, built=self.built)
+        text = str(ctx.exception)
+        self.assertIn(sha(odd), text)  # the SHA-256 of the file as found, so a report can be compared with QIDI's original
+        self.assertIn("half-restored", text)  # the version check only reads a manifest file
+        self.assertIn("RECOVERY", text)
+
     def test_busy_printer_is_refused(self):
         install.check_printer(self.p)
         for state in ("printing", "paused"):

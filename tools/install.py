@@ -500,7 +500,11 @@ def load_history():
 
 OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community fixes, manual edits), put the "
                    "official 01.01.02.04 back first - re-install it from USB, see docs/RECOVERY.md option 2 - "
-                   "and run the installer again.")
+                   "and run the installer again."
+                   "\nIt can also be a half-restored printer: the version check only reads a manifest file, so a printer "
+                   "that was restored with another tool, or went back from 01.01.03.x, can pass it while some files "
+                   "(for example the Fluidd web files) still come from another version. If you report this, include the "
+                   "SHA-256 above and what System > Version shows on the screen.")
 
 
 class Plan(list):
@@ -550,7 +554,7 @@ def plan(p, selected, built=None):
         elif current in history.get(path, []):
             changes.append((path, new, "upgrade", owners[path]))  # an earlier version of ours
         else:
-            problems.append("%s is neither the 02.04 original nor a version of ours" % path)
+            problems.append("%s is neither the 02.04 original nor a version of ours (its SHA-256 is %s)" % (path, current))
     for m in selected:
         g = m.get("generate")
         if g and g.get("kind") == "ethernet-mac":

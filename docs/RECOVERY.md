@@ -48,6 +48,8 @@ original.
 
 ## Option 3 – full reflash, then updates **only up to 01.01.02.04**
 
+> **This is not the USB-stick update of option 2.** Option 3 *erases and rewrites the printer's storage* (eMMC): either with the module taken out of the printer, or over the USB-C port on the mainboard with a special tool, which first needs the processor in a flashing mode. It is for a printer that does not start, not for an installer message. Only the later steps (1.0.x → 1.1.1 → … → 01.01.02.04) use a USB stick like option 2. If you are unsure, stay with option 1 or 2, and do not mix this with other restore tools.
+
 A reflashed eMMC starts at firmware **1.0.x** (the guides' text says 1.0.0, but their screenshots and the current image are 1.0.1). QIDI's wiki says to update in this exact order, because
 skipping a step can (rarely) damage the SOC board:
 

@@ -45,6 +45,8 @@ QIDI pozwala wgrać **tę samą** wersję jeszcze raz. Wszystkie pliki QIDI z pa
 
 ## Opcja 3 – pełny reflash, potem aktualizacje **tylko do 01.01.02.04**
 
+> **To nie jest aktualizacja z pendrive'a z opcji 2.** Opcja 3 *kasuje i zapisuje od nowa pamięć drukarki* (eMMC): albo po wyjęciu modułu z drukarki, albo przez port USB-C na płycie głównej specjalnym narzędziem, które wymaga najpierw trybu flashowania procesora. To na wypadek drukarki, która się nie uruchamia, a nie na komunikat instalatora. Dopiero kolejne kroki (1.0.x → 1.1.1 → … → 01.01.02.04) używają pendrive'a jak opcja 2. Jeśli nie masz pewności, zostań przy opcji 1 lub 2 i nie mieszaj tego z innymi narzędziami do przywracania.
+
 Po reflashu eMMC drukarka startuje z firmware **1.0.x** (tekst poradników mówi o 1.0.0, ale ich zrzuty ekranu i aktualny obraz to 1.0.1). Wiki QIDI każe aktualizować dokładnie w tej kolejności,
 bo pominięcie kroku może (rzadko) uszkodzić płytkę SOC:
 
