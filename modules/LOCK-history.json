@@ -231,5 +231,8 @@
  "/usr/local/lib/q2-screen/q2_touch.py": [
   "c5f369c925a04795369f206bc83f64e445fc866df507e5613eb565790e26b811",
   "e5b57441512b0860ef7b69a5c8758865c38b76c2513fd5de903bfa1edddcb90c"
+ ],
+ "/usr/local/lib/q2-update-notice/VERSION": [
+  "10e2e117b01523891ca271a615ae36e9d5e52348fd7d642f66727602c1b8dcbe"
  ]
 }

@@ -6,7 +6,7 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 > **Projekt nieoficjalny.** Niezwiązany z QIDI Technology, nieautoryzowany i niewspierany przez QIDI. Używasz na własne ryzyko. Miej pod ręką oficjalną paczkę firmware, żeby zawsze móc wrócić do wersji fabrycznej.
 
-> **Stan: 1.3.1.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; każdy moduł został zainstalowany (i zaktualizowany) tym instalatorem na drukarce autora, instalator jest testowany bez drukarki, na symulowanej drukarce, a pełna instalacja przeszła na świeżo zreflashowanej drukarce (14.11.2026). Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
+> **Stan: 1.3.2.** Wszystkie moduły budują się z oficjalnych paczek i zgadzają co do bajtu z przetestowaną drukarką; każdy moduł został zainstalowany (i zaktualizowany) tym instalatorem na drukarce autora, instalator jest testowany bez drukarki, na symulowanej drukarce, a pełna instalacja przeszła na świeżo zreflashowanej drukarce (14.11.2026). Zobacz [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ## Co naprawia
 

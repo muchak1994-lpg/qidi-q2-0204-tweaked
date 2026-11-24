@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+
+## 1.3.2 - 2026-11-24
+Fifth release. Contains a fix for a user's installer problem, new optional modules and the first real print with them. Seen in a real print on the author's printer (24.11.2026, 1 h PLA tube, stock kernel, old `q2-algo-recycle` off): the model loaded in blocks, the model released 2 min after the end, the "PEI foreign object check" lines (at the start of the print: "looking at the plate" / "nothing found"), the phone messages at start, 25/50/75 % with photo buttons, the timelapse video, and the Fluidd console without the echo lines. Lowest free memory 85 MB (81 MB just after the end), no OOM, no restart. NOT tested in a real print yet: the brightness gate in the dark, a print on another kernel or with swap, long prints (10 h and more), the new short screen line on a real screen change, the installer fix on the user's printer (tested offline, with his file's exact SHA-256).
+
 - Installer: a Fluidd web page (`index.html`) with just SOME of our optional modules (for example the drying button and the screen window without the touch button) was refused with "neither the 02.04 original nor a version of ours", although every byte was ours; the installer knew only the result of all modules together and of earlier releases. It now also accepts every mix of our modules that edit that file (found by a user: his file is the original plus the two script tags, SHA-256 214c6c1a...). Tested with synthetic modules and with the real files offline; not yet seen on his printer. A file with anything else in it is still refused.
 - `fluidd-console-filters`: the filter for the screen-state echo never matched (Fluidd adds the `$ ` in front of a command only when it draws the line, the filters see the raw text); it now looks for `SMART_STATUS MODE=`. The installer replaces the old value, but only when it is exactly the one this project shipped before; a value you wrote stays. Labels of existing filters are refreshed too (switch on/off is never touched). Not yet seen on a printer.
 - New module `update-notice` (installed by default, `--skip update-notice` leaves it out): once a day the printer asks GitHub for the latest published release
@@ -8,14 +12,14 @@
   message per release (Fluidd console, printer screen, and phone when phone-notifications is installed): "New TWEAKED version X.Y.Z
   (currently A.B.C). Download and install with the help of a computer." It never downloads or installs anything, never speaks during a
   print, accepts only plain-digit tags, and has an off switch file. Tested offline against fake GitHub and Moonraker servers (19 tests);
-  not installed on a printer yet. Release step: `modules/update-notice/files/VERSION` must equal `VERSION` (a test checks it).
+  installed on the author's printer and seen on 24.11 with a faked lower version: phone message, window on the printer screen and red line in the Fluidd console; never yet with a really newer release. Release step: `modules/update-notice/files/VERSION` must equal `VERSION` (a test checks it).
 - New optional module `algo-app-stream-decrypt` (`--with algo-app-stream-decrypt`): the AI service decrypts its 44.6 MB model block by block
   (1 MiB) instead of holding three whole copies for a moment (about 134 MB more than needed when the model is loaded in a print's second layer;
   worked out from the service's code, not measured). Same key, cipher and result file, byte for byte; a replacement for that one method, applied
   inside the service after QIDI's module is imported (no file of QIDI's is edited), only when the method still looks exactly as expected, and QIDI's
   own method does the job if anything goes wrong. Tested offline (26 tests, including real AES). The block-by-block part is installed on the author's
-  printer (hook seen in the service's log, the model load itself not yet seen in a print).
-  Second part of the same module (separate off switch `Q2_STREAM_RELEASE=off`, written and tested offline with a fake clock, NOT installed yet): the
+  printer; seen in a real print on 24.11.2026: the model was loaded in 43 blocks of at most 1 MiB (44.6 MB) in the print's second layer. Lowest free memory of that 1 h print was 85 MB, inside the range of earlier prints of the same length, so this is NOT a proof of a gain.
+  Second part of the same module (separate off switch `Q2_STREAM_RELEASE=off`, tested offline with a fake clock; installed, and seen in the same print: "noodle model released after the print (process memory 177 -> 135 MB)" 2 min 4 s after the end): the
   service gives the noodle model back 120 s after a print (QIDI's own `detector_release()`, garbage collection, `malloc_trim`) instead of keeping
   ~100 MB until a restart; never while printing, paused or starting a print; a QIDI change to the objects it looks at makes it do nothing.
 - Ghidra scripts used for the screen-program audit are now in `tools/ghscripts/` (four small scripts and a README; no QIDI code or binary).
