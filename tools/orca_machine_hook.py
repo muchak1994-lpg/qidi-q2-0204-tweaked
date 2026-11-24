@@ -25,20 +25,23 @@ MACHINES = REPO / "orca-profiles" / "machine"
 # PETG 75 and PA 25 are the owner's choice (PA: a little air exchange, the chamber stays warm).
 # Types not listed here get no fan line (the end G-code switches the fan off after the print).
 FAN_GROUPS = {
-    100: ("PLA", "PLA+", "PLA-CF", "PLA-AERO", "PLA Silk", "TPU", "TPU-AMS"),
+    100: ("TPU", "TPU-AMS"),   # plus EVERY type starting with PLA, see PREFIX_100
     75: ("PETG", "PETG-CF", "PETG HF", "PET-CF", "PCTG", "PCTG-CF", "PCTG-GF"),
     25: ("PA", "PA6", "PA-CF", "PA-GF", "PA6-CF", "PPA-CF", "PPA-GF"),
     0: ("ABS", "ABS-GF", "ASA", "ASA-AERO", "ASA-CF", "PC"),
 }
+# Every filament type starting with PLA (PLA, PLA+, PLA Silk, PLA-HF, ...) gets 100 %. OrcaSlicer's =~ needs the whole string to match.
+PREFIX_100 = 'filament_type[initial_tool] =~ /^PLA.*/'
 FAN = {ftype: speed for speed, types in FAN_GROUPS.items() for ftype in types}
 
 
 def machine_fan_gcode():
     """before_layer_change_gcode: sets the chamber fan before the first layer from the filament type.
-    Checked by slicing with OrcaSlicer 2.5.2: PLA -> S255, PETG -> S191, PA -> S64, ABS/ASA/PC -> nothing."""
+    Checked by slicing with OrcaSlicer 2.5.2: any PLA* -> S255, PETG -> S191, PA -> S64, ABS/ASA/PC -> nothing."""
     lines = ["{if layer_num == 0}"]
     for i, pct in enumerate(sorted({s for s in FAN.values() if s}, reverse=True)):
-        cond = " or ".join('filament_type[initial_tool] == "%s"' % t for t, s in FAN.items() if s == pct)
+        conds = ['filament_type[initial_tool] == "%s"' % t for t, s in FAN.items() if s == pct]
+        cond = " or ".join(([PREFIX_100] if pct == 100 else []) + conds)
         lines.append("{%s %s}" % ("if" if i == 0 else "elsif", cond))
         lines.append("M106 P3 S%d" % round(pct * 2.55))
     return "\n".join(lines + ["{endif}", "{endif}"])

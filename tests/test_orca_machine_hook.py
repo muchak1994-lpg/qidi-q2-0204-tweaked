@@ -26,11 +26,20 @@ class MachineHookTest(unittest.TestCase):
     def test_hook_values(self):
         g = hook.machine_fan_gcode()
         self.assertEqual(g.count("{if layer_num == 0}"), 1)  # once, before the first layer
-        for fan, ftype in ((255, "PLA"), (191, "PETG"), (64, "PA")):
+        for fan, ftype in ((255, "/^PLA"), (191, '"PETG"'), (64, '"PA"')):
             block = g.split("M106 P3 S%d" % fan)[0].rsplit("{", 1)[1]
-            self.assertIn('"%s"' % ftype, block)
+            self.assertIn(ftype, block)
         for ftype in ("ABS", "ASA", "PC"):  # these heat the chamber: no fan line
             self.assertNotIn('"%s"' % ftype, g)
+
+    def test_every_type_starting_with_pla_gets_the_fan(self):
+        g = hook.machine_fan_gcode()
+        # Orca's =~ needs the whole string to match, so the pattern ends in .*
+        self.assertIn('filament_type[initial_tool] =~ /^PLA.*/', g)
+        block = g.split("M106 P3 S255")[0].rsplit("{", 1)[1]
+        self.assertIn("=~", block)  # the regex sits in the 100 % branch
+        for ftype in ("TPU", "TPU-AMS"):  # other 100 % types stay exact names
+            self.assertIn('== "%s"' % ftype, block)
 
     def test_no_filament_profiles_are_shipped(self):
         self.assertFalse((REPO / "orca-profiles" / "filament").exists())
