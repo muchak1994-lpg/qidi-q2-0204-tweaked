@@ -34,6 +34,9 @@ print yet: the brightness gate in the dark, the new "PEI foreign object check" l
 on a printer, and the chamber-fan code from the OrcaSlicer printer profiles on a printer (only the first filament counts; a Box with mixed
 materials is not handled).
 
+- `fluidd-console-filters`: two more hidden lines, the echo of the phone-message command (`RUN_SHELL_COMMAND CMD=q2_notify ...`, with the raw
+  message text) and of the update notice's `RESPOND TYPE=error MSG="New TWEAKED version ...` (the red line with the message stays). Seen in
+  Fluidd's console on 24.11.2026; the new filters themselves are not yet seen working on a printer.
 - New module `fluidd-console-filters`: hides two internal lines in Fluidd's console, the echo of the timelapse's per-frame command
   (`MACRO=TIMELAPSE_TAKE_FRAME VARIABLE=takingframe`, one per layer) and the AI service's status code
   (`SAVE_VARIABLE ... qdc_ai_error_code`, e.g. `noodle=0 status=0`, written when the service restarts). Two "contains" filters in Fluidd's

@@ -535,6 +535,17 @@ class ConsoleFilterTest(unittest.TestCase):
     def ids(self, p):
         return [f["id"] for f in json.loads(p.db[self.KEY])]
 
+    def test_shipped_module_hides_the_notify_and_update_commands_but_not_the_message(self):
+        m = json.loads((Path(__file__).resolve().parent.parent / "modules" / "fluidd-console-filters" / "module.json")
+                       .read_text(encoding="utf-8"))
+        filters = json.loads(m["actions"][0][1])
+        self.assertEqual([f["id"] for f in filters], ["tweaked-timelapse-frame", "tweaked-ai-code",
+                                                       "tweaked-notify-echo", "tweaked-update-echo"])
+        hidden = lambda line: any(f["value"] in line for f in filters)
+        self.assertTrue(hidden("$ RUN_SHELL_COMMAND CMD=q2_notify PARAMS=\"--tsv 'x'\""))
+        self.assertTrue(hidden('$ RESPOND TYPE=error MSG="New TWEAKED version 1.4.0 (currently 1.3.1). Download."'))
+        self.assertFalse(hidden("!! New TWEAKED version 1.4.0 (currently 1.3.1). Download and install with the help of a computer."))
+
     def test_fresh_printer_gets_both_filters_as_contains_and_enabled(self):
         p = FakePrinter({})
         install.do_install(p, self.mods, [], "h", backups=self.tmp)
