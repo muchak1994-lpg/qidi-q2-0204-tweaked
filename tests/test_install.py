@@ -540,10 +540,14 @@ class ConsoleFilterTest(unittest.TestCase):
                        .read_text(encoding="utf-8"))
         filters = json.loads(m["actions"][0][1])
         self.assertEqual([f["id"] for f in filters], ["tweaked-timelapse-frame", "tweaked-ai-code",
-                                                       "tweaked-notify-echo", "tweaked-update-echo"])
+                                                       "tweaked-notify-echo", "tweaked-update-echo",
+                                                       "tweaked-smart-status-echo", "tweaked-smart-status-state"])
         hidden = lambda line: any(f["value"] in line for f in filters)
         self.assertTrue(hidden("$ RUN_SHELL_COMMAND CMD=q2_notify PARAMS=\"--tsv 'x'\""))
         self.assertTrue(hidden('$ RESPOND TYPE=error MSG="New TWEAKED version 1.4.0 (currently 1.3.1). Download."'))
+        self.assertTrue(hidden("$ SMART_STATUS MODE=1 SCREEN=0"))
+        self.assertTrue(hidden("// SMART_STATUS state updated: MODE=1, SCREEN=0, TIMELAPSE=1"))
+        self.assertFalse(hidden("// Light sync: screen OFF, standby, AI=1, timelapse=1 -> LIGHT=OFF"))
         self.assertFalse(hidden("!! New TWEAKED version 1.4.0 (currently 1.3.1). Download and install with the help of a computer."))
 
     def test_fresh_printer_gets_both_filters_as_contains_and_enabled(self):

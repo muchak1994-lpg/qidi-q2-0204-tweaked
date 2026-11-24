@@ -34,6 +34,10 @@ print yet: the brightness gate in the dark, the new "PEI foreign object check" l
 on a printer, and the chamber-fan code from the OrcaSlicer printer profiles on a printer (only the first filament counts; a Box with mixed
 materials is not handled).
 
+- Console: every screen on/off change printed three lines (`$ SMART_STATUS ...`, `// SMART_STATUS state updated ...` and the light line). Now it is
+  one: the two SMART_STATUS lines are hidden by `fluidd-console-filters`, and `console-english` shortens the light line from
+  `[smart_output_pin caselight] Lighting sync: SCREEN=OFF, PRINT=standby, AI=1, TIMELAPSE=1 -> LIGHT=OFF` to
+  `Light sync: screen OFF, standby, AI=1, timelapse=1 -> LIGHT=OFF` (same values; MODE is always 1 when this line appears). Not yet seen on a printer.
 - `fluidd-console-filters`: two more hidden lines, the echo of the phone-message command (`RUN_SHELL_COMMAND CMD=q2_notify ...`, with the raw
   message text) and of the update notice's `RESPOND TYPE=error MSG="New TWEAKED version ...` (the red line with the message stays). Seen in
   Fluidd's console on 24.11.2026; the new filters themselves are not yet seen working on a printer.

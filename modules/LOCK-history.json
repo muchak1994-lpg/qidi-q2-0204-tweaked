@@ -113,6 +113,9 @@
   "82db07d1ee12b8c42fdc712e267c2441594f49f5e8d8fb8f17e5e28a429b9721",
   "cc673176b03bc1168b08f23b664ff1c013393a6275674a3317bfd829b9d4cd2b"
  ],
+ "/home/qidi/klipper/klippy/extras/smart_output_pin.py": [
+  "065a5a31032a6aa4e4532cc1ce0003f81ccff541d3a162ea396fc7ce5b9bc88a"
+ ],
  "/home/qidi/klipper/klippy/extras/virtual_sdcard.py": [
   "12b102e0031654f82efb6276b007aa486dd7fb351e0856ba79e36a83b9f2f959",
   "636295b63fbf5718622d3a6102a38a4c62188e3d3dde16ca6d260af786100991"

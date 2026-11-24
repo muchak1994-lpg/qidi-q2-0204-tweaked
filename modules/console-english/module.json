@@ -8,7 +8,7 @@
    "edits": [
     [
      "        self.gcode.respond_info(\r\n            f\"[{self.name}] 照明同步: SCREEN={'亮' if screen else '熄'}, \"\r\n            f\"PRINT={printer_state}, AI={ai_enabled}, TIMELAPSE={timelapse} \"\r\n",
-     "        self.gcode.respond_info(\r\n            f\"[{self.name}] Lighting sync: SCREEN={'ON' if screen else 'OFF'}, \"\r\n            f\"PRINT={printer_state}, AI={ai_enabled}, TIMELAPSE={timelapse} \"\r\n"
+     "        self.gcode.respond_info(\r\n            f\"Light sync: screen {'ON' if screen else 'OFF'}, \"\r\n            f\"{printer_state}, AI={ai_enabled}, timelapse={timelapse} \"\r\n"
     ]
    ]
   },
