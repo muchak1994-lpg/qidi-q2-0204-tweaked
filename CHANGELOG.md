@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Docs: the module list in `docs/FIXES.md` and `docs/FIXES.pl.md` was missing nine modules (`algo-app-gate`, `algo-app-malloc`, `algo-app-oom-priority`, `algo-app-recycle`, `algo-app-stream-decrypt`, `printer-screen-view`, `printer-screen-touch`, `update-notice`, `maintenance-reminders`); they are listed now, with what was and was not seen on a printer. The README module count (71) was out of date: 80 modules, 72 installed by default and 8 optional. Corrections to the 1.3.2 notes below: both the console filter for the screen-state echo and the new short screen line (`Light sync: screen OFF, ...`) were seen on 24.11.2026 in Fluidd's console after the release, including in the history of a print; the notes say "not yet seen".
 - `update-notice` looks for a new release every 12 hours instead of once a day (still one small request to GitHub's public 'latest release' address each time; a new release is shown at most one message per version, as before). Tested offline; takes effect when the module is installed.
 
 ## 1.4.0 - 2026-11-24
