@@ -498,31 +498,51 @@ def load_history():
     return history
 
 
-def optional_mix_results(path):
-    """SHA-256 of `path` for every mix of OUR modules that edit it, applied to the 02.04 original.
+def only_our_places_differ(path, current):
+    """True when `current` is the 02.04 original of `path` and differs from it ONLY in the places our modules edit.
 
-    A file that several optional modules edit (the Fluidd web page) is only recognised by hash. The installer used to
-    know the result of all modules together and of earlier releases, so a printer that has just some of the optional
-    modules (for example the drying button and the screen window without the touch button) was refused although every
-    byte was ours. Only used when the file matches nothing else."""
+    A file that several modules edit (the Fluidd web page) used to be recognised only by its whole SHA-256 against a list
+    of results we had produced. That list cannot know a printer that has just some optional modules, or an older release
+    of one edit, so such a file was refused although every byte was ours (a user's report). Here every place any of our
+    modules edits (the original text of each edit, found exactly once in the original) is cut out; the rest of the file
+    must be identical to the original, and what stands in those places does not matter: it is replaced anyway. A change
+    anywhere else - another tool, a hand edit, a different Fluidd - still stops the installer."""
     mods = [m for m in build.load_modules()
             if path in m.get("files", {}) and m["files"][path].get("edits")
             and "source" not in m["files"][path] and "generator" not in m["files"][path]
             and m["files"][path].get("base") != "printer"]
-    if not mods or len(mods) > 8:
-        return set()
+    if not mods:
+        return False
     original = firmware.extract_many([path])[path]
-    found = set()
-    for mask in range(1, 1 << len(mods)):
-        data = original
-        try:
-            for i, m in enumerate(mods):
-                if mask >> i & 1:
-                    data = build.apply_edits(data, m["files"][path]["edits"], "%s: %s" % (m["id"], path))
-        except build.BuildError:
-            continue
-        found.add(sha(data))
-    return found
+    spans = []
+    for m in mods:
+        for old, _new in m["files"][path]["edits"]:
+            old = old.encode("utf-8")
+            if original.count(old) != 1:
+                return False  # not a place we can name: do not guess
+            at = original.index(old)
+            spans.append((at, at + len(old)))
+    merged = []
+    for start, end in sorted(spans):
+        if merged and start <= merged[-1][1]:
+            merged[-1] = (merged[-1][0], max(merged[-1][1], end))
+        else:
+            merged.append((start, end))
+    gaps, at = [], 0
+    for start, end in merged:
+        gaps.append(original[at:start])
+        at = end
+    gaps.append(original[at:])
+    if not current.startswith(gaps[0]):
+        return False
+    here = len(gaps[0])
+    for gap in gaps[1:-1]:
+        found = current.find(gap, here)
+        if found < 0:
+            return False
+        here = found + len(gap)
+    last = gaps[-1]
+    return len(current) - len(last) >= here and current.endswith(last)
 
 
 OTHER_MODS_HINT = ("\nIf this printer has other modifications (other community fixes, manual edits), put the "
@@ -578,7 +598,7 @@ def plan(p, selected, built=None):
             changes.append((path, new, "new", owners[path]))
         elif current == index.get(path, {}).get("sha256"):
             changes.append((path, new, "replace", owners[path]))
-        elif current in history.get(path, []) or current in optional_mix_results(path):
+        elif current in history.get(path, []) or only_our_places_differ(path, p.read(path) or b""):
             changes.append((path, new, "upgrade", owners[path]))  # an earlier version of ours
         else:
             problems.append("%s is neither the 02.04 original nor a version of ours (its SHA-256 is %s)" % (path, current))

@@ -350,6 +350,36 @@ class InstallTest(unittest.TestCase):
         install.do_uninstall(self.p, backup)
         self.assertEqual(self.p.db[key], '"mine"')  # exactly the earlier value, not the factory one
 
+    def test_a_file_that_differs_only_where_our_modules_edit_counts_as_ours(self):
+        # What an OLDER release of ours wrote into the places we edit is not on any hash list any more, yet it is not a stranger's
+        # change either: the rest of the file is the 02.04 original. Only a change OUTSIDE our places is refused.
+        path = "/home/qidi/fluidd/index.html"
+        L = bytes([10])
+        STOCK[path] = b"<head>" + L + b"<script main></script>" + L + b"<!-- tail -->" + L + b"</head>" + L
+        mods = [{"id": "a", "order": 1, "files": {path: {"edits": [["<script main></script>", "<script a v=2></script><script main></script>"]]}}},
+                {"id": "b", "order": 2, "files": {path: {"edits": [["<!-- tail -->", "<!-- tail --><script b></script>"]]}}}]
+        older = (b"<head>" + L + b"<script a v=1 OLD TEXT></script><script main></script>" + L + b"<!-- tail -->" + L + b"</head>" + L)
+        try:
+            saved = install.build.load_modules
+            install.build.load_modules = lambda: mods
+            try:
+                built = build.build(mods[:1], stock_reader=lambda p: STOCK[p])
+                self.p.files[path] = [older, "qidi", "qidi", "644"]
+                changes = {c[0]: c for c in install.plan(self.p, mods[:1], built=built)}
+                self.assertEqual(changes[path][2], "upgrade")
+                # a change outside the places we edit stops it
+                self.p.files[path] = [older.replace(b"</head>", b"<script stranger></script></head>"), "qidi", "qidi", "644"]
+                with self.assertRaisesRegex(install.InstallError, "neither the 02.04 original"):
+                    install.plan(self.p, mods[:1], built=built)
+                # also the plain original and a file with a chopped-off end are not mistaken for ours
+                self.p.files[path] = [older[:-9], "qidi", "qidi", "644"]
+                with self.assertRaisesRegex(install.InstallError, "neither the 02.04 original"):
+                    install.plan(self.p, mods[:1], built=built)
+            finally:
+                install.build.load_modules = saved
+        finally:
+            STOCK.pop(path, None)
+
     def test_any_mix_of_our_optional_modules_on_one_file_counts_as_ours(self):
         # Two optional modules edit the same web file. A printer that has only A+B (not C) is ours, not a stranger's file -
         # the installer used to know only the result of ALL modules, so such a printer was refused (a user's report).
