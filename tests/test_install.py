@@ -545,7 +545,8 @@ class ConsoleFilterTest(unittest.TestCase):
         hidden = lambda line: any(f["value"] in line for f in filters)
         self.assertTrue(hidden("$ RUN_SHELL_COMMAND CMD=q2_notify PARAMS=\"--tsv 'x'\""))
         self.assertTrue(hidden('$ RESPOND TYPE=error MSG="New TWEAKED version 1.4.0 (currently 1.3.1). Download."'))
-        self.assertTrue(hidden("$ SMART_STATUS MODE=1 SCREEN=0"))
+        # Fluidd tests the raw text of an entry; the "$ " in front of a command is added only when the line is drawn
+        self.assertTrue(hidden("SMART_STATUS MODE=1 SCREEN=0"))
         self.assertTrue(hidden("// SMART_STATUS state updated: MODE=1, SCREEN=0, TIMELAPSE=1"))
         self.assertFalse(hidden("// Light sync: screen OFF, standby, AI=1, timelapse=1 -> LIGHT=OFF"))
         self.assertFalse(hidden("!! New TWEAKED version 1.4.0 (currently 1.3.1). Download and install with the help of a computer."))
@@ -558,6 +559,15 @@ class ConsoleFilterTest(unittest.TestCase):
         self.assertEqual(out[0]["name"], self.WANTED[1]["name"])
         self.assertEqual((out[0]["enabled"], out[0]["value"]), (False, "mine"))
         self.assertIsNone(install.fluidd_console_filters_with(json.dumps(out), self.WANTED))  # second run: nothing to do
+
+    def test_a_value_we_shipped_earlier_is_replaced_but_the_users_own_value_is_not(self):
+        wanted = [{"id": "x", "name": "N", "value": "SMART_STATUS MODE=", "was": ["$ SMART_STATUS"]}]
+        old = [{"id": "x", "enabled": False, "name": "N", "type": "contains", "value": "$ SMART_STATUS"}]
+        out = install.fluidd_console_filters_with(json.dumps(old), wanted)
+        self.assertEqual((out[0]["value"], out[0]["enabled"]), ("SMART_STATUS MODE=", False))
+        self.assertNotIn("was", out[0])
+        mine = [dict(old[0], value="my own text")]
+        self.assertIsNone(install.fluidd_console_filters_with(json.dumps(mine), wanted))
 
     def test_fresh_printer_gets_both_filters_as_contains_and_enabled(self):
         p = FakePrinter({})

@@ -697,7 +697,7 @@ def fluidd_layouts_with_card(current, card):
 
 def fluidd_console_filters_with(current, wanted):
     """Fluidd's saved console filters plus the `wanted` ones ({"id", "name", "value"}; type "contains", on), or None when all of
-    them are already there. A filter with the same id keeps its on/off state and value (also one the user switched off), only its label is refreshed; the user's own filters
+    them are already there. A filter with the same id keeps its on/off state and value (also one the user switched off), only its label (and a value we shipped earlier, listed as "was") is refreshed; the user's own filters
     keep their place; a saved value that is not a list of filters is replaced."""
     try:
         saved = json.loads(current) if current else []
@@ -705,10 +705,20 @@ def fluidd_console_filters_with(current, wanted):
         saved = []
     filters = [f for f in saved if isinstance(f, dict)] if isinstance(saved, list) else []
     have = {f.get("id") for f in filters}
-    names = {w["id"]: w["name"] for w in wanted}
-    # a filter we shipped earlier gets the current label; whether it is on, and its value, stay the user's
-    filters = [dict(f, name=names[f["id"]]) if f.get("id") in names and f.get("name") != names[f["id"]] else f
-               for f in filters]
+    by_id = {w["id"]: w for w in wanted}
+
+    def refreshed(f):
+        w = by_id.get(f.get("id"))
+        if w is None:
+            return f
+        # a filter we shipped earlier gets the current label, and a value we ourselves shipped before ("was") the current one;
+        # whether it is on, and a value the user wrote, stay the user's
+        out = dict(f, name=w["name"])
+        if f.get("value") in w.get("was", []):
+            out["value"] = w["value"]
+        return out
+
+    filters = [refreshed(f) for f in filters]
     added = [{"id": w["id"], "enabled": True, "name": w["name"], "type": "contains", "value": w["value"]}
              for w in wanted if w["id"] not in have]
     if not added and filters == saved:
