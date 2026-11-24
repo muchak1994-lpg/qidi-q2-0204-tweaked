@@ -550,6 +550,15 @@ class ConsoleFilterTest(unittest.TestCase):
         self.assertFalse(hidden("// Light sync: screen OFF, standby, AI=1, timelapse=1 -> LIGHT=OFF"))
         self.assertFalse(hidden("!! New TWEAKED version 1.4.0 (currently 1.3.1). Download and install with the help of a computer."))
 
+    def test_old_label_is_refreshed_but_the_switch_and_value_stay_the_users(self):
+        old = [{"id": "tweaked-ai-code", "enabled": False, "name": "Old label", "type": "contains", "value": "mine"},
+               {"id": "tweaked-timelapse-frame", "enabled": True, "name": self.WANTED[0]["name"], "type": "contains",
+                "value": self.WANTED[0]["value"]}]
+        out = install.fluidd_console_filters_with(json.dumps(old), self.WANTED)
+        self.assertEqual(out[0]["name"], self.WANTED[1]["name"])
+        self.assertEqual((out[0]["enabled"], out[0]["value"]), (False, "mine"))
+        self.assertIsNone(install.fluidd_console_filters_with(json.dumps(out), self.WANTED))  # second run: nothing to do
+
     def test_fresh_printer_gets_both_filters_as_contains_and_enabled(self):
         p = FakePrinter({})
         install.do_install(p, self.mods, [], "h", backups=self.tmp)
