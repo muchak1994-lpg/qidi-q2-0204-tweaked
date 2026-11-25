@@ -54,8 +54,9 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None):
+    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
+        self.light = light                                           # value of output_pin caselight (None: no such pin)
         self.stored = stored                                         # what qdc_ai_error_code holds when the print starts
         self.reset_at = reset_at                                     # second at which the AI zeroes its counters
         self.down_until, self.status, self.calls = down_until, status, 0   # the AI does not answer before this second
@@ -64,6 +65,8 @@ class Rig:
         pause = types.SimpleNamespace(is_paused=False, sd_paused=False, pause_command_sent=False)
         save = types.SimpleNamespace(cmd_SAVE_VARIABLE=lambda cmd: self.notices.append(cmd))
         objects = {"virtual_sdcard": self.sd, "pause_resume": pause, "save_variables": save}
+        if light is not None:
+            objects["output_pin caselight"] = types.SimpleNamespace(get_status=lambda eventtime: {"value": self.light})
         self.printer = types.SimpleNamespace(lookup_object=lambda n, *a: objects[n],
                                              get_reactor=lambda: types.SimpleNamespace(monotonic=lambda: self.t, pause=self.pause))
         self.gcode = types.SimpleNamespace(respond_info=self.messages.append, create_gcode_command=lambda *a: a)
@@ -305,6 +308,36 @@ class ClearTheStoredAlarmTests(unittest.TestCase):
         m = rig.build(stats_source())
         m._handle_stats_changed("printing", "complete")
         self.assertEqual(rig.notices, [])
+
+
+class CaseLightTests(unittest.TestCase):
+    """The log says what the case light does when the AI looks at the plate (25.11.2026: the screen showed an alarm and nothing
+    in the log said whether the light had come on before the first frame)."""
+
+    def light_lines(self, rig):
+        return [m for m in rig.messages if "the case light is" in m]
+
+    def test_the_light_state_is_written_down_at_the_start_of_the_check(self):
+        for value, word in ((1.0, "on"), (0.0, "off")):
+            rig = Rig(positives=[], light=value)
+            rig.run()
+            lines = self.light_lines(rig)
+            self.assertEqual(len(lines), 1, word)
+            self.assertIn("light is " + word + " at ", lines[0])
+            self.assertIn(clock(1_000_000), lines[0])
+
+    def test_a_missing_light_pin_does_not_stop_the_check(self):
+        rig = Rig(positives=[])
+        rig.run()
+        self.assertIn("light is unknown", self.light_lines(rig)[0])
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_the_light_state_is_in_the_line_about_an_early_positive(self):
+        rig = Rig(positives=[2.0], light=1.0)
+        rig.run()
+        said = [m for m in rig.messages if "the AI reported an object at" in m]
+        self.assertEqual(len(said), 1)
+        self.assertIn("the case light is on", said[0])
 
 
 if __name__ == "__main__":
