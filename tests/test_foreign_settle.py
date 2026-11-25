@@ -59,7 +59,7 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None):
+    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None, toolhead=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
         self.history, self.capture = history, capture               # pictures of the AI (base64 text) for /history_frames and /capture
         self.light = light                                           # value of output_pin caselight (None: no such pin)
@@ -71,6 +71,8 @@ class Rig:
         pause = types.SimpleNamespace(is_paused=False, sd_paused=False, pause_command_sent=False)
         save = types.SimpleNamespace(cmd_SAVE_VARIABLE=lambda cmd: self.notices.append(cmd))
         objects = {"virtual_sdcard": self.sd, "pause_resume": pause, "save_variables": save}
+        if toolhead is not None:
+            objects["toolhead"] = types.SimpleNamespace(get_status=lambda eventtime: toolhead)
         if light is not None:
             objects["output_pin caselight"] = types.SimpleNamespace(get_status=lambda eventtime: {"value": self.light})
         self.printer = types.SimpleNamespace(lookup_object=lambda n, *a: objects[n],
@@ -398,6 +400,31 @@ class SavedPicturesTests(unittest.TestCase):
             open(os.path.join(rig.frames_dir, "2000010%d-000000_old_ai0.jpg" % (k % 10) + str(k)), "wb").close()
         m.m4050()
         self.assertEqual(len(self.files(rig)), 12)
+
+
+class ToolheadPositionTests(unittest.TestCase):
+    """25.11.2026: the alarms on an empty plate may depend on where the toolhead and the bed stand; the log says where."""
+
+    def lines(self, rig):
+        return [m for m in rig.messages if "the toolhead is at" in m]
+
+    def test_the_position_and_the_homed_axes_are_written_down(self):
+        rig = Rig(positives=[], toolhead={"position": [260.0, 260.0, 50.0, 0.0], "homed_axes": "xyz"})
+        rig.run()
+        self.assertEqual(len(self.lines(rig)), 1)
+        self.assertIn('X260.0 Y260.0 Z50.0, homed axes "xyz"', self.lines(rig)[0])
+
+    def test_axes_that_are_not_homed_are_said_so(self):
+        rig = Rig(positives=[], toolhead={"position": [0.0, 0.0, 0.0, 0.0], "homed_axes": ""})
+        rig.run()
+        self.assertIn('homed axes ""', self.lines(rig)[0])
+
+    def test_a_missing_or_odd_toolhead_does_not_stop_the_check(self):
+        for toolhead in (None, {}, {"position": "bad"}):
+            rig = Rig(positives=[], toolhead=toolhead)
+            rig.run()
+            self.assertIn("the toolhead is at unknown", self.lines(rig)[0])
+            self.assertIn(NOTHING, rig.messages)
 
 
 if __name__ == "__main__":
