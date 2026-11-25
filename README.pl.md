@@ -10,7 +10,7 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 ## Co naprawia
 
-80 modułów (72 instalowane domyślnie, 8 opcjonalnych przez `--with`): program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
+79 modułów (72 instalowane domyślnie, 7 opcjonalnych przez `--with`): program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
 poprawki suszenia filamentu), poprawki Klippera (powtórzenia pomiaru siatki, bazowanie, fuzzy skin, wentylator
 hotendu, grzałki i próg wentylatorów Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne, kilka z oficjalnego
 Klippera), makra (strażnik bazowania Z, temperatura ładowania po cieplejszym filamencie, suszenie z Fluidda),

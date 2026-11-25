@@ -1,4 +1,7 @@
 {
+ "/etc/systemd/system/q2-algo-recycle.service": [
+  "a82348d420819df6874002759fa22e2ef14a4ceac01ed21c2ebee74ab218ce20"
+ ],
  "/etc/systemd/system/q2-screen-touch.service": [
   "225d941cb8c1e6370ad67547c904ba05856ebf64f5ceff46a527819ee880396d",
   "bbcb26d9dccb6ef6e06e6846a4dc6ceffd7379bd577b51746d811f311c44368b"
@@ -228,6 +231,9 @@
   "7a28cb9843188c2a7e45d22396a2aa6fe739f85e53d8d3365a09b3bb1154293c",
   "be7f26a2338591338e4c93825ddcff38f4e55adda2833037cb5b3da84d438e8b",
   "c9c82caafd9fac09821eef0dc4e2e45270dad1cfca71bf79cc2aae335c5bff2c"
+ ],
+ "/usr/local/lib/q2-algo-recycle/q2_algo_recycle.sh": [
+  "214283bba70164e005c17e3d8ddfd7c9173c3dc4277cd1bf89099008dc2980bc"
  ],
  "/usr/local/lib/q2-screen/q2_touch.py": [
   "c5f369c925a04795369f206bc83f64e445fc866df507e5613eb565790e26b811",
