@@ -11,7 +11,12 @@ The test takes the method's source from the module's edit (the file QIDI's is ne
 camera service, clock and printer.
 """
 import json
+import atexit
+import base64
 import logging
+import os
+import shutil
+import tempfile
 import time as real_time
 import types
 import unittest
@@ -54,8 +59,9 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None):
+    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
+        self.history, self.capture = history, capture               # pictures of the AI (base64 text) for /history_frames and /capture
         self.light = light                                           # value of output_pin caselight (None: no such pin)
         self.stored = stored                                         # what qdc_ai_error_code holds when the print starts
         self.reset_at = reset_at                                     # second at which the AI zeroes its counters
@@ -84,6 +90,10 @@ class Rig:
 
     def get(self, url, **kw):
         self.unanswered()
+        if url.endswith("/history_frames?type=foreign"):
+            return Reply([] if self.history is None else self.history)
+        if url.endswith("/capture"):
+            return Reply({"image": self.capture} if self.capture else {})
         if self.status != 200:
             reply = Reply({})
             reply.status_code = self.status
@@ -108,6 +118,9 @@ class Rig:
         m.printer, m.gcode, m._foreign_preflight, m.ai_error_type = self.printer, self.gcode, None, None
         m.save_variables = types.SimpleNamespace(qdc_ai_error_code=self.stored)
         m.ai_configs = {AIErrorType.FOREIGN: {"enabled": 1, "count": 0}}
+        self.frames_dir = tempfile.mkdtemp(prefix="q2frames")        # never the printer's folder: the test must not create it on the PC
+        atexit.register(shutil.rmtree, self.frames_dir, True)
+        m._alarm_frames_dir = self.frames_dir
         return m
 
     def run(self):
@@ -338,6 +351,53 @@ class CaseLightTests(unittest.TestCase):
         said = [m for m in rig.messages if "the AI reported an object at" in m]
         self.assertEqual(len(said), 1)
         self.assertIn("the case light is on", said[0])
+
+
+class SavedPicturesTests(unittest.TestCase):
+    """25.11.2026: the screen showed an alarm on an empty plate and not one picture of what the AI had looked at existed."""
+
+    def files(self, rig):
+        return sorted(os.listdir(rig.frames_dir))
+
+    def test_the_pictures_of_the_ai_are_saved_when_it_reports_an_object(self):
+        jpeg = base64.b64encode(b"\xff\xd8picture\xff\xd9").decode()
+        rig = Rig(positives=[2.0], history=[jpeg, jpeg], capture=jpeg)
+        rig.run()
+        names = self.files(rig)
+        self.assertEqual(len(names), 3)
+        self.assertEqual(sorted(n.split("_", 2)[2] for n in names), ["ai0.jpg", "ai1.jpg", "now0.jpg"])
+        self.assertTrue(all("_early_" in n for n in names))
+        with open(os.path.join(rig.frames_dir, names[0]), "rb") as f:
+            self.assertEqual(f.read(), b"\xff\xd8picture\xff\xd9")
+        self.assertTrue([m for m in rig.messages if "pictures of the AI were saved" in m])
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_a_positive_after_the_first_seconds_saves_pictures_too(self):
+        jpeg = base64.b64encode(b"x").decode()
+        rig = Rig(positives=[9.0], history=[jpeg], capture=jpeg)
+        rig.run()
+        self.assertTrue([n for n in self.files(rig) if "_found_" in n])
+        self.assertIn(FOUND, rig.messages)
+
+    def test_nothing_is_saved_when_the_ai_reports_nothing(self):
+        rig = Rig(positives=[], history=[base64.b64encode(b"x").decode()], capture=base64.b64encode(b"x").decode())
+        rig.run()
+        self.assertEqual(self.files(rig), [])
+
+    def test_a_service_without_pictures_or_with_odd_answers_does_not_stop_the_check(self):
+        for history, capture in ((None, None), (["", 5, None], ""), (["not base64 !!"], "###")):
+            rig = Rig(positives=[2.0], history=history, capture=capture)
+            rig.run()
+            self.assertIn(NOTHING, rig.messages)
+            self.assertEqual(rig.posts[-1][1], {"state": False})
+
+    def test_only_the_newest_files_are_kept(self):
+        rig = Rig(positives=[2.0], history=[base64.b64encode(b"x").decode()] * 2, capture=base64.b64encode(b"x").decode())
+        m = rig.build()
+        for k in range(20):
+            open(os.path.join(rig.frames_dir, "2000010%d-000000_old_ai0.jpg" % (k % 10) + str(k)), "wb").close()
+        m.m4050()
+        self.assertEqual(len(self.files(rig)), 12)
 
 
 if __name__ == "__main__":
