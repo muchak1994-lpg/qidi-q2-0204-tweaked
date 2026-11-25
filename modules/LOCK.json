@@ -228,6 +228,6 @@
  "/usr/local/bin/algo_app/main": "7a28cb9843188c2a7e45d22396a2aa6fe739f85e53d8d3365a09b3bb1154293c",
  "/usr/local/lib/q2-screen/q2_screen.py": "a2fe4b564a7cb54ca30cbb2fc2202493c4d6a26470b7829c0bffc2cf16a6fd92",
  "/usr/local/lib/q2-screen/q2_touch.py": "acc299816bcb415a459a85729f9793e683c1388096778cd46877f4d5df8c8c68",
- "/usr/local/lib/q2-update-notice/VERSION": "78b591400c56b7b67b8cb3b2b8a8e65e9093897f02ce0878e6b5405c68620fa7",
+ "/usr/local/lib/q2-update-notice/VERSION": "7d072b48526b023950e4c48db01e8c273554a6401119f5691e7589ba9bc65d9d",
  "/usr/local/lib/q2-update-notice/q2_update_notice.py": "b04b27693ec241ae3fababe8c3f3e1a9a85c678ef535e52fce0968ccadc247cf"
 }
