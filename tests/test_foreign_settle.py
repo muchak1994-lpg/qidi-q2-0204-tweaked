@@ -12,6 +12,7 @@ camera service, clock and printer.
 """
 import json
 import logging
+import time as real_time
 import types
 import unittest
 from enum import Enum
@@ -47,8 +48,9 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives, reset_at=None, down_until=0.0, status=200):
+    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
+        self.stored = stored                                         # what qdc_ai_error_code holds when the print starts
         self.reset_at = reset_at                                     # second at which the AI zeroes its counters
         self.down_until, self.status, self.calls = down_until, status, 0   # the AI does not answer before this second
         self.sd = types.SimpleNamespace(current_file=object(), file_position=0, has_run_m4050=False, must_pause_work=False,
@@ -89,11 +91,13 @@ class Rig:
         return Reply({"status": "success", "homing_state": bool(json["state"])})
 
     def run(self):
-        ns = {"requests": self.requests, "time": types.SimpleNamespace(time=lambda: 1_000_000), "logging": logging,
+        ns = {"requests": self.requests, "time": types.SimpleNamespace(time=lambda: 1_000_000, strftime=real_time.strftime, localtime=real_time.localtime),
+              "logging": logging,
               "AIErrorType": AIErrorType}
         exec("class M:\n" + method_source().lstrip("\n"), ns)
         m = ns["M"]()
-        m.printer, m.gcode, m._foreign_preflight, m.save_variables, m.ai_error_type = self.printer, self.gcode, None, None, None
+        m.printer, m.gcode, m._foreign_preflight, m.ai_error_type = self.printer, self.gcode, None, None
+        m.save_variables = types.SimpleNamespace(qdc_ai_error_code=self.stored)
         m.ai_configs = {AIErrorType.FOREIGN: {"enabled": 1, "count": 0}}
         m.m4050()
         return m
@@ -201,6 +205,49 @@ class SlowAiTests(unittest.TestCase):
         rig.run()
         self.assertIn(UNAVAILABLE, rig.messages)
         self.assertEqual(rig.calls, 1)
+
+
+def clock(moment):
+    return real_time.strftime("%Y-%m-%d %H:%M:%S", real_time.localtime(moment))
+
+
+class TimeStampTests(unittest.TestCase):
+    """25.11.2026: the printer screen showed an AI "foreign object" window through two whole prints while the console and the
+    log said "nothing found". Now the log says when the AI reported it and what was already stored at the start."""
+
+    def test_a_positive_in_the_first_seconds_is_written_down_with_the_time(self):
+        rig = Rig(positives=[2.0])
+        rig.run()
+        said = [m for m in rig.messages if "the AI reported an object at" in m]
+        self.assertEqual(len(said), 1)
+        self.assertIn(clock(1_000_000), said[0])
+        self.assertIn("NOT paused", said[0])
+        self.assertIn(NOTHING, rig.messages)                         # the verdict itself is unchanged
+
+    def test_nothing_is_said_when_the_ai_reports_nothing(self):
+        rig = Rig(positives=[])
+        rig.run()
+        self.assertFalse([m for m in rig.messages if "AI reported" in m or "already stored" in m])
+
+    def test_a_stored_alarm_from_an_earlier_print_is_written_down_with_both_times(self):
+        rig = Rig(positives=[], stored="foreign=1 status=1 time=999000")
+        rig.run()
+        said = [m for m in rig.messages if "already stored" in m]
+        self.assertEqual(len(said), 1)
+        self.assertIn(clock(999_000), said[0])                       # when it was raised
+        self.assertIn(clock(1_000_000), said[0])                     # when this print started
+        self.assertIn("this print did not raise it", said[0])
+
+    def test_a_stored_alarm_that_is_zero_or_not_about_foreign_objects_is_not_reported(self):
+        for stored in ("foreign=0 status=0 time=5", "noodle=3 status=1 time=5", "", None):
+            rig = Rig(positives=[], stored=stored)
+            rig.run()
+            self.assertFalse([m for m in rig.messages if "already stored" in m], stored)
+
+    def test_an_unreadable_stored_alarm_does_not_stop_the_check(self):
+        rig = Rig(positives=[], stored="foreign=abc time=")
+        rig.run()
+        self.assertIn(NOTHING, rig.messages)
 
 
 if __name__ == "__main__":
