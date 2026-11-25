@@ -31,6 +31,12 @@ class AIErrorType(Enum):
     NOODLE = "noodle"
 
 
+def stats_source():
+    edits = json.loads(MODULE.read_text(encoding="utf-8"))["files"][TARGET]["edits"]
+    new = next(n for _old, n in edits if "def _handle_stats_changed" in n)
+    return new.replace("\r\n", "\n")
+
+
 def method_source():
     edits = json.loads(MODULE.read_text(encoding="utf-8"))["files"][TARGET]["edits"]
     new = next(n for _old, n in edits if "def m4050" in n)
@@ -90,15 +96,19 @@ class Rig:
         self.posts.append((url, json))
         return Reply({"status": "success", "homing_state": bool(json["state"])})
 
-    def run(self):
+    def build(self, extra=""):
         ns = {"requests": self.requests, "time": types.SimpleNamespace(time=lambda: 1_000_000, strftime=real_time.strftime, localtime=real_time.localtime),
               "logging": logging,
               "AIErrorType": AIErrorType}
-        exec("class M:\n" + method_source().lstrip("\n"), ns)
+        exec("class M:\n" + method_source().lstrip("\n") + extra, ns)
         m = ns["M"]()
         m.printer, m.gcode, m._foreign_preflight, m.ai_error_type = self.printer, self.gcode, None, None
         m.save_variables = types.SimpleNamespace(qdc_ai_error_code=self.stored)
         m.ai_configs = {AIErrorType.FOREIGN: {"enabled": 1, "count": 0}}
+        return m
+
+    def run(self):
+        m = self.build()
         m.m4050()
         return m
 
@@ -248,6 +258,53 @@ class TimeStampTests(unittest.TestCase):
         rig = Rig(positives=[], stored="foreign=abc time=")
         rig.run()
         self.assertIn(NOTHING, rig.messages)
+
+
+class ClearTheStoredAlarmTests(unittest.TestCase):
+    """The alarm text that the screen reads stayed stored after a print and opened the window again at the start of the next
+    one. The pre-print check of QIDI cleared it before it started; ours does that now, and the end of every print does too."""
+
+    def cleared(self, rig):
+        return [n for n in rig.notices if n[2]["VALUE"] == "''"]
+
+    def test_a_stored_alarm_is_cleared_when_the_check_starts_and_the_log_says_so(self):
+        rig = Rig(positives=[], stored="foreign=1 status=1 time=999000")
+        rig.run()
+        self.assertEqual(len(self.cleared(rig)), 1)
+        self.assertEqual(self.cleared(rig)[0][2]["VARIABLE"], "qdc_ai_error_code")
+        self.assertTrue([m for m in rig.messages if "was cleared" in m and "status=1" in m])
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_nothing_is_written_when_no_alarm_is_active(self):
+        for stored in ("foreign=0 status=0 time=5", "noodle=0 status=0 time=5", "", None):
+            rig = Rig(positives=[], stored=stored)
+            rig.run()
+            self.assertEqual(rig.notices, [], stored)
+
+    def test_the_end_of_a_print_clears_an_active_alarm(self):
+        for new_status in ("complete", "cancelled", "standby", "error"):
+            rig = Rig(positives=[], stored="foreign=1 status=1 time=999000")
+            m = rig.build(stats_source())
+            m.ai_error_type = AIErrorType.FOREIGN
+            m.ai_configs[AIErrorType.FOREIGN]["count"] = 1
+            m._handle_stats_changed("printing", new_status)
+            self.assertEqual(len(self.cleared(rig)), 1, new_status)
+            self.assertTrue([x for x in rig.messages if "cleared at the end of the print" in x], new_status)
+            self.assertEqual(m.ai_configs[AIErrorType.FOREIGN]["count"], 0)       # what the stock method did stays
+            self.assertEqual(m.ai_error_type, AIErrorType.NONE)
+
+    def test_a_pause_does_not_clear_the_alarm(self):
+        rig = Rig(positives=[], stored="foreign=1 status=1 time=999000")
+        m = rig.build(stats_source())
+        m._handle_stats_changed("printing", "paused")
+        m._handle_stats_changed("paused", "printing")
+        self.assertEqual(rig.notices, [])
+
+    def test_the_end_of_a_print_without_an_alarm_writes_nothing(self):
+        rig = Rig(positives=[], stored="noodle=0 status=0 time=5")
+        m = rig.build(stats_source())
+        m._handle_stats_changed("printing", "complete")
+        self.assertEqual(rig.notices, [])
 
 
 if __name__ == "__main__":
