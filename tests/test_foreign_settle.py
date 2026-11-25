@@ -59,17 +59,20 @@ class Reply:
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
-    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None, toolhead=None):
+    def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None, toolhead=None,
+                 script_fails=False):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
+        self.events, self.scripts, self.timers = [], [], []          # (kind, what, second) in order; G-code the check ran; (second, action) the user does meanwhile
+        self.ai_at, self.first_call, self.script_fails = None, None, script_fails   # second the AI was switched on; second of the first request
         self.history, self.capture = history, capture               # pictures of the AI (base64 text) for /history_frames and /capture
         self.light = light                                           # value of output_pin caselight (None: no such pin)
         self.stored = stored                                         # what qdc_ai_error_code holds when the print starts
-        self.reset_at = reset_at                                     # second at which the AI zeroes its counters
-        self.down_until, self.status, self.calls = down_until, status, 0   # the AI does not answer before this second
+        self.reset_at = reset_at                                     # seconds after its start at which the AI zeroes its counters
+        self.down_until, self.status, self.calls = down_until, status, 0   # the AI does not answer for this many seconds after the first request
         self.sd = types.SimpleNamespace(current_file=object(), file_position=0, has_run_m4050=False, must_pause_work=False,
                                         work_timer=None, do_resume=lambda: None, do_cancel=lambda: None)
         pause = types.SimpleNamespace(is_paused=False, sd_paused=False, pause_command_sent=False)
-        save = types.SimpleNamespace(cmd_SAVE_VARIABLE=lambda cmd: self.notices.append(cmd))
+        save = types.SimpleNamespace(cmd_SAVE_VARIABLE=self.save)
         objects = {"virtual_sdcard": self.sd, "pause_resume": pause, "save_variables": save}
         if toolhead is not None:
             objects["toolhead"] = types.SimpleNamespace(get_status=lambda eventtime: toolhead)
@@ -77,16 +80,34 @@ class Rig:
             objects["output_pin caselight"] = types.SimpleNamespace(get_status=lambda eventtime: {"value": self.light})
         self.printer = types.SimpleNamespace(lookup_object=lambda n, *a: objects[n],
                                              get_reactor=lambda: types.SimpleNamespace(monotonic=lambda: self.t, pause=self.pause))
-        self.gcode = types.SimpleNamespace(respond_info=self.messages.append, create_gcode_command=lambda *a: a)
+        self.gcode = types.SimpleNamespace(respond_info=self.messages.append, create_gcode_command=lambda *a: a,
+                                           run_script_from_command=self.run_script)
         self.requests = types.SimpleNamespace(get=self.get, post=self.post)
 
     def pause(self, until):
         self.t = max(self.t, until)
+        for timer in [x for x in self.timers if self.t >= x[0]]:    # what the user does while the check waits
+            self.timers.remove(timer)
+            timer[1]()
+
+    def save(self, cmd):
+        self.notices.append(cmd)
+        self.events.append(("notice", cmd[2]["VALUE"], self.t))
+
+    def run_script(self, text):
+        if self.script_fails:
+            raise RuntimeError("the pin is not there")
+        self.scripts.append(text)
+        self.events.append(("script", text, self.t))
+        if self.light is not None and "caselight VALUE=1" in text:
+            self.light = 1.0
 
     def unanswered(self):
         # A real request that gets no answer blocks for its timeout (0.2 s) and then raises (requests' errors are OSErrors).
         self.calls += 1
-        if self.t < self.down_until:
+        if self.first_call is None:
+            self.first_call = self.t
+        if self.t < self.first_call + self.down_until:
             self.t += 0.2
             raise TimeoutError("Read timed out. (read timeout=0.2)")
 
@@ -100,15 +121,19 @@ class Rig:
             reply = Reply({})
             reply.status_code = self.status
             return reply
-        if self.reset_at is not None and self.t >= self.reset_at:
+        since = 0.0 if self.ai_at is None else self.t - self.ai_at   # the AI looks at the plate from the moment it is switched on
+        if self.reset_at is not None and self.ai_at is not None and since >= self.reset_at:
             return Reply({"frame_detect_pos_count": 0, "foreign_count": 0})
-        frames = int(self.t)                                         # one frame per second since the start
+        frames = int(since)                                          # one frame per second since the AI was switched on
         return Reply({"frame_detect_pos_count": 10 + frames,
                       "foreign_count": sum(1 for p in self.positives if int(p) < frames)})
 
     def post(self, url, json=None, **kw):
         self.unanswered()
         self.posts.append((url, json))
+        self.events.append(("post", json["state"], self.t))
+        if json["state"] and self.ai_at is None:
+            self.ai_at = self.t
         return Reply({"status": "success", "homing_state": bool(json["state"])})
 
     def build(self, extra=""):
@@ -161,7 +186,7 @@ class SettleTests(unittest.TestCase):
     def test_the_whole_check_does_not_take_longer_than_before(self):
         rig = Rig(positives=[])
         rig.run()
-        self.assertLessEqual(rig.t, 20.0 + 0.8)                      # the same 20 s window as before the change
+        self.assertLessEqual(rig.t, WAIT + 20.0 + 0.8)               # the same 20 s window as before, after the wait for the camera
         self.assertEqual(rig.posts[0][1], {"state": True})
         self.assertEqual(rig.posts[-1][1], {"state": False})         # the AI worker is always switched back off
 
@@ -225,7 +250,7 @@ class SlowAiTests(unittest.TestCase):
         self.assertIn(UNAVAILABLE, rig.messages)
         self.assertFalse(rig.sd.must_pause_work)
         self.assertIsNone(m._foreign_preflight)
-        self.assertLessEqual(rig.t, 6.0)                             # a few tries, not a long wait
+        self.assertLessEqual(rig.t, WAIT + 6.0)                      # the wait for the camera, then a few tries, not a long wait
         self.assertLessEqual(rig.calls, 6)
 
     def test_a_refusal_is_not_tried_again(self):
@@ -332,8 +357,9 @@ class CaseLightTests(unittest.TestCase):
     def light_lines(self, rig):
         return [m for m in rig.messages if "the case light is" in m]
 
-    def test_the_light_state_is_written_down_at_the_start_of_the_check(self):
-        for value, word in ((1.0, "on"), (0.0, "off")):
+    def test_the_light_state_is_written_down_when_the_ai_starts_to_look(self):
+        # a light that was off is switched on by the check (see CameraSettleTests), so the AI starts with the light on
+        for value, word in ((1.0, "on"), (0.0, "on")):
             rig = Rig(positives=[], light=value)
             rig.run()
             lines = self.light_lines(rig)
@@ -425,6 +451,95 @@ class ToolheadPositionTests(unittest.TestCase):
             rig.run()
             self.assertIn("the toolhead is at unknown", self.lines(rig)[0])
             self.assertIn(NOTHING, rig.messages)
+
+
+WAIT = 5.0                                                           # seconds the camera gets after the light before the AI is started
+SWITCH_ON = "SET_PIN PIN=caselight VALUE=1"
+
+
+class CameraSettleTests(unittest.TestCase):
+    """26.11.2026, test on the printer without a print: the AI started at once with the light wrote a "foreign object" alarm within
+    four seconds from badly exposed, completely white frames of an EMPTY plate (2 of 2 runs); started 5 s after the light it wrote
+    none (0 of 2). So the check switches the light on itself and starts the AI only when the camera has had time to settle."""
+
+    def ai_started(self, rig):
+        return next(t for kind, what, t in rig.events if kind == "post" and what is True)
+
+    def test_the_ai_is_started_only_after_the_camera_had_time_to_settle(self):
+        rig = Rig(positives=[], light=1.0)
+        rig.run()
+        self.assertGreaterEqual(self.ai_started(rig), WAIT)
+        self.assertLess(self.ai_started(rig), WAIT + 1.5)             # a wait, not a long delay of the print
+
+    def test_a_light_that_is_off_is_switched_on_at_the_start_and_the_log_says_so(self):
+        rig = Rig(positives=[], light=0.0)
+        rig.run()
+        scripts = [e for e in rig.events if e[0] == "script"]
+        self.assertEqual([e[1] for e in scripts], [SWITCH_ON])
+        self.assertLess(scripts[0][2], 1.0)                           # at the start, so the camera has the whole wait
+        self.assertGreaterEqual(self.ai_started(rig) - scripts[0][2], WAIT - 0.5)
+        self.assertTrue([m for m in rig.messages if "the case light was off" in m and "switched on" in m], rig.messages)
+
+    def test_a_light_that_is_already_on_is_left_alone_and_the_wait_stays(self):
+        rig = Rig(positives=[], light=1.0)                            # nobody knows since when it is on
+        rig.run()
+        self.assertEqual(rig.scripts, [])
+        self.assertGreaterEqual(self.ai_started(rig), WAIT)
+
+    def test_a_missing_light_pin_switches_nothing_and_does_not_stop_the_check(self):
+        rig = Rig(positives=[])
+        rig.run()
+        self.assertEqual(rig.scripts, [])
+        self.assertGreaterEqual(self.ai_started(rig), WAIT)
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_a_light_that_cannot_be_switched_on_does_not_stop_the_check(self):
+        rig = Rig(positives=[], light=0.0, script_fails=True)
+        rig.run()
+        self.assertGreaterEqual(self.ai_started(rig), WAIT)
+        self.assertIn(NOTHING, rig.messages)
+        self.assertEqual(rig.posts[-1][1], {"state": False})
+
+    def test_the_wait_is_written_down(self):
+        rig = Rig(positives=[], light=1.0)
+        rig.run()
+        self.assertIn("PEI foreign object check: waiting 5 s for the camera to settle after the light.", rig.messages)
+        self.assertTrue(all(m.startswith("PEI foreign object check:") for m in rig.messages), rig.messages)
+
+    def test_a_cancel_during_the_wait_starts_no_ai_and_leaves_nothing_behind(self):
+        rig = Rig(positives=[], light=1.0)
+        rig.timers.append((2.0, lambda: setattr(rig.sd, "current_file", None)))
+        m = rig.run()
+        self.assertEqual(rig.posts, [])
+        self.assertIsNone(m._foreign_preflight)
+        self.assertNotIn(NOTHING, rig.messages)
+
+    def test_a_pause_during_the_wait_ends_the_check_without_starting_the_ai(self):
+        rig = Rig(positives=[], light=1.0)
+        rig.timers.append((3.0, lambda: setattr(rig.sd, "must_pause_work", True)))
+        rig.run()
+        self.assertEqual(rig.posts, [])
+        self.assertNotIn(NOTHING, rig.messages)
+
+    def test_the_ai_still_gets_its_whole_twenty_seconds(self):
+        rig = Rig(positives=[], light=1.0)
+        rig.run()
+        self.assertGreaterEqual(rig.t - self.ai_started(rig), 19.0)
+        self.assertLessEqual(rig.t - self.ai_started(rig), 20.0 + 0.8)
+
+    def test_an_object_that_is_really_there_is_still_found_after_the_wait(self):
+        rig = Rig(positives=[9.0], light=1.0)                         # nine seconds after the AI started
+        m = rig.run()
+        self.assertIn(FOUND, rig.messages)
+        self.assertTrue(rig.sd.must_pause_work)
+        self.assertEqual(m._foreign_preflight["phase"], "held")
+
+    def test_a_stored_alarm_is_cleared_before_the_wait_not_after_it(self):
+        rig = Rig(positives=[], light=1.0, stored="foreign=1 status=1 time=999000")
+        rig.run()
+        cleared = [e for e in rig.events if e[0] == "notice" and e[1] == "\'\'"]
+        self.assertEqual(len(cleared), 1)
+        self.assertLess(cleared[0][2], 1.0)                           # at the start, before the wait for the camera
 
 
 if __name__ == "__main__":
