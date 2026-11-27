@@ -185,7 +185,8 @@ class FakePrinter:
             return {"result": {"state": "ready"}}
         if url == "/printer/objects/list":
             return {"result": {"objects": ["toolhead"] + (["q2_thr_check"] if self.loaded else [])}}
-        return {"result": {"status": {"q2_thr_check": self.result}}}
+        return {"result": {"status": {"q2_thr_check": self.result, "print_stats": {"state": "standby"},
+                                      "extruder": {"target": 0}, "heater_bed": {"target": 0}}}}
 
     def gcode(self, script):
         self.scripts.append(script)

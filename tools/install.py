@@ -49,9 +49,11 @@ BACKUPS = REPO / "backups"
 SERVICES = {"klipper": "klipper.service", "moonraker": "moonraker.service",
             "algo_app": "algo_app.service", "qidi-client": "qidi-client.service"}
 RESTART_ORDER = ["klipper", "moonraker", "algo_app", "qidi-client"]
+FACTORY_ENABLED = {"algo_app.service"}  # QIDI's package enables these: an uninstall leaves them on, never switches them off
 UNDO_ACTIONS = {  # how to reverse a module action on uninstall
     ("chattr", "+i"): lambda a: ["chattr", "-i"] + a[2:],
-    ("systemctl", "enable"): lambda a: ["systemctl", "disable", "--now"] + a[3:],
+    ("systemctl", "enable"): lambda a: (["systemctl", "enable", a[-1]] if a[-1] in FACTORY_ENABLED
+                                        else ["systemctl", "disable", "--now"] + a[3:]),
     ("systemctl", "disable"): lambda a: ["systemctl", "enable", "--now"] + a[3:],
 }
 
@@ -67,6 +69,10 @@ def db_url(namespace, key):
 
 
 class InstallError(Exception):
+    pass
+
+
+class PrinterBusy(InstallError):
     pass
 
 
@@ -441,14 +447,44 @@ class SSHPrinter:
 def check_printer(p, require_idle=True):
     if p.sha("/home/qidi/update/firmware_manifest.json") != firmware.MANIFEST_SHA256:
         raise InstallError("this printer is not on firmware 01.01.02.04 - nothing was changed")
-    if not require_idle:
-        return
-    status = p.http_json("/printer/objects/query?print_stats&extruder&heater_bed")["result"]["status"]
-    state = status["print_stats"]["state"]
+    if require_idle:
+        check_idle(p)
+
+
+IDLE_WAIT, IDLE_STEP = 150, 3  # seconds: QIDI's Klipper needed about 90 s to be ready again after a restart
+
+
+def check_idle(p):
+    """Raise when the printer is printing, paused or heating. A print can be started while the installer runs, so this is
+    asked at the start, again before the first file is written and again before anything is restarted. A Klipper that
+    does not answer (it may be restarting after the step before) is waited for."""
+    for attempt in range(IDLE_WAIT // IDLE_STEP + 1):
+        try:
+            status = p.http_json("/printer/objects/query?print_stats&extruder&heater_bed")["result"]["status"]
+            state = status["print_stats"]["state"]
+            heating = status["extruder"].get("target", 0) or status["heater_bed"].get("target", 0)
+            break
+        except (InstallError, ValueError, KeyError, TypeError, AttributeError):
+            if attempt == IDLE_WAIT // IDLE_STEP:
+                raise InstallError("could not read what the printer is doing (is Klipper ready? see the screen or Fluidd)")
+        if attempt == 0:
+            print("Waiting for Klipper to answer (it may be restarting) ...", flush=True)
+        time.sleep(IDLE_STEP)
     if state in ("printing", "paused"):
-        raise InstallError("the printer is %s - run this when it is idle" % state)
-    if status["extruder"].get("target", 0) or status["heater_bed"].get("target", 0):
-        raise InstallError("a heater is on - turn the heaters off first")
+        raise PrinterBusy("the printer is %s - run this when it is idle" % state)
+    if heating:
+        raise PrinterBusy("a heater is on - turn the heaters off first")
+
+
+def check_idle_before_restart(p, command):
+    """The files are on the printer; restarting now would end a print that was started in the meantime."""
+    try:
+        check_idle(p)
+    except InstallError:
+        print("\nNOT FINISHED. The files are on the printer, but nothing was restarted, because the printer is busy or\n"
+              "cannot be asked. Leave it switched on and let it finish. Then run %s again (it does what is still\n"
+              "missing)." % command)
+        raise
 
 
 def select(skip, extra=()):
@@ -458,6 +494,44 @@ def select(skip, extra=()):
     if unknown:
         raise InstallError("unknown module(s): " + ", ".join(sorted(unknown)))
     return [m for m in mods if m["id"] not in skip and (m.get("default", True) or m["id"] in extra)]
+
+
+def keep_installed(p, selected, skip=()):
+    """The selection plus the optional modules the printer already has. An update used to drop them unless every --with
+    was typed again: the 'Printer screen' window disappeared from Fluidd and the modules' files stayed old.
+
+    A module with files of its own is there when one of them is on the printer in a version of ours; a module that only
+    edits a configuration file, when its lines (current or earlier ones) are in that file. --skip leaves a module out."""
+    chosen = [m["id"] for m in selected if not m.get("default", True)]
+    candidates = [m for m in build.load_modules()
+                  if not m.get("default", True) and m["id"] not in chosen and m["id"] not in skip]
+    history = load_history()
+    own = {m["id"]: {path: spec["source"] for path, spec in m.get("files", {}).items() if "source" in spec}
+           for m in candidates}
+    paths = sorted({path for files in own.values() for path in files})
+    shas = p.sha_many(paths) if hasattr(p, "sha_many") else {f: p.sha(f) for f in paths}
+    found = []
+    for m in candidates:
+        mid = m["id"]
+        if own[mid]:
+            present = [path for path in sorted(own[mid]) if shas.get(path)]
+            if any(shas[path] in history.get(path, []) or shas[path] == sha((m["_dir"] / own[mid][path]).read_bytes())
+                   for path in present):
+                found.append(mid)
+            elif present:
+                print("  Optional module %s: %s on the printer is not a version of ours - the module is not updated."
+                      % (mid, ", ".join(present)))
+            continue
+        for path, spec in m.get("files", {}).items():
+            data = p.read(path) if spec.get("base") == "printer" and spec.get("edits") else None
+            if data is not None and strip_config_edits(data, [m], path) != data:
+                found.append(mid)
+                break
+    if not found:
+        return selected
+    print("Optional modules already on this printer are kept and updated: %s (to leave one out: --skip NAME)."
+          % ", ".join(found))
+    return select(skip, chosen + found)
 
 
 def apply_config_edits(data, mods, path, reverse=False):
@@ -845,6 +919,7 @@ def progress(what, n, total):
 
 
 def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resumed=None):
+    check_idle(p)  # before the first write: "Install now?" may be answered long after the check at the start
     if resumed is None:
         resumed = unfinished_modules(host, backups, p)
     stamp = time.strftime("%Y%m%d-%H%M%S")
@@ -879,6 +954,9 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
     save = lambda: (backup / "install.json").write_text(json.dumps(record, indent=1), encoding="utf-8")
     save()
     print("Backup on the PC (%d file(s)): %s" % (len(changes), backup))
+    touched = {mid for _, _, _, mods in changes for mid in mods} | set(resumed)
+    restarts = {r for m in selected for r in m.get("restart", []) if m["id"] in touched}
+    stopped_busy = False
     try:
         for n, (path, new, kind, mods) in enumerate(changes, 1):
             progress("Installing", n, len(changes))
@@ -892,6 +970,10 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
         # when the plan was made, before the service file existed.
         fresh = pending_actions(p, selected, changes, resumed)
         actions = fresh if actions is None else list(actions) + [a for a in fresh if a not in actions]
+        if actions or restarts:
+            stopped_busy = True
+            check_idle_before_restart(p, "the installer")
+            stopped_busy = False
         for mid, action in actions:
             if action[0] == "moonraker-db" and hasattr(p, "db_value"):
                 before = p.db_value(action[1], action[2])  # put back exactly this on uninstall
@@ -910,8 +992,10 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
             record["actions"].append(action)
             save()
             print("Done:", describe_action(action))
-        touched = {mid for _, _, _, mods in changes for mid in mods} | set(resumed)
-        restarts = {r for m in selected for r in m.get("restart", []) if m["id"] in touched}
+        if restarts:  # again: the actions above can take a while
+            stopped_busy = True
+            check_idle_before_restart(p, "the installer")
+            stopped_busy = False
         for name in RESTART_ORDER:
             if name in restarts:
                 p.restart(name)
@@ -919,7 +1003,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
         record["complete"] = True
     finally:
         save()
-        if not record["complete"] and (resumed or any(e.get("installed") for e in record["files"].values())):
+        if not record["complete"] and not stopped_busy and (resumed or any(e.get("installed") for e in record["files"].values())):
             print("\nNOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
                   "Do not print yet: run the installer again (it continues where it stopped), or turn the\n"
                   "printer off and on. Backup of this run: %s" % backup)
@@ -951,6 +1035,11 @@ def toolhead_check(p, backups=BACKUPS, wait=90, sleep=time.sleep):
         return None
     if "q2_thr_check" not in p.http_json("/printer/objects/list")["result"]["objects"]:
         print("Toolhead check skipped: TWEAKED_THR_CHECK is not loaded.")
+        return None
+    try:
+        check_idle(p)  # the check sends G-code: never into a running print
+    except InstallError as exc:
+        print("Toolhead check skipped:", exc)
         return None
     print("Toolhead check (read only, about a minute) ...")
     p.gcode("TWEAKED_THR_CHECK SAVE=1")
@@ -1108,6 +1197,7 @@ def merged_record(found):
 def do_uninstall(p, backup):
     found = backup if isinstance(backup, list) else [backup]
     files, all_actions, complete = merged_record(found)
+    check_idle(p)
     if not complete:
         print("Note: no backup of a first install of this printer was found (lost, or made in another project\n"
               "folder). Files that were already ours before the oldest backup cannot be put back from it;\n"
@@ -1115,6 +1205,8 @@ def do_uninstall(p, backup):
     for path, entry in sorted(files.items()):
         backup = entry["_backup"]
         if entry["kind"] != "config" and p.sha(path) not in (entry["new_sha256"], None):
+            if p.sha(path) == entry.get("old_sha256"):
+                continue  # already put back (by a run that stopped because the printer was busy)
             print("  left alone (changed since install):", path)
             continue
         if entry["kind"] == "config":
@@ -1137,6 +1229,7 @@ def do_uninstall(p, backup):
         else:
             p.remove(path)
         print("  restored:", path)
+    check_idle_before_restart(p, "the uninstall")
     for action in all_actions:
         undo = undo_action(action)
         if undo:
@@ -1151,6 +1244,7 @@ def do_uninstall_stock(p, selected):
     """Uninstall without a PC backup: put QIDI's originals from the official package back.
 
     Only files that are a version of ours are touched; anything else is reported and left."""
+    check_idle(p)
     files, owners = build.build(selected)
     index = firmware.load_index()["files"]
     history = load_history()
@@ -1198,6 +1292,7 @@ def do_uninstall_stock(p, selected):
                 print("  removed:", path)
             else:
                 left.append(path)
+    check_idle_before_restart(p, "the uninstall")
     for m in reversed(selected):
         for action in reversed(m.get("actions", [])):
             undo = undo_action(action)
@@ -1252,6 +1347,7 @@ def install_round(p, selected, host):
 
 def configure_notify(p, host):
     try:
+        check_idle(p)  # it restarts Moonraker
         notify_setup.configure(p, "yes", host=host)
     except Exception as exc:  # optional extra: never fail the install because of it
         print("Phone notifications step skipped:", exc)
@@ -1379,7 +1475,7 @@ def main(argv=None):
         extra = list(args.extra)
         if args.notify == "yes" and "phone-notifications" not in extra:
             extra.append("phone-notifications")
-        selected = select(args.skip, extra)
+        selected = keep_installed(p, select(args.skip, extra), args.skip)
         changes, resumed, actions = show_plan(p, selected, args.host)
         if args.command == "plan":
             return 0
@@ -1388,8 +1484,9 @@ def main(argv=None):
                 print("Nothing changed.")
                 return 0
             do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
-        if any(m["id"] == "phone-notifications" for m in selected):
-            configure_notify(p, args.host)  # --with / --notify yes: set it up right away
+        if "phone-notifications" in extra and "phone-notifications" not in args.skip:
+            # asked for with --with / --notify yes: set it up right away (an update that only keeps it does not)
+            configure_notify(p, args.host)
         # The optional extras, one after the other: question -> yes -> done (no -> next question).
         interactive = sys.stdin.isatty()
         selected = optional_modules(
@@ -1408,6 +1505,8 @@ def main(argv=None):
         if mode == "ask" and not sys.stdin.isatty():
             mode = "no"  # no one to ask (scripted run)
         try:
+            if mode != "no":
+                check_idle(p)  # it restarts Moonraker
             tailscale_setup.offer(p, mode)
         except Exception as exc:  # optional extra: never fail the install because of it
             print("Tailscale step skipped:", exc)

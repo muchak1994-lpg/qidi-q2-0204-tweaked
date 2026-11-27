@@ -51,6 +51,11 @@
    "enable",
    "--now",
    "q2-notify-listen.service"
+  ],
+  [
+   "systemctl",
+   "restart",
+   "q2-notify-listen.service"
   ]
  ]
 }
