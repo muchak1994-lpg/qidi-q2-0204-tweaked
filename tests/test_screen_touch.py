@@ -370,10 +370,10 @@ def read(path):
 
 
 class ModuleTests(unittest.TestCase):
-    def test_module_is_optional_and_local(self):
+    def test_module_is_default_and_local(self):
         m = json.loads(read(MOD / "module.json"))
         self.assertEqual(m["id"], "printer-screen-touch")
-        self.assertIs(m["default"], False)
+        self.assertTrue(m.get("default", True))
         for dest, f in m["files"].items():
             if "source" in f:
                 self.assertTrue((MOD / f["source"]).is_file(), dest)

@@ -14,6 +14,5 @@
    "systemd-journald"
   ]
  ],
- "default": false,
- "note": "Off by default. Install with: --with journal-retention"
+ "note": "On by default (--skip journal-retention leaves it out). The system log (journald) is kept 7 days and may take up to 2 GB, leaving at least 2 GB of the storage free; on the author's printer it was limited to 4 days and 500 MB before (/etc/systemd/journald.conf)."
 }

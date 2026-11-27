@@ -17,6 +17,17 @@ import install  # noqa: E402
 OPTIONAL = [m["id"] for m in build.load_modules() if not m.get("default", True)]
 
 
+class DefaultSetTests(unittest.TestCase):
+    def test_only_what_needs_a_choice_of_the_user_stays_optional(self):
+        self.assertEqual(sorted(OPTIONAL), ["phone-notifications", "start-keep-xy"])
+
+    def test_the_screen_window_the_ai_service_modules_and_the_log_come_with_every_install(self):
+        selected = {m["id"] for m in install.select([])}
+        for mid in ("printer-screen-view", "printer-screen-touch", "algo-app-gate", "algo-app-malloc",
+                    "algo-app-stream-decrypt", "journal-retention"):
+            self.assertIn(mid, selected)
+
+
 class Recorder:
     def __init__(self, answers=None, notify=False, nothing_to_do=()):
         self.answers = answers or {}

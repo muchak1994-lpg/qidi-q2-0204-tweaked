@@ -1476,7 +1476,7 @@ def main(argv=None):
     ap.add_argument("--port", type=int, default=22)
     ap.add_argument("--skip", action="append", default=[], help="leave this module out")
     ap.add_argument("--with", dest="extra", action="append", default=[],
-                    help="also install an optional module that is off by default (e.g. journal-retention)")
+                    help="also install an optional module that is off by default (e.g. phone-notifications)")
     ap.add_argument("--tailscale", choices=("ask", "yes", "no"), default="ask",
                     help="install: optional Tailscale for remote access (ask = ask in the window)")
     ap.add_argument("--toolhead", choices=("ask", "yes", "no"), default="ask",

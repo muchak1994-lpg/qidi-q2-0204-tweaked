@@ -10,11 +10,11 @@ Community fixes and small improvements for the **QIDI Q2** 3D printer running fi
 
 ## What it fixes
 
-80 modules (72 installed by default, 8 optional with `--with`): screen program (print queue from 03.02, update popup off, dark mode for the light,
+80 modules (78 installed by default; `phone-notifications` and `start-keep-xy` are optional, with `--with`): screen program (print queue from 03.02, update popup off, dark mode for the light,
 filament drying fixes), Klipper fixes (bed mesh probe retries, homing, fuzzy skin, hotend fan, QIDI Box heaters
 and fan threshold, MCU errors, safe settings saving and more, several from upstream Klipper), macros (Z homing
 guard, load temperature after a hotter filament, drying from Fluidd), Moonraker/Fluidd fixes, stable Ethernet MAC,
-and the missing camera-AI libraries.
+the missing camera-AI libraries, memory fixes for the AI service, the printer's screen (view and touch) in Fluidd, and a longer system log.
 **Full list with the problem each one solves: [docs/FIXES.md](docs/FIXES.md).**
 
 ## Principles
