@@ -195,6 +195,7 @@ Cortex-A35, bez akceleratora AI; `docs/ZRAM_SWAP_Q2.md`), usługa przypięta do 
   1. systematyczny fałszywy alarm klasyfikatora dla danej wysokości stołu / pozycji głowicy / światła (najlepiej udokumentowany w danych);
   2. głowica zaparkowana tam, gdzie klasyfikator jej nie zna. Kontrola w naszym `ai-fixes` odbywa się **przed pierwszą komendą pliku, bez ruchu** - głowica stoi, gdzie została po poprzedniej pracy
      (po końcu druku: okolice X90/Y270, wg zapisu 23.10), a po ręcznych ruchach / pauzie może stać wszędzie;
+     (Dopisek 26.11.2026: nowsza wersja `ai-fixes` przed kontrolą odsuwa głowicę do tylnego prawego rogu; opis powyżej dotyczy wersji z tego audytu.)
   3. prawdziwy mały przedmiot (np. kawałek filamentu, nalot) - nie można wykluczyć.
 - Co dokładnie pobrać z drukarki, żeby to rozstrzygnąć (tylko odczyt): sekcja 7.
 

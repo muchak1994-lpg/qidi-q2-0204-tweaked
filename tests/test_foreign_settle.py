@@ -56,11 +56,95 @@ class Reply:
         return self._data
 
 
+class GcodeError(Exception):
+    """What Klipper raises for a command that fails (gcode.error)."""
+
+
+CONFIGURED = {"stepper_x": 1.07, "stepper_y": 1.07}
+HOMING = 0.9
+
+
+class Machine:
+    """The pretend toolhead: position, homed axes and Klipper's refusal to move an axis that is not homed."""
+
+    def __init__(self, rig, homed, position, report):
+        self.rig, self.homed, self.pos, self.report = rig, homed, list(position) + [0.0], report
+        self.z_move_fails = False
+        self.broken = set()                                           # names of methods that fail like a bug in our code or in the fork
+        self.current = dict(CONFIGURED)                               # motor current of X and Y
+        self.absolute = True                                          # G90 / G91
+
+    def get_status(self, eventtime):
+        if self.report is None:
+            raise KeyError("no status")
+        return self.report
+
+    def get_position(self):
+        return list(self.pos)
+
+    def set_position(self, newpos, homing_axes=()):
+        assert self.rig.locked, "the toolhead is moved without the G-code mutex"
+        self.fail_if_broken("set_position_before")
+        self.pos = list(newpos)
+        self.homed = "".join(a for k, a in enumerate("xyz") if a in self.homed or k in homing_axes)
+        self.rig.events.append(("set_position", (self.pos[2], list(homing_axes)), self.rig.t))
+        self.fail_if_broken("set_position_after")
+
+    def fail_if_broken(self, name):
+        if name in self.broken:
+            raise AttributeError("broken: " + name)
+
+    def motor_off(self):
+        self.homed = ""
+        self.rig.events.append(("motor_off", None, self.rig.t))
+
+    def manual_move(self, coord, speed):
+        assert self.rig.locked, "the toolhead is moved without the G-code mutex"
+        for k, value in enumerate(coord):
+            if value is not None and "xyz"[k] not in self.homed:
+                raise GcodeError("Must home axis first")
+        if self.z_move_fails:
+            raise GcodeError("the bed did not move")
+        before = self.pos[2]
+        for k, value in enumerate(coord):
+            if value is not None:
+                self.pos[k] = value
+        self.rig.events.append(("z_move", (before, self.pos[2], speed), self.rig.t))
+        self.rig.spend(self.rig.durations.get("z", 0.0))
+
+    def wait_moves(self):
+        pass
+
+    def get_kinematics(self):
+        return types.SimpleNamespace(get_status=lambda eventtime: {"homed_axes": self.homed}, note_z_not_homed=self.note_z_not_homed)
+
+    def note_z_not_homed(self):
+        self.fail_if_broken("note_z_not_homed")
+        self.homed = self.homed.replace("z", "")
+        self.rig.events.append(("z_forgotten", None, self.rig.t))
+
+
+class Mutex:
+    def __init__(self, rig):
+        self.rig = rig
+
+    def __enter__(self):
+        assert not self.rig.locked, "the G-code mutex is taken twice: Klipper would hang"
+        self.rig.deliver()                                            # Klipper's mutex is a queue: who waits goes first
+        self.rig.locked = True
+
+    def __exit__(self, *error):
+        self.rig.locked = False
+
+
+SET_START_HOME = "SET_GCODE_VARIABLE MACRO=_TWEAKED_START_HOME VARIABLE=xy_fresh VALUE="
+
+
 class Rig:
     """The pretend world: a clock, a camera service whose counters follow the scripted positive frames (one frame per second)."""
 
     def __init__(self, positives, reset_at=None, down_until=0.0, status=200, stored=None, light=None, history=None, capture=None, toolhead=None,
-                 script_fails=False):
+                 script_fails=False, homed="xyz", position=(260.0, 260.0, 50.0), home_fails=False, durations=None):
         self.t, self.positives, self.messages, self.notices, self.posts = 0.0, positives, [], [], []
         self.events, self.scripts, self.timers = [], [], []          # (kind, what, second) in order; G-code the check ran; (second, action) the user does meanwhile
         self.ai_at, self.first_call, self.script_fails = None, None, script_fails   # second the AI was switched on; second of the first request
@@ -74,21 +158,122 @@ class Rig:
         pause = types.SimpleNamespace(is_paused=False, sd_paused=False, pause_command_sent=False)
         save = types.SimpleNamespace(cmd_SAVE_VARIABLE=self.save)
         objects = {"virtual_sdcard": self.sd, "pause_resume": pause, "save_variables": save}
-        if toolhead is not None:
-            objects["toolhead"] = types.SimpleNamespace(get_status=lambda eventtime: toolhead)
+        self.locked, self.home_fails, self.durations = False, home_fails, durations or {}
+        self.machine = Machine(self, homed, position, toolhead)
+        objects["toolhead"] = objects["stepper_enable"] = self.machine
+        self.abort_epoch, self.restore_fails, self.home_breaks_late = 0, False, False
+        self.queue, self.errors, self.resets, self.after_homing = [], [], [], None
+        self.xy_fresh, self.park_fails = None, False                 # xy_fresh: None = the module start-keep-xy is not installed
+        self.sd.do_cancel, self.sd._reset_file, self.sd.cmd_from_sd = self.do_cancel, self.reset_file, False
+        settings = {"tmc2240 " + name: {"run_current": value} for name, value in CONFIGURED.items()}
+        objects["configfile"] = types.SimpleNamespace(get_status=lambda eventtime: {"settings": settings})
         if light is not None:
             objects["output_pin caselight"] = types.SimpleNamespace(get_status=lambda eventtime: {"value": self.light})
-        self.printer = types.SimpleNamespace(lookup_object=lambda n, *a: objects[n],
+        self.objects = objects
+        self.printer = types.SimpleNamespace(lookup_object=lambda n, *a: objects.get(n, a[0]) if a else objects[n],
                                              get_reactor=lambda: types.SimpleNamespace(monotonic=lambda: self.t, pause=self.pause))
         self.gcode = types.SimpleNamespace(respond_info=self.messages.append, create_gcode_command=lambda *a: a,
-                                           run_script_from_command=self.run_script)
+                                           run_script_from_command=self.run_script, run_script=self.run_queued,
+                                           get_mutex=lambda: Mutex(self), error=GcodeError)
         self.requests = types.SimpleNamespace(get=self.get, post=self.post)
+
+    def spend(self, seconds):
+        self.pause(self.t + seconds)
+
+    def abort_waits(self):
+        # QIDI: a cancel makes Klipper drop the rest of every G-code script that is running (gcode.abort_waits).
+        self.abort_epoch += 1
+
+    def do_cancel(self):
+        # QIDI's virtual_sdcard.do_cancel: drop what is running, close the file.
+        self.abort_waits()
+        self.sd.current_file = None
+
+    def reset_file(self):
+        self.sd.current_file, self.sd.has_run_m4050 = None, False
+        self.resets.append(self.t)
+
+    def send_reset(self, m):
+        """SDCARD_RESET_FILE arrives (QIDI's Moonraker sends it after every cancel); it waits for the G-code mutex."""
+        self.queue.append(m)
+        self.deliver()
+
+    def deliver(self):
+        while self.queue and not self.locked:
+            m = self.queue.pop(0)
+            if not m.foreign_preflight_command("SDCARD_RESET_FILE"):  # Klipper's own command, as in virtual_sdcard.py
+                if self.sd.cmd_from_sd:
+                    self.errors.append("SDCARD_RESET_FILE cannot be run from the sdcard")
+                else:
+                    self.sd._reset_file()
+
+    def work(self, m):
+        """QIDI's SD worker around the check: "command from the file" until it returns; then the waiting commands run."""
+        self.sd.cmd_from_sd = True
+        try:
+            m.m4050()
+            self.sd.has_run_m4050 = True
+        finally:
+            self.sd.cmd_from_sd = False
+            self.deliver()
+
+    def run_queued(self, text):
+        # gcode.run_script takes the G-code mutex itself: calling it while the mutex is held would hang Klipper.
+        assert not self.locked, "run_script while the G-code mutex is held: Klipper would hang"
+        self.deliver()                                                # who already waits for the mutex goes first
+        self.locked = True
+        try:
+            self.execute(text)
+        finally:
+            self.locked = False                                       # the waiting command gets it when the check yields
+        if text == "G28 X Y" and self.after_homing:
+            hook, self.after_homing = self.after_homing, None
+            hook()
+
+    def execute(self, text):
+        self.events.append(("gcode", text, self.t))
+        for line in text.split("\n"):
+            if line.startswith("SET_TMC_CURRENT "):
+                if self.restore_fails:
+                    raise GcodeError("the driver does not answer")
+                words = dict(w.split("=") for w in line.split()[1:])
+                self.machine.current[words["STEPPER"]] = float(words["CURRENT"])
+            elif line == "G90":
+                self.machine.absolute = True
+            elif line.startswith("G28"):
+                if self.home_fails:
+                    raise GcodeError("homing failed")
+                axes = line.split()[1:] or ["X", "Y", "Z"]
+                # QIDI's homing macro: lower the motor current, home, back off in relative mode, put current and mode back.
+                self.machine.current = {name: HOMING for name in CONFIGURED}
+                self.machine.absolute = False
+                if self.home_breaks_late:
+                    raise GcodeError("homing failed half way")
+                epoch = self.abort_epoch
+                self.spend(self.durations.get("home", 0.0))
+                if self.abort_epoch != epoch:
+                    self.machine.homed = "y"                          # the first axis was done, the rest of the macro is dropped
+                    continue
+                self.machine.homed = "".join(a for a in "xyz" if a in self.machine.homed or a.upper() in axes)
+                self.machine.current = dict(CONFIGURED)
+                self.machine.absolute = True
+            elif line.startswith("G1 "):
+                if self.park_fails:
+                    raise GcodeError("the head did not move")
+                words = {w[0]: float(w[1:]) for w in line.split()[1:]}
+                for k, axis in enumerate("XYZ"):
+                    if axis in words:
+                        if axis.lower() not in self.machine.homed:
+                            raise GcodeError("Must home axis first")
+                        self.machine.pos[k] = words[axis]
+                self.spend(self.durations.get("park", 0.0))
 
     def pause(self, until):
         self.t = max(self.t, until)
         for timer in [x for x in self.timers if self.t >= x[0]]:    # what the user does while the check waits
             self.timers.remove(timer)
             timer[1]()
+        self.deliver()
 
     def save(self, cmd):
         self.notices.append(cmd)
@@ -99,6 +284,10 @@ class Rig:
             raise RuntimeError("the pin is not there")
         self.scripts.append(text)
         self.events.append(("script", text, self.t))
+        if text.startswith(SET_START_HOME):
+            if self.xy_fresh is None:
+                raise GcodeError("Unknown gcode_macro")
+            self.xy_fresh = int(text[len(SET_START_HOME):])
         if self.light is not None and "caselight VALUE=1" in text:
             self.light = 1.0
 
@@ -445,7 +634,7 @@ class ToolheadPositionTests(unittest.TestCase):
         rig.run()
         self.assertIn('homed axes ""', self.lines(rig)[0])
 
-    def test_a_missing_or_odd_toolhead_does_not_stop_the_check(self):
+    def test_an_unreadable_or_odd_toolhead_report_does_not_stop_the_check(self):
         for toolhead in (None, {}, {"position": "bad"}):
             rig = Rig(positives=[], toolhead=toolhead)
             rig.run()
@@ -540,6 +729,430 @@ class CameraSettleTests(unittest.TestCase):
         cleared = [e for e in rig.events if e[0] == "notice" and e[1] == "\'\'"]
         self.assertEqual(len(cleared), 1)
         self.assertLess(cleared[0][2], 1.0)                           # at the start, before the wait for the camera
+
+PARK = "G90\nG1 X260 Y260 F3000\nM400"
+MOVING = "PEI foreign object check: moving the head to the rear right corner, away from the camera's view of the plate."
+
+
+class ParkForTheCameraTests(unittest.TestCase):
+    """26.11.2026: with the toolhead in the middle of the picture the AI reported an object on an empty plate (after a Home); at
+    the rear right corner it did not (2 of 2). So before the AI looks, X and Y are homed (never Z: homing Z presses the nozzle
+    on a plate nobody has looked at yet) and the head is driven to that corner. The owner decides what the warning means."""
+
+    def events(self, rig, *kinds):
+        return [e for e in rig.events if e[0] in kinds]
+
+    def gcodes(self, rig):
+        return [e[1] for e in self.events(rig, "gcode")]
+
+    def ai_started(self, rig):
+        return next(t for kind, what, t in rig.events if kind == "post" and what is True)
+
+    def test_after_the_motors_were_off_the_bed_drops_then_x_and_y_home_then_the_head_parks(self):
+        rig = Rig(positives=[], light=1.0, homed="", position=(0.0, 0.0, 0.0))
+        rig.run()
+        moves = [(e[0], e[1]) for e in self.events(rig, "set_position", "z_move", "z_forgotten", "gcode", "post")]
+        self.assertEqual(moves[:6], [("set_position", (0.0, [2])), ("z_move", (0.0, 5.0, 10.0)), ("z_forgotten", None),
+                                     ("gcode", "G28 X Y"), ("gcode", PARK), ("post", True)])
+        self.assertEqual(rig.machine.pos[:2], [260.0, 260.0])
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_the_printer_never_keeps_believing_that_it_knows_the_bed_height(self):
+        rig = Rig(positives=[], homed="")
+        rig.run()
+        self.assertEqual(rig.machine.homed, "xy")                     # the print file homes everything again
+
+    def test_z_is_never_homed_by_the_check(self):
+        for homed in ("", "xy", "xyz", "z"):
+            rig = Rig(positives=[], homed=homed)
+            rig.run()
+            homing = [g for g in self.gcodes(rig) if "G28" in g]
+            self.assertTrue(all(g == "G28 X Y" for g in homing), (homed, homing))
+
+    def test_homed_axes_are_not_homed_again_and_a_low_enough_bed_is_not_moved(self):
+        for z in (50.0, 138.0, 265.0):
+            rig = Rig(positives=[], homed="xyz", position=(100.0, 100.0, z))
+            rig.run()
+            self.assertEqual(self.gcodes(rig), [PARK], z)
+            self.assertEqual(self.events(rig, "set_position", "z_move"), [], z)
+            self.assertEqual(rig.machine.homed, "xyz")
+
+    def test_a_bed_close_to_the_nozzle_is_only_ever_moved_away_from_it(self):
+        # 50 mm is the lowest bed height at which the AI was tried with the head in this corner
+        for z in (-1.0, 0.0, 20.0, 49.9):
+            rig = Rig(positives=[], homed="xyz", position=(100.0, 100.0, z))
+            rig.run()
+            self.assertEqual([e[1] for e in self.events(rig, "z_move")], [(z, 50.0, 10.0)], z)
+            self.assertEqual(self.events(rig, "set_position", "z_forgotten"), [], z)
+            self.assertEqual(rig.machine.homed, "xyz")                # the height was really known: it stays known
+
+    def test_only_a_missing_x_or_y_is_homed(self):
+        for homed, expected in (("xy", [PARK]), ("x", ["G28 X Y", PARK]), ("yz", ["G28 X Y", PARK])):
+            rig = Rig(positives=[], homed=homed)
+            rig.run()
+            self.assertEqual(self.gcodes(rig), expected, homed)
+
+    def test_the_ai_looks_only_after_the_head_has_arrived_and_the_camera_has_settled(self):
+        rig = Rig(positives=[], light=1.0, homed="", durations={"home": 9.0, "park": 4.0})
+        rig.run()
+        self.assertGreaterEqual(self.ai_started(rig), 9.0 + 4.0 + WAIT)
+        self.assertGreaterEqual(rig.t - self.ai_started(rig), 19.0)   # still its whole window
+
+    def test_the_user_is_told_that_the_head_moves(self):
+        rig = Rig(positives=[], homed="")
+        rig.run()
+        self.assertEqual(rig.messages.count(MOVING), 1)
+        self.assertTrue(all(m.startswith("PEI foreign object check:") for m in rig.messages), rig.messages)
+        self.assertFalse([m for m in rig.messages if "without movement" in m])
+
+    def test_a_bed_that_does_not_move_stops_the_print_with_that_error(self):
+        rig = Rig(positives=[], homed="")
+        rig.machine.z_move_fails = True
+        m = rig.build()
+        with self.assertRaises(GcodeError):
+            m.m4050()
+        self.assertEqual(rig.machine.homed, "")                       # the made-up height is forgotten even then
+        self.assertEqual((rig.posts, self.gcodes(rig)), ([], []))
+        self.assertIsNone(m._foreign_preflight)
+        self.assertFalse(rig.locked)
+
+    def test_a_homing_that_fails_stops_the_print_with_that_error(self):
+        rig = Rig(positives=[], homed="", home_fails=True)
+        m = rig.build()
+        with self.assertRaises(GcodeError):
+            m.m4050()
+        self.assertEqual(rig.posts, [])                               # the AI does not look at a head that did not move
+        self.assertNotIn("z", rig.machine.homed)
+        self.assertIsNone(m._foreign_preflight)
+        self.assertNotIn(UNAVAILABLE, rig.messages)
+
+    def test_a_cancel_while_the_bed_drops_stops_before_the_homing(self):
+        rig = Rig(positives=[], homed="", durations={"z": 1.0})
+        m = rig.build()
+        rig.timers.append((0.5, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        m.m4050()
+        self.assertEqual((self.gcodes(rig), rig.posts), ([], []))
+        self.assertNotIn("z", rig.machine.homed)
+        self.assertIsNone(m._foreign_preflight)
+
+    def test_a_cancel_while_x_and_y_home_stops_before_the_park(self):
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        rig.timers.append((3.0, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        m.m4050()
+        self.assertEqual(self.gcodes(rig), ["G28 X Y", RESTORE])
+        self.assertEqual(rig.posts, [])
+        self.assertIsNone(m._foreign_preflight)
+
+    def test_a_pause_while_x_and_y_home_holds_the_print_without_further_moves(self):
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        rig.timers.append((3.0, lambda: m.foreign_preflight_command("PAUSE")))
+        m.m4050()
+        self.assertEqual(self.gcodes(rig), ["G28 X Y"])
+        self.assertEqual(rig.posts, [])
+        self.assertTrue(rig.sd.must_pause_work)
+        self.assertEqual(m._foreign_preflight["phase"], "held")      # Continue still finds the waiting print
+
+    def test_a_cancel_while_the_head_drives_to_the_corner_starts_no_ai(self):
+        rig = Rig(positives=[], homed="xyz", durations={"park": 4.0})
+        m = rig.build()
+        rig.timers.append((1.0, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        m.m4050()
+        self.assertEqual(rig.posts, [])
+        self.assertNotIn(NOTHING, rig.messages)
+
+    def test_nothing_moves_when_the_check_is_switched_off(self):
+        rig = Rig(positives=[], homed="")
+        m = rig.build()
+        m.ai_configs[AIErrorType.FOREIGN]["enabled"] = 0
+        m.m4050()
+        self.assertEqual(rig.events, [])
+
+    def test_nothing_moves_for_a_resumed_print(self):
+        for change in ({"has_run_m4050": True}, {"file_position": 1000}, {"current_file": None}):
+            rig = Rig(positives=[], homed="")
+            for name, value in change.items():
+                setattr(rig.sd, name, value)
+            rig.run()
+            self.assertEqual(rig.events, [], change)
+
+SKIPPED = ("PEI foreign object check: the head could not be moved to the corner (see the log); the check is skipped "
+           "and the print goes on.")
+
+
+class ParkThatBreaksTests(unittest.TestCase):
+    """Review by the 03.02 agent (26.11.2026): only a movement that the printer refuses may stop a print. A mistake in our code,
+    or a Klipper that differs from what we read, must not block every print - and must never leave a made-up bed height behind."""
+
+    def broken(self, name):
+        rig = Rig(positives=[], homed="")
+        rig.machine.broken.add(name)
+        m = rig.run()                                                 # no exception: the print goes on
+        self.assertIn(SKIPPED, rig.messages, name)
+        self.assertNotIn(UNAVAILABLE, rig.messages, name)
+        self.assertNotIn(NOTHING, rig.messages, name)
+        self.assertEqual(rig.posts, [], name)                         # the AI does not look at a head that may be anywhere
+        self.assertNotIn("z", rig.machine.homed, name)
+        self.assertFalse(rig.sd.must_pause_work, name)
+        self.assertIsNone(m._foreign_preflight, name)
+        self.assertFalse(rig.locked, name)
+        return rig
+
+    def test_a_toolhead_that_does_not_take_the_new_position_does_not_block_the_print(self):
+        self.broken("set_position_before")
+
+    def test_a_failure_after_the_position_was_taken_still_forgets_the_height(self):
+        rig = self.broken("set_position_after")
+        self.assertIn("z_forgotten", [e[0] for e in rig.events])
+
+    def test_when_the_height_cannot_be_forgotten_the_motors_are_switched_off(self):
+        rig = self.broken("note_z_not_homed")
+        self.assertIn("motor_off", [e[0] for e in rig.events])        # Klipper then knows no axis any more
+        self.assertEqual([e for e in rig.events if e[0] == "gcode"], [])
+
+    def test_the_motors_are_left_on_in_a_normal_run(self):
+        rig = Rig(positives=[], homed="")
+        rig.run()
+        self.assertNotIn("motor_off", [e[0] for e in rig.events])
+
+RESTORE = ("SET_TMC_CURRENT STEPPER=stepper_x CURRENT=1.07\nSET_TMC_CURRENT STEPPER=stepper_y CURRENT=1.07\nG90")
+RESTORED = "PEI foreign object check: the homing was cut short; the motor current of X and Y was put back."
+
+
+class CutHomingTests(unittest.TestCase):
+    """26.11.2026, third test on the printer: a cancel during "G28 X Y" made QIDI drop the rest of the homing macro, and the X
+    and Y motors stayed at the homing current (0.9 A instead of 1.07 A) until the next homing."""
+
+    def gcodes(self, rig):
+        return [e[1] for e in rig.events if e[0] == "gcode"]
+
+    def cancelled(self):
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        rig.timers.append((3.0, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        return rig, m
+
+    def test_a_cancel_during_the_homing_puts_the_motor_current_and_the_mode_back(self):
+        rig, m = self.cancelled()
+        m.m4050()
+        self.assertEqual(rig.machine.current, CONFIGURED)
+        self.assertTrue(rig.machine.absolute)
+        self.assertEqual(rig.messages.count(RESTORED), 1)
+        self.assertEqual(rig.posts, [])
+
+    def test_a_homing_that_fails_half_way_puts_the_current_back_and_still_stops_the_print(self):
+        rig = Rig(positives=[], homed="")
+        rig.home_breaks_late = True
+        with self.assertRaisesRegex(GcodeError, "homing failed half way"):
+            rig.run()
+        self.assertEqual(rig.machine.current, CONFIGURED)
+        self.assertTrue(rig.machine.absolute)
+
+    def test_a_current_that_cannot_be_put_back_hides_neither_the_error_nor_the_cancel(self):
+        rig, m = self.cancelled()
+        rig.restore_fails = True
+        m.m4050()                                                     # no exception
+        self.assertNotIn(RESTORED, rig.messages)
+        self.assertIsNone(m._foreign_preflight)
+        rig = Rig(positives=[], homed="")
+        rig.restore_fails, rig.home_breaks_late = True, True
+        with self.assertRaisesRegex(GcodeError, "homing failed half way"):
+            rig.run()
+
+    def test_nothing_extra_is_sent_when_the_homing_ends_normally_or_the_print_is_paused(self):
+        rig = Rig(positives=[], homed="")
+        rig.run()
+        self.assertFalse([g for g in self.gcodes(rig) if "SET_TMC_CURRENT" in g])
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        rig.timers.append((3.0, lambda: m.foreign_preflight_command("PAUSE")))
+        m.m4050()
+        self.assertEqual(self.gcodes(rig), ["G28 X Y"])               # a pause does not cut the macro
+        self.assertEqual(rig.machine.current, CONFIGURED)
+
+REFUSED = "SDCARD_RESET_FILE cannot be run from the sdcard"
+
+
+class ResetAfterCancelTests(unittest.TestCase):
+    """26.11.2026, 19:07 on the printer: after a cancel during "G28 X Y" the screen showed "SDCARD_RESET_FILE cannot be run
+    from the sdcard". QIDI's Moonraker sends that command after every cancel; the check had not returned yet, so Klipper
+    still counted it as a command from the file and refused the reset."""
+
+    def cancel(self, rig, m, at, reset_after=0.3):
+        rig.timers.append((at, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        rig.timers.append((at + reset_after, lambda: rig.send_reset(m)))
+
+    def quiet(self, rig, m):
+        rig.work(m)
+        self.assertEqual(rig.errors, [])
+        self.assertEqual(len(rig.resets), 1)                          # the file and the print state are reset, as QIDI wants
+        self.assertEqual(rig.queue, [])
+        self.assertIsNone(m._foreign_preflight)
+        self.assertIsNone(m._foreign_check_sd)
+
+    def test_a_cancel_while_x_and_y_home_shows_no_error(self):
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        self.cancel(rig, m, 3.0)
+        self.quiet(rig, m)
+        self.assertEqual(rig.machine.current, CONFIGURED)
+
+    def test_a_reset_between_the_cut_homing_and_the_current_going_back_shows_no_error(self):
+        rig = Rig(positives=[], homed="", durations={"home": 8.0})
+        m = rig.build()
+        rig.timers.append((3.0, lambda: m.foreign_preflight_command("CANCEL_PRINT")))
+        rig.after_homing = lambda: rig.send_reset(m)
+        self.quiet(rig, m)
+        self.assertEqual(rig.machine.current, CONFIGURED)
+
+    def test_a_cancel_while_the_camera_settles_shows_no_error(self):
+        rig = Rig(positives=[], light=1.0)
+        m = rig.build()
+        self.cancel(rig, m, 2.1)                                      # both arrive before the check looks again
+        self.quiet(rig, m)
+        self.assertEqual(rig.posts, [])
+
+    def test_a_cancel_while_the_ai_looks_shows_no_error(self):
+        rig = Rig(positives=[], light=1.0)
+        m = rig.build()
+        self.cancel(rig, m, 10.1, reset_after=0.1)
+        self.quiet(rig, m)
+        self.assertEqual(rig.posts[-1][1], {"state": False})
+
+    def test_a_cancel_while_the_head_drives_shows_no_error(self):
+        rig = Rig(positives=[], homed="xyz", durations={"park": 4.0})
+        m = rig.build()
+        self.cancel(rig, m, 1.0)
+        self.quiet(rig, m)
+
+    def test_a_cancel_while_the_bed_drops_shows_no_error(self):
+        rig = Rig(positives=[], homed="", durations={"z": 1.0})
+        m = rig.build()
+        self.cancel(rig, m, 0.3)
+        self.quiet(rig, m)
+
+    def test_a_reset_that_is_itself_the_cancel_still_cancels(self):
+        rig = Rig(positives=[], light=1.0)
+        m = rig.build()
+        rig.timers.append((2.1, lambda: rig.send_reset(m)))          # the user's own reset, the file still open
+        rig.timers.append((2.4, lambda: rig.send_reset(m)))          # Moonraker's, after it saw "cancelled"
+        self.quiet(rig, m)
+        self.assertEqual(rig.posts, [])
+
+    def test_after_the_check_the_command_is_klippers_again(self):
+        rig = Rig(positives=[], light=1.0)
+        m = rig.build()
+        rig.work(m)
+        rig.sd.current_file = None
+        self.assertFalse(m.foreign_preflight_command("SDCARD_RESET_FILE"))
+
+    def test_a_reset_inside_a_print_file_is_still_refused(self):
+        rig = Rig(positives=[], light=1.0)
+        m = rig.build()
+        rig.work(m)
+        rig.sd.cmd_from_sd = True                                     # a line of the file is running
+        rig.send_reset(m)
+        self.assertEqual(rig.errors, [REFUSED])
+
+    def test_a_found_object_still_lets_the_reset_cancel_the_held_print(self):
+        rig = Rig(positives=[9.0], light=1.0)
+        m = rig.build()
+        rig.work(m)
+        self.assertIsNone(m._foreign_check_sd)
+        rig.send_reset(m)
+        self.assertEqual(rig.errors, [])
+        self.assertIsNone(rig.sd.current_file)
+        self.assertIsNone(m._foreign_preflight)
+
+    def test_a_check_that_stops_the_print_with_an_error_hands_the_command_back(self):
+        rig = Rig(positives=[], homed="", home_fails=True)
+        m = rig.build()
+        with self.assertRaises(GcodeError):
+            rig.work(m)
+        self.assertIsNone(m._foreign_check_sd)
+
+class StartKeepsXyTests(unittest.TestCase):
+    """Module start-keep-xy: the first homing of a print may keep X and Y only when this check has just homed them itself
+    and nobody was asked to do anything since (03.02 agent and owner, 26.11.2026)."""
+
+    def rig(self, stale=0, **kw):
+        rig = Rig(**dict({"positives": [], "homed": ""}, **kw))
+        rig.xy_fresh = stale
+        rig.objects["gcode_macro _TWEAKED_START_HOME"] = object()
+        return rig
+
+    def test_a_check_that_homed_x_and_y_itself_lets_the_start_keep_them(self):
+        rig = self.rig()
+        rig.work(rig.build())
+        self.assertIn(NOTHING, rig.messages)
+        self.assertEqual(rig.xy_fresh, 1)
+
+    def test_axes_that_were_homed_before_the_check_are_homed_again_by_the_print_start(self):
+        for homed in ("xy", "xyz"):                                   # e.g. Home on the screen, or a cancel a minute ago
+            rig = self.rig(homed=homed)
+            rig.run()
+            self.assertEqual(rig.xy_fresh, 0, homed)
+
+    def test_an_old_mark_never_survives_a_new_start(self):
+        rig = self.rig(stale=1, homed="xyz")
+        rig.run()
+        self.assertEqual(rig.xy_fresh, 0)
+        rig = self.rig(stale=1)
+        m = rig.build()
+        m.ai_configs[AIErrorType.FOREIGN]["enabled"] = 0             # check switched off: nothing is homed by it
+        m.m4050()
+        self.assertEqual(rig.xy_fresh, 0)
+
+    def test_a_found_object_means_the_user_may_touch_the_printer_so_everything_is_homed(self):
+        rig = self.rig(positives=[9.0])
+        rig.run()
+        self.assertIn(FOUND, rig.messages)
+        self.assertEqual(rig.xy_fresh, 0)
+
+    def test_an_object_reported_in_the_first_seconds_also_means_full_homing(self):
+        rig = self.rig(positives=[2.0])
+        rig.run()
+        self.assertIn(NOTHING, rig.messages)
+        self.assertEqual(rig.xy_fresh, 0)
+
+    def test_a_cancel_or_a_pause_or_a_continue_leaves_no_mark(self):
+        for command in ("CANCEL_PRINT", "PAUSE", "RESUME"):
+            for second in (3.0, 10.0, 22.0):                          # homing, camera wait, AI window
+                rig = self.rig(durations={"home": 8.0})
+                m = rig.build()
+                rig.timers.append((second, lambda: m.foreign_preflight_command(command)))
+                rig.work(m)
+                self.assertEqual(rig.xy_fresh, 0, (command, second))
+
+    def test_without_an_answer_of_the_ai_the_mark_is_set_the_print_goes_on_untouched(self):
+        rig = self.rig(status=500)
+        rig.run()
+        self.assertIn(UNAVAILABLE, rig.messages)
+        self.assertEqual(rig.xy_fresh, 1)
+
+    def test_a_head_that_could_not_be_parked_leaves_no_mark(self):
+        rig = self.rig()
+        rig.park_fails = True
+        with self.assertRaises(GcodeError):
+            rig.run()
+        self.assertEqual(rig.xy_fresh, 0)
+        rig = self.rig()
+        rig.machine.broken.add("set_position_before")
+        rig.run()
+        self.assertEqual(rig.xy_fresh, 0)
+
+    def test_without_the_module_nothing_is_sent(self):
+        rig = Rig(positives=[], homed="")
+        rig.run()
+        self.assertFalse([s for s in rig.scripts if "START_HOME" in s])
+        self.assertIn(NOTHING, rig.messages)
+
+    def test_a_mark_that_cannot_be_written_stops_nothing(self):
+        rig = self.rig(light=1.0)
+        rig.script_fails = True
+        rig.run()
+        self.assertIn(NOTHING, rig.messages)
 
 
 if __name__ == "__main__":

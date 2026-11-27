@@ -1,0 +1,30 @@
+{
+ "id": "start-keep-xy",
+ "order": 121,
+ "default": false,
+ "title": "Print start: X and Y homed by the plate check are not homed a second time (optional)",
+ "files": {
+  "/home/qidi/printer_data/config/klipper-macros-qd/gcode_macro.cfg": {
+   "base": "printer",
+   "stock_sha256": "6c7cca893f4d57f9c170fca90bf3c30fbf821ba25ea3e9a789898a1988d33927",
+   "edits": [
+    [
+     "    {% if 'X' not in params and  'Y' not in params  %}\n        SET_KINEMATIC_POSITION X=100\n        SET_KINEMATIC_POSITION Y=100\n        SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum.z/2}\n        G91\n        G1 Z5 F600\n#        G1 X-5 F2400\n#        G1 Y2 F2400\n        G4 P2000\n        _HOME_XY\n        G90\n",
+     "    {% if 'X' not in params and  'Y' not in params  %}\n        # q2-start-keep-xy: only for the first homing of a print (PRINT_START sends TWEAKED_KEEP_XY): homed X and Y are not\n        # homed again, only Z, when the plate check of this start has just homed them (the mark counts once) or when\n        # TWEAKED_START_XY MODE=ANY was chosen.\n        {% set q2_trusted = printer['gcode_macro _TWEAKED_START_HOME'].xy_fresh|int == 1 or printer.save_variables.variables.q2_start_keep_any|default(0)|int == 1 %}\n        {% set q2_keep_xy = 'TWEAKED_KEEP_XY' in params and q2_trusted and 'x' in printer.toolhead.homed_axes and 'y' in printer.toolhead.homed_axes %}\n        {% if 'TWEAKED_KEEP_XY' in params %}\n        SET_GCODE_VARIABLE MACRO=_TWEAKED_START_HOME VARIABLE=xy_fresh VALUE=0\n        {% endif %}\n        {% if not q2_keep_xy %}\n        SET_KINEMATIC_POSITION X=100\n        SET_KINEMATIC_POSITION Y=100\n        {% endif %}\n        SET_KINEMATIC_POSITION Z={printer.toolhead.axis_maximum.z/2}\n        G91\n        G1 Z5 F600\n#        G1 X-5 F2400\n#        G1 Y2 F2400\n        G4 P2000\n        {% if not q2_keep_xy %}\n        _HOME_XY\n        {% endif %}\n        G90\n"
+    ],
+    [
+     "    SET_PRINT_SUB_STATUS SUB_STATUS=tool_head_reset\n    G28   \n",
+     "    SET_PRINT_SUB_STATUS SUB_STATUS=tool_head_reset\n    G28 TWEAKED_KEEP_XY  # q2-start-keep-xy: X and Y just homed by the plate check are not homed again\n"
+    ],
+    [
+     "[homing_override]\n",
+     "# q2-start-keep-xy: xy_fresh is 1 only between a plate check that has just homed X and Y and the first homing of\n# PRINT_START.\n[gcode_macro _TWEAKED_START_HOME]\nvariable_xy_fresh: 0\ngcode:\n    M118 The plate check sets this mark; the first homing of a print start reads it.\n\n[gcode_macro TWEAKED_START_XY]\ndescription: Print start: keep homed X and Y only after the plate check (MODE=CHECK) or after any homing (MODE=ANY)\ngcode:\n    {% set mode = params.MODE|default('')|upper %}\n    {% if mode == 'CHECK' %}\n        SAVE_VARIABLE VARIABLE=q2_start_keep_any VALUE=0\n    {% elif mode == 'ANY' %}\n        SAVE_VARIABLE VARIABLE=q2_start_keep_any VALUE=1\n    {% elif mode %}\n        { action_raise_error(\"TWEAKED_START_XY: use MODE=CHECK or MODE=ANY\") }\n    {% endif %}\n    {% set now = mode if mode else ('ANY' if printer.save_variables.variables.q2_start_keep_any|default(0)|int == 1 else 'CHECK') %}\n    M118 Print start keeps homed X and Y: MODE={now}\n\n[homing_override]\n"
+    ]
+   ]
+  }
+ },
+ "restart": [
+  "klipper"
+ ],
+ "note": "OPTIONAL (install with --with start-keep-xy). QIDI's PRINT_START homes all axes at its beginning, also when X and Y were homed a moment before. With this module that first homing can keep X and Y and home only Z, the same way as before (bed 5 mm down, nozzle to the middle, probe with the nozzle); expected saving about 9-10 s. Two modes, chosen in the console and remembered: TWEAKED_START_XY MODE=CHECK (default, careful; needs ai-fixes and its foreign-object check switched on): only when the check of this start has just homed X and Y itself and went through without a report, pause, cancel or Continue. TWEAKED_START_XY MODE=ANY: whenever X and Y count as homed (Home on the screen or in Fluidd, an earlier cancel). Risk of ANY: the printer cannot tell a real position from a wrong one - after a pushed head or lost steps with the motors on, or after a position forced with SET_KINEMATIC_POSITION, the head goes to the middle, the nozzle cleaning and the filament cutter work with that wrong position and the head can hit the frame. (The printer screen forces such a position when it moves an axis that is not homed, and switches the motors off right after the move, which forgets it: seen on the author's printer on 27.11.2026.) In both modes 'Home All', the second homing of PRINT_START (after the filament cutter) and a print start with X or Y not homed home everything. No print start with it has been tried yet. Uninstall restores QIDI's lines."
+}
