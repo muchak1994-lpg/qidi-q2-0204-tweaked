@@ -1,5 +1,8 @@
 # Changelog
 
+## Unreleased
+- Installer: **`algo-app-recycle` is taken off the printer.** The module left the project in 1.4.1, but an update left its service switched on without a word. Install and both kinds of uninstall now stop `q2-algo-recycle.service` and remove its two files (`plan` lists them; a file you changed yourself is reported and left alone). Tested offline against a pretend printer; not tried on a real printer yet.
+
 ## 1.4.2 - 2026-11-27
 Eighth release: three installer fixes, and the foreign-object check at the start of a print waits for the camera and writes down what it saw. A new move of the toolhead before that check is being tried separately and is NOT in this release. Installer tried on the author's printer on 27.11.2026, without a print: return to the official 02.04 originals; a fresh install of this release; an update that added one module without naming the installed ones; an uninstall with the backups on the PC; a new install; and release 1.3.2, installed with its own installer on the originals, then updated to this release without `--with` (3 files changed in under a minute, the six optional modules still in the project were kept). **An update does not remove `algo-app-recycle`** (gone from the project since 1.4.1): in that test it stayed switched on and the installer said nothing about it; the commands in the 1.4.1 notes removed it. NOT tried: the refusal while a print is running (tested offline only), and a complete print with this release.
 
