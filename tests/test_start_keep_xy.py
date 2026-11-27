@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 muchak1994-lpg (QIDI Q2 02.04 Tweaked) - with Claude (Anthropic) and Codex "Stefan" (OpenAI)
-"""start-keep-xy: the first homing of a print does not home X and Y again when they are already homed.
+"""start-keep-xy: the first homing of a print, and the homing before the bed mesh, do not home X and Y again.
 
 The two edits are taken from the module (QIDI's file is never needed): the homing part is rendered with jinja2 using
 Klipper's delimiters, once as QIDI wrote it and once as the module writes it, and the G-code lines are compared.
@@ -24,6 +24,7 @@ KEYWORD = "TWEAKED_KEEP_XY"
 XY_LINES = ["SET_KINEMATIC_POSITION X=100", "SET_KINEMATIC_POSITION Y=100", "_HOME_XY"]
 Z_ONLY = ["SET_KINEMATIC_POSITION Z=132.5", "G91", "G1 Z5 F600", "G4 P2000", "G90"]
 MACRO = "_TWEAKED_START_HOME"
+MARK = "SET_GCODE_VARIABLE MACRO=_TWEAKED_START_HOME VARIABLE=xy_fresh VALUE=1"
 USED = "SET_GCODE_VARIABLE MACRO=_TWEAKED_START_HOME VARIABLE=xy_fresh VALUE=0"
 
 
@@ -50,26 +51,57 @@ def render(text, **context):
     return [line.strip() for line in out.split("\n") if line.strip() and not line.strip().startswith("#")]
 
 
-def commands(text, homed, params, fresh=1, saved=None):
-    printer = {"toolhead": {"homed_axes": homed, "axis_maximum": {"z": 265}}, "gcode_macro " + MACRO: {"xy_fresh": fresh},
-               "save_variables": {"variables": saved or {}}}
+def commands(text, homed, params, fresh=1):
+    printer = {"toolhead": {"homed_axes": homed, "axis_maximum": {"z": 265}}, "gcode_macro " + MACRO: {"xy_fresh": fresh}}
     return render(text + "{% endif %}", printer=printer, params=params)
 
 
-class MacroError(Exception):
-    pass
+def edits():
+    return module()["files"][TARGET]["edits"]
 
 
-def switch(params, saved=None):
-    """The G-code of the user macro TWEAKED_START_XY."""
-    new = edit("[homing_override]")[1]
-    body = new.split("[gcode_macro TWEAKED_START_XY]\n")[1].split("gcode:\n")[1].split("\n[homing_override]")[0]
-    body = body.split("\n[")[0]
+class MeshHomingLineTests(unittest.TestCase):
+    """The third homing of a print: QIDI's G29 homes all axes again, a moment after PRINT_START has done it."""
 
-    def stop(message):
-        raise MacroError(message)
+    def changed_g28(self):
+        found = []
+        for old, new in edits():
+            old_lines, new_lines = old.split("\n"), new.split("\n")
+            if len(old_lines) != len(new_lines) or "SUB_STATUS=tool_head_reset" in old:
+                continue
+            found += [(a, b) for a, b in zip(old_lines, new_lines) if a != b and a.strip() == "G28"]
+        return found
 
-    return render(body, params=params, action_raise_error=stop, printer={"save_variables": {"variables": saved or {}}})
+    def test_all_three_homings_of_the_bed_mesh_macro_ask_to_keep_x_and_y(self):
+        changed = self.changed_g28()
+        self.assertEqual(len(changed), 3, changed)
+        for old, new in changed:
+            self.assertEqual(new.strip(), "G28 " + KEYWORD)
+            self.assertEqual(old[:len(old) - len(old.lstrip())], new[:len(new) - len(new.lstrip())])
+
+    def test_each_of_the_three_branches_is_found_by_its_own_text(self):
+        for marker in ("BED_MESH_CALIBRATE PROFILE=kamp", "profiles.default", "BED_MESH_CALIBRATE PROFILE=default"):
+            old, new = edit(marker)
+            self.assertIn("G28 " + KEYWORD, new, marker)
+
+    def test_print_start_sets_the_mark_right_before_the_bed_mesh(self):
+        old, new = edit("SUB_STATUS=auto_bed_adjust")
+        old_lines, new_lines = old.split("\n"), new.split("\n")
+        at = new_lines.index(next(line for line in new_lines if line.strip().startswith(MARK)))
+        self.assertEqual(new_lines[at + 1].strip(), "G29")          # nothing between the mark and its only user
+        self.assertEqual(new_lines[:at] + new_lines[at + 1:], old_lines)
+        self.assertNotIn(";", new_lines[at])
+
+
+@unittest.skipIf(jinja2 is None, "jinja2 not installed")
+class MeshHomingTests(unittest.TestCase):
+    def setUp(self):
+        self.old, self.new = edit("_HOME_XY")
+        self.asked = klipper_params("G28 " + KEYWORD)
+
+    def test_the_bed_mesh_from_the_screen_or_the_console_homes_everything(self):
+        got = commands(self.new, "xyz", self.asked, fresh=0)
+        self.assertEqual(got, [USED] + commands(self.old, "xyz", self.asked))
 
 
 class ModuleTests(unittest.TestCase):
@@ -90,6 +122,12 @@ class ModuleTests(unittest.TestCase):
         old, new = edit("[homing_override]")
         self.assertTrue(new.endswith(old))
         self.assertIn("[gcode_macro " + MACRO + "]\nvariable_xy_fresh: 0\ngcode:\n    ", new)
+
+    def test_the_module_adds_no_command_of_its_own_and_remembers_no_setting(self):
+        new = "".join(pair[1] for pair in edits())
+        self.assertEqual(re.findall(r"\[gcode_macro ([^\]]+)\]", new), [MACRO])
+        self.assertNotIn("save_variables", new)
+        self.assertNotIn("SAVE_VARIABLE", new)
 
     def test_klipper_reads_the_new_line_as_a_homing_of_all_axes(self):
         params = klipper_params("G28 " + KEYWORD)
@@ -126,49 +164,6 @@ class HomingTests(unittest.TestCase):
             got = commands(self.new, homed, self.plain)
             self.assertEqual(got, commands(self.old, homed, self.plain), homed)
             self.assertTrue(all(c in got for c in XY_LINES), homed)
-
-@unittest.skipIf(jinja2 is None, "jinja2 not installed")
-class AnyHomingTests(unittest.TestCase):
-    """The wider mode the owner asked about on 27.11.2026: X and Y homed by anything are kept (chosen with a command)."""
-
-    ANY = {"q2_start_keep_any": 1}
-
-    def setUp(self):
-        self.old, self.new = edit("_HOME_XY")
-        self.asked = klipper_params("G28 " + KEYWORD)
-
-    def test_x_and_y_homed_by_anything_are_kept(self):
-        for homed in ("xy", "xyz"):
-            self.assertEqual(commands(self.new, homed, self.asked, fresh=0, saved=self.ANY), [USED] + Z_ONLY, homed)
-
-    def test_axes_that_are_not_homed_are_homed(self):
-        for homed in ("", "x", "y", "yz"):
-            got = commands(self.new, homed, self.asked, fresh=0, saved=self.ANY)
-            self.assertTrue(all(c in got for c in XY_LINES), homed)
-
-    def test_home_all_still_homes_everything(self):
-        got = commands(self.new, "xyz", klipper_params("G28"), fresh=0, saved=self.ANY)
-        self.assertTrue(all(c in got for c in XY_LINES))
-
-    def test_the_careful_mode_is_the_default(self):
-        for saved in ({}, {"q2_start_keep_any": 0}):
-            got = commands(self.new, "xyz", self.asked, fresh=0, saved=saved)
-            self.assertTrue(all(c in got for c in XY_LINES), saved)
-
-    def test_the_command_chooses_and_remembers_the_mode(self):
-        self.assertIn("SAVE_VARIABLE VARIABLE=q2_start_keep_any VALUE=1", switch({"MODE": "ANY"}))
-        self.assertIn("SAVE_VARIABLE VARIABLE=q2_start_keep_any VALUE=0", switch({"MODE": "check"}, self.ANY))
-
-    def test_the_command_without_a_mode_only_says_which_one_is_on(self):
-        for saved, name in (({}, "CHECK"), (self.ANY, "ANY")):
-            got = switch({}, saved)
-            self.assertEqual(len(got), 1, got)
-            self.assertTrue(got[0].startswith("M118 ") and name in got[0], got)
-
-    def test_a_wrong_mode_changes_nothing(self):
-        with self.assertRaises(MacroError):
-            switch({"MODE": "ALL"})
-
 
 if __name__ == "__main__":
     unittest.main()
