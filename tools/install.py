@@ -906,6 +906,46 @@ def pending_actions(p, selected, changes, resumed=()):
     return out
 
 
+# ------------------------------------------------------------------ modules that left the project
+# An update used to leave them running on the printer without a word (algo-app-recycle, seen on 27.11.2026). They are
+# taken off now - but only files in a version this project released (LOCK-history.json).
+RETIRED = (
+    {"id": "algo-app-recycle", "since": "1.4.1", "service": "q2-algo-recycle.service",
+     "folder": "/usr/local/lib/q2-algo-recycle",
+     "files": ("/etc/systemd/system/q2-algo-recycle.service",
+               "/usr/local/lib/q2-algo-recycle/q2_algo_recycle.sh")},
+)
+
+
+def find_retired(p):
+    """[(module, its files on the printer)] to take off. A module with a changed file is reported and left alone."""
+    history = load_history()
+    found = []
+    for m in RETIRED:
+        shas = {path: p.sha(path) for path in m["files"]}
+        present = [path for path in m["files"] if shas[path] is not None]
+        changed = [path for path in present if shas[path] not in history.get(path, [])]
+        if changed:
+            print("  left alone: %s left the project in %s, but this file is not a version of ours: %s"
+                  % (m["id"], m["since"], ", ".join(changed)))
+        elif present:
+            found.append((m, present))
+    return found
+
+
+def remove_retired(p, found):
+    if not found:
+        return
+    check_idle(p)  # the question before may have been open for a long time
+    for m, present in found:
+        p.action(["systemctl", "disable", "--now", m["service"]], check=False)
+        for path in present:
+            p.remove(path)
+        p.action(["rmdir", m["folder"]], check=False)  # stays when something else is in it
+        p.action(["systemctl", "daemon-reload"], check=False)
+        print("Removed %s (no longer part of the project since %s)." % (m["id"], m["since"]))
+
+
 # ------------------------------------------------------------------ install / uninstall
 def progress(what, n, total):
     """One line that counts up, e.g. "Backup  12/203  [#####-----]"; a new line at the end."""
@@ -1198,6 +1238,7 @@ def do_uninstall(p, backup):
     found = backup if isinstance(backup, list) else [backup]
     files, all_actions, complete = merged_record(found)
     check_idle(p)
+    remove_retired(p, find_retired(p))
     if not complete:
         print("Note: no backup of a first install of this printer was found (lost, or made in another project\n"
               "folder). Files that were already ours before the oldest backup cannot be put back from it;\n"
@@ -1245,6 +1286,7 @@ def do_uninstall_stock(p, selected):
 
     Only files that are a version of ours are touched; anything else is reported and left."""
     check_idle(p)
+    remove_retired(p, find_retired(p))
     files, owners = build.build(selected)
     index = firmware.load_index()["files"]
     history = load_history()
@@ -1477,13 +1519,19 @@ def main(argv=None):
             extra.append("phone-notifications")
         selected = keep_installed(p, select(args.skip, extra), args.skip)
         changes, resumed, actions = show_plan(p, selected, args.host)
+        retired = find_retired(p)
+        for m, present in retired:
+            for path in present:
+                print("  %-9s %s  (%s, no longer part of the project)" % ("remove", path, m["id"]))
         if args.command == "plan":
             return 0
-        if changes or actions or resumed:
+        if changes or actions or resumed or retired:
             if input("Install now? Type yes: ").strip().lower() != "yes":
                 print("Nothing changed.")
                 return 0
-            do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
+            remove_retired(p, retired)
+            if changes or actions or resumed:
+                do_install(p, selected, changes, args.host, actions=actions, resumed=resumed)
         if "phone-notifications" in extra and "phone-notifications" not in args.skip:
             # asked for with --with / --notify yes: set it up right away (an update that only keeps it does not)
             configure_notify(p, args.host)

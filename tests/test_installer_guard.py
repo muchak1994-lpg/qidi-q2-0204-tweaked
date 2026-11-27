@@ -323,5 +323,117 @@ class FactoryServiceTest(Base):
         self.check()
 
 
+# ------------------------------------------------------------------ a module that left the project is taken off
+class RetiredModuleTest(Base):
+    """algo-app-recycle left the project in 1.4.1, but an update left it running on the printer (27.11.2026)."""
+    UNIT = "/etc/systemd/system/q2-algo-recycle.service"
+    SCRIPT = "/usr/local/lib/q2-algo-recycle/q2_algo_recycle.sh"
+    DISABLE = ["systemctl", "disable", "--now", "q2-algo-recycle.service"]
+
+    def setUp(self):
+        super().setUp()
+        install.build.load_modules = lambda: [{"id": "base", "order": 1, "files": {}}]
+        install.load_history = lambda: {self.UNIT: [sha(b"unit\n")], self.SCRIPT: [sha(b"script\n")]}
+        self.p.close = lambda: None
+        self.asked = []
+
+    def put_it_on_the_printer(self, script=b"script\n"):
+        self.p.files[self.UNIT] = [b"unit\n", "root", "root", "644"]
+        self.p.files[self.SCRIPT] = [script, "root", "root", "755"]
+
+    def left(self):
+        return [path for path in (self.UNIT, self.SCRIPT) if path in self.p.files]
+
+    def run_main(self, command="install", answer="yes"):
+        saved = (install.SSHPrinter.open, install.show_plan)
+        install.SSHPrinter.open = classmethod(lambda cls, *a: self.p)
+        install.show_plan = lambda p, selected, host: ([], set(), [])
+        install.input = lambda question: self.asked.append(question) or answer
+        try:
+            argv = [command, "--host", "h", "--toolhead", "no", "--tailscale", "no", "--orca", "no"]
+            return self.quiet(install.main, argv)
+        finally:
+            install.SSHPrinter.open, install.show_plan = saved
+            del install.input
+
+    def test_an_update_stops_the_service_and_removes_its_files(self):
+        self.put_it_on_the_printer()
+        stopped_while_present = []
+        real = self.p.action
+
+        def action(argv, check=True):
+            if argv == self.DISABLE:
+                stopped_while_present.append(self.left())
+            return real(argv, check)
+
+        self.p.action = action
+        self.assertEqual(self.run_main(), 0)
+        self.assertEqual(len(self.asked), 1)  # nothing else to change, still asked first
+        self.assertEqual(stopped_while_present, [[self.UNIT, self.SCRIPT]])
+        self.assertEqual(self.left(), [])
+        self.assertIn(["systemctl", "daemon-reload"], self.p.actions)
+        self.assertIn(["rmdir", "/usr/local/lib/q2-algo-recycle"], self.p.actions)
+        self.assertIn("algo-app-recycle", self.out.getvalue())
+
+    def test_a_printer_without_it_is_not_asked_and_nothing_runs(self):
+        self.assertEqual(self.run_main(), 0)
+        self.assertEqual((self.asked, self.p.actions), ([], []))
+        self.assertNotIn("algo-app-recycle", self.out.getvalue())
+
+    def test_plan_names_it_and_changes_nothing(self):
+        self.put_it_on_the_printer()
+        self.assertEqual(self.run_main("plan"), 0)
+        self.assertIn(self.SCRIPT, self.out.getvalue())
+        self.assertEqual((self.left(), self.p.actions), ([self.UNIT, self.SCRIPT], []))
+
+    def test_answering_no_keeps_it(self):
+        self.put_it_on_the_printer()
+        self.assertEqual(self.run_main(answer="no"), 0)
+        self.assertEqual((self.left(), self.p.actions), ([self.UNIT, self.SCRIPT], []))
+
+    def test_a_script_changed_by_the_owner_is_left_alone_and_reported(self):
+        self.put_it_on_the_printer(script=b"my own version\n")
+        self.assertEqual(self.run_main(), 0)
+        self.assertEqual((self.left(), self.p.actions, self.asked), ([self.UNIT, self.SCRIPT], [], []))
+        self.assertIn("left alone", self.out.getvalue())
+
+    def test_a_print_started_before_yes_keeps_it(self):
+        self.put_it_on_the_printer()
+        saved = install.find_retired
+
+        def then_print(p):
+            found = saved(p)
+            self.p.state = "printing"
+            return found
+
+        install.find_retired = then_print
+        self.addCleanup(setattr, install, "find_retired", saved)
+        self.assertEqual(self.run_main(), 1)
+        self.assertEqual((self.left(), self.p.actions), ([self.UNIT, self.SCRIPT], []))
+
+    def test_both_uninstalls_remove_it_even_without_a_record_of_its_install(self):
+        backup = self.quiet(install.do_install, self.p, [], [], "h", backups=self.tmp)
+        self.put_it_on_the_printer()
+        self.quiet(install.do_uninstall, self.p, backup)
+        self.assertEqual(self.left(), [])
+        self.put_it_on_the_printer()
+        saved = install.build.build
+        install.build.build = lambda sel: ({}, {})
+        try:
+            self.quiet(install.do_uninstall_stock, self.p, [])
+        finally:
+            install.build.build = saved
+        self.assertEqual(self.left(), [])
+        self.assertEqual(self.p.actions.count(self.DISABLE), 2)
+
+
+class RetiredHistoryTest(unittest.TestCase):
+    def test_the_released_files_of_every_retired_module_are_still_known(self):
+        history = install.load_history()
+        for m in install.RETIRED:
+            for path in m["files"]:
+                self.assertTrue(history.get(path), "%s: no known version of %s" % (m["id"], path))
+
+
 if __name__ == "__main__":
     unittest.main()
