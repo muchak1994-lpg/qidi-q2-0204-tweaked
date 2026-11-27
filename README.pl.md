@@ -64,6 +64,10 @@ py tools/install.py install --host IP_DRUKARKI (kopia na komputerze, potem insta
 - Twoja kalibracja w `printer.cfg` zostaje: zmieniane są tylko nasze linie.
 - Kopia trafia do `backups/` na komputerze. Zachowaj ten folder.
 - Moduł można pominąć opcją `--skip MODUŁ` (lista: `py tools/build.py --list`).
+- Aktualizacja zachowuje moduły opcjonalne, które już są na drukarce (nie trzeba znowu wpisywać `--with`). `--skip`
+  pomija moduł w tym uruchomieniu; jego pliki zostają na drukarce, więc następne uruchomienie bez `--skip` weźmie go z powrotem.
+- Instalator sprawdza drukarkę jeszcze raz przed zapisem i przed każdym restartem: jeśli w międzyczasie ktoś zaczął druk,
+  zatrzymuje się, a Ty uruchamiasz go ponownie po druku.
 - Poprawka adresu MAC działa po następnym restarcie drukarki.
 
 ### Sprawdzenie akcelerometru głowicy (tylko odczyt)

@@ -64,6 +64,10 @@ py tools/install.py install --host PRINTER_IP  (backup on the PC, then install; 
 - Your calibration in `printer.cfg` is kept: only our lines are edited.
 - The backup goes to `backups/` on your PC. Keep that folder.
 - A module can be left out with `--skip MODULE` (list: `py tools/build.py --list`).
+- An update keeps the optional modules the printer already has (you do not type `--with` again). `--skip` leaves one out
+  of that run; its files stay on the printer, so a later run without `--skip` takes it up again.
+- The installer also looks again before it writes and before it restarts anything: if a print was started in the
+  meantime it stops, and you run it again after the print.
 - The installer remembers on the PC (`work/hash-cache-<printer>.json`) what the printer's files hashed to and hashes again only files that changed; `--rehash` hashes everything again for one run.
 - The Ethernet MAC fix takes effect after the next reboot.
 
