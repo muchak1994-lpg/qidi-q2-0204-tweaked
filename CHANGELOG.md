@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- **Six optional modules are now installed by default** (each can be left out with `--skip`): `printer-screen-view` and `printer-screen-touch` (the printer's screen in a Fluidd window; touch stays off in every new window, but whoever can open your Fluidd can then press the real screen), `algo-app-gate`, `algo-app-malloc` (effect not measured), `algo-app-stream-decrypt` and `journal-retention` (system log 7 days, up to 2 GB). An update of an existing installation installs those that are missing. Still optional: `phone-notifications`. Not tried yet: a print in the dark with `algo-app-gate`.
 - Installer: **`algo-app-recycle` is taken off the printer.** The module left the project in 1.4.1, but an update left its service switched on without a word. Install and both kinds of uninstall now stop `q2-algo-recycle.service` and remove its two files (`plan` lists them; a file you changed yourself is reported and left alone). Tested offline against a pretend printer; not tried on a real printer yet.
 
 ## 1.4.2 - 2026-11-27

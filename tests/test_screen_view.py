@@ -97,7 +97,7 @@ class ModuleTests(unittest.TestCase):
     def test_module_file(self):
         m = json.loads((MOD / "module.json").read_text(encoding="utf-8"))
         self.assertEqual(m["id"], "printer-screen-view")
-        self.assertIs(m["default"], False)          # optional
+        self.assertTrue(m.get("default", True))      # installed unless --skip
         self.assertFalse([a for a in m["actions"] if a[0] == "moonraker-db"])   # no camera entry: own window
         js = (MOD / "files" / "q2-screen-view.js").read_text(encoding="utf-8")
         self.assertIn("/webcam4/?action=snapshot", js)

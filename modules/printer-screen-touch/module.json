@@ -1,8 +1,7 @@
 {
  "id": "printer-screen-touch",
  "order": 151,
- "default": false,
- "title": "Fluidd: click in the 'Printer screen' window to touch the printer's real screen (optional, off in every new window)",
+ "title": "Fluidd: click in the 'Printer screen' window to touch the printer's real screen (off in every new window)",
  "files": {
   "/usr/local/lib/q2-screen/q2_touch.py": {
    "source": "files/q2_touch.py"
@@ -22,7 +21,7 @@
    ]
   }
  },
- "note": "OPTIONAL, needs printer-screen-view (install both: --with printer-screen-view --with printer-screen-touch). Adds a 'Touch off/on' button to the Fluidd 'Printer screen' window. Touch is OFF every time the window is opened; after you switch it on, a click in the picture presses the same place on the printer's real touch screen (the printer sees an ordinary finger: it can wake the screen, press Home, Stop, Pause, move axes...). While the screen sleeps the first tap only wakes it. A small separate service (q2-screen-touch, root, 127.0.0.1:8082, shown by Fluidd's web server as /webcam3/) writes the touch events to the Goodix panel; the picture service stays look-only. It accepts only JSON from the same site, at most 4 taps a second, positions inside the picture. Uses ~10 MB RAM while installed. Coordinates are 1:1 screen pixels: one test of 06.11.2026 (touch point 160,200 pressed 'Cancel' at pixel 160,200); not yet tried from the Fluidd window. Uninstall removes the service and the files.",
+ "note": "On by default (--skip printer-screen-touch leaves it out); needs printer-screen-view. Adds a 'Touch off/on' button to the Fluidd 'Printer screen' window. Touch is OFF every time the window is opened; after you switch it on, a click in the picture presses the same place on the printer's real touch screen (the printer sees an ordinary finger: it can wake the screen, press Home, Stop, Pause, move axes...). While the screen sleeps the first tap only wakes it. A small separate service (q2-screen-touch, root, 127.0.0.1:8082, shown by Fluidd's web server as /webcam3/) writes the touch events to the Goodix panel; the picture service stays look-only. It accepts only JSON from the same site, at most 4 taps a second, positions inside the picture. Uses ~10 MB RAM while installed. Coordinates are 1:1 screen pixels: one test of 06.11.2026 (touch point 160,200 pressed 'Cancel' at pixel 160,200); tried from the Fluidd window on 22.11.2026 (menu, Home, settings), not during a print. Uninstall removes the service and the files.",
  "actions": [
   [
    "systemctl",

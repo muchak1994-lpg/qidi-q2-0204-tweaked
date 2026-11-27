@@ -1,8 +1,7 @@
 {
  "id": "algo-app-gate",
  "order": 153,
- "default": false,
- "title": "AI service: dark camera frames (case light off) are not shown to the noodle model (optional, runs inside the service)",
+ "title": "AI service: dark camera frames (case light off) are not shown to the noodle model (runs inside the service)",
  "files": {
   "/usr/local/bin/algo_app/_internal/cv2/q2gate/__init__.py": {
    "source": "files/q2gate/__init__.py"
@@ -11,5 +10,5 @@
  "restart": [
   "algo_app"
  ],
- "note": "OPTIONAL. Install with: --with algo-app-gate. In the dark (case light off) the noodle model reports false noodle: it reads the toolhead LEDs as noodle (22.11: 3.2 % of 652 dark frames at the MEDIUM threshold, 0 of 326 light frames). This module adds one folder to OpenCV's package inside the AI service (_internal/cv2/q2gate/); OpenCV's loader imports it at the end of 'import cv2', and it makes cv2.VideoCapture.read() return a uniform dark grey frame (value 19) instead of any frame whose mean grey value is below 22. Light frames are passed on untouched. No file of QIDI's or OpenCV's is edited and 'main' stays the original. Side effect: the AI service's own picture of a dark frame (/capture, its recordings) is that grey frame. Log lines in /var/log/algo_app/app_*.log: 'q2gate: active ...' at the first frame, 'q2gate: dark frame replaced ...' for the first and every 300th dark frame. Off switch without a restart: a file /etc/q2-algo-gate.conf containing the word 'off' (also: threshold=22 fill=19 log_every=300; looked at every 30 s). A systemd environment Q2_GATE=off leaves OpenCV untouched. Takes effect when the AI service restarts (the installer does that). Uninstall removes the file; an empty folder cv2/q2gate/__pycache__ may stay behind and does nothing. Not measured on the printer yet."
+ "note": "On by default (--skip algo-app-gate leaves it out). In the dark (case light off) the noodle model reports false noodle: it reads the toolhead LEDs as noodle (22.11: 3.2 % of 652 dark frames at the MEDIUM threshold, 0 of 326 light frames). This module adds one folder to OpenCV's package inside the AI service (_internal/cv2/q2gate/); OpenCV's loader imports it at the end of 'import cv2', and it makes cv2.VideoCapture.read() return a uniform dark grey frame (value 19) instead of any frame whose mean grey value is below 22. Light frames are passed on untouched. No file of QIDI's or OpenCV's is edited and 'main' stays the original. Side effect: the AI service's own picture of a dark frame (/capture, its recordings) is that grey frame. Log lines in /var/log/algo_app/app_*.log: 'q2gate: active ...' at the first frame, 'q2gate: dark frame replaced ...' for the first and every 300th dark frame. Off switch without a restart: a file /etc/q2-algo-gate.conf containing the word 'off' (also: threshold=22 fill=19 log_every=300; looked at every 30 s). A systemd environment Q2_GATE=off leaves OpenCV untouched. Takes effect when the AI service restarts (the installer does that). Uninstall removes the file; an empty folder cv2/q2gate/__pycache__ may stay behind and does nothing. Active on the author's printer; in real prints with the light on it let normal frames through, a print in the dark has NOT been tried."
 }

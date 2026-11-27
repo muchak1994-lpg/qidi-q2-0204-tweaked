@@ -10,11 +10,11 @@ Społecznościowe poprawki i drobne ulepszenia dla drukarki 3D **QIDI Q2** z fir
 
 ## Co naprawia
 
-79 modułów (72 instalowane domyślnie, 7 opcjonalnych przez `--with`): program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
+79 modułów (78 instalowanych domyślnie; `phone-notifications` jest opcjonalny, przez `--with`): program ekranu (kolejka druku z 03.02, bez okienka aktualizacji, dark mode światła,
 poprawki suszenia filamentu), poprawki Klippera (powtórzenia pomiaru siatki, bazowanie, fuzzy skin, wentylator
 hotendu, grzałki i próg wentylatorów Boxa QIDI, błędy MCU, bezpieczny zapis ustawień i inne, kilka z oficjalnego
 Klippera), makra (strażnik bazowania Z, temperatura ładowania po cieplejszym filamencie, suszenie z Fluidda),
-poprawki Moonrakera i Fluidda, stały MAC Ethernetu oraz brakujące biblioteki AI kamery.
+poprawki Moonrakera i Fluidda, stały MAC Ethernetu, brakujące biblioteki AI kamery, poprawki pamięci usługi AI, ekran drukarki we Fluidd (podgląd i dotyk) oraz dłuższy dziennik systemowy.
 **Pełna lista z problemem, który rozwiązuje każdy moduł: [docs/FIXES.pl.md](docs/FIXES.pl.md).**
 
 ## Zasady

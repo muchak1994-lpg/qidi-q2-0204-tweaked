@@ -9,12 +9,28 @@ import sys
 import unittest
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 import build  # noqa: E402
 import install  # noqa: E402
 
-OPTIONAL = [m["id"] for m in build.load_modules() if not m.get("default", True)]
+REAL = build.load_modules()
+OPTIONAL = [m["id"] for m in REAL if not m.get("default", True)]
+# The questions are tested with one made-up optional module asked first, however many real ones are optional.
+STAND_IN = {"id": "stand-in-extra", "order": 0, "default": False, "title": "a made-up extra", "files": {}}
+ASKABLE = [STAND_IN["id"]] + OPTIONAL
+
+
+class DefaultSetTests(unittest.TestCase):
+    def test_only_what_needs_a_choice_of_the_user_stays_optional(self):
+        self.assertEqual(sorted(OPTIONAL), ["phone-notifications"])
+
+    def test_the_screen_window_the_ai_service_modules_and_the_log_come_with_every_install(self):
+        selected = {m["id"] for m in install.select([])}
+        for mid in ("printer-screen-view", "printer-screen-touch", "algo-app-gate", "algo-app-malloc",
+                    "algo-app-stream-decrypt", "journal-retention"):
+            self.assertIn(mid, selected)
 
 
 class Recorder:
@@ -25,7 +41,7 @@ class Recorder:
         self.log = []
 
     def ask(self, question):
-        mid = max((i for i in OPTIONAL if i in question), key=len)  # longest id: one id can be the start of another
+        mid = max((i for i in ASKABLE if i in question), key=len)  # longest id: one id can be the start of another
         self.log.append(("ask", mid))
         return self.answers.get(mid, False)
 
@@ -49,19 +65,23 @@ def run(rec, interactive=True, skip=(), notify="ask", extra=()):
 
 
 class OptionalStepTest(unittest.TestCase):
+    def setUp(self):
+        patch = mock.patch.object(build, "load_modules", lambda: [STAND_IN] + REAL)
+        patch.start()
+        self.addCleanup(patch.stop)
+
     def test_there_are_optional_modules_including_phone_notifications(self):
         self.assertIn("phone-notifications", OPTIONAL)
-        self.assertGreaterEqual(len(OPTIONAL), 2)
 
     def test_each_module_is_asked_in_turn_and_no_goes_to_the_next_question(self):
         rec = Recorder()
         run(rec)
         asked = [x for kind, x in rec.log if kind == "ask"]
-        self.assertEqual(asked, [m for m in OPTIONAL if m != "phone-notifications"])
+        self.assertEqual(asked, [m for m in ASKABLE if m != "phone-notifications"])
         self.assertNotIn("round", [k for k, _ in rec.log])
 
     def test_yes_installs_right_away_before_the_next_question(self):
-        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
+        first = STAND_IN["id"]
         rec = Recorder(answers={first: True})
         run(rec)
         kinds = [k for k, _ in rec.log]
@@ -71,7 +91,7 @@ class OptionalStepTest(unittest.TestCase):
         self.assertGreater(len(rec.log), i + 1)                 # ... and only then the next question
 
     def test_modules_installed_earlier_in_the_run_stay_in_the_selection(self):
-        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
+        first = STAND_IN["id"]
         rec = Recorder(answers={first: True}, notify=True)
         run(rec)
         rounds = [x for k, x in rec.log if k == "round"]
@@ -92,7 +112,7 @@ class OptionalStepTest(unittest.TestCase):
         self.assertNotIn("configure", [k for k, _ in rec.log])
 
     def test_no_questions_without_a_window_to_ask_in(self):
-        rec = Recorder(answers={m: True for m in OPTIONAL}, notify=True)
+        rec = Recorder(answers={m: True for m in ASKABLE}, notify=True)
         run(rec, interactive=False)
         self.assertEqual([k for k, _ in rec.log if k in ("ask", "round", "configure")], [])
         self.assertIn(("wanted", "no"), rec.log)                   # --notify ask without a window means no
@@ -103,7 +123,7 @@ class OptionalStepTest(unittest.TestCase):
         self.assertIn(("wanted", "yes"), rec.log)
 
     def test_skipped_and_already_selected_modules_are_not_asked(self):
-        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
+        first = STAND_IN["id"]
         rec = Recorder()
         run(rec, skip=[first])
         self.assertNotIn(first, [x for k, x in rec.log if k == "ask"])
@@ -115,7 +135,7 @@ class OptionalStepTest(unittest.TestCase):
         self.assertNotIn("wanted", [k for k, _ in rec.log])
 
     def test_already_installed_says_so_and_goes_on(self):
-        first = [m for m in OPTIONAL if m != "phone-notifications"][0]
+        first = STAND_IN["id"]
         rec = Recorder(answers={first: True}, nothing_to_do=[first])
         run(rec)
         self.assertIn("wanted", [k for k, _ in rec.log])     # went on to the next question

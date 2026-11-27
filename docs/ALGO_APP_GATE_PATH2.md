@@ -1,6 +1,6 @@
 # Bramka jasności dla `algo_app` - droga 2: kod wewnątrz procesu przez `cv2` (2026-11-22)
 
-Moduł opcjonalny `algo-app-gate` (`--with algo-app-gate`, `"default": false`, kolejność 153). **Nie zmienia ani jednego pliku QIDI ani OpenCV, `main` zostaje oryginalny.**
+Moduł `algo-app-gate` (domyślnie włączony od 27.11.2026, `--skip algo-app-gate` go pomija; kolejność 153). **Nie zmienia ani jednego pliku QIDI ani OpenCV, `main` zostaje oryginalny.**
 Napisany **bez żadnego kontaktu z drukarką** (zero SSH, curl, Moonrakera). Wszystko poniżej oznaczone **DOWÓD** zostało uruchomione na laptopie; **NIE SPRAWDZONE** = wymaga drukarki.
 Folder `ai-lab`, modele i klatki są poza repozytorium; w tym pliku i w kodzie nie ma żadnego klucza ani hasła do modeli, ani kodu QIDI.
 
@@ -102,7 +102,7 @@ Uwagi uczciwie: (1) 20 trafień zamiast 21 z `AI_MODELS_AUDIT.md`, bo tu klatki 
 ## 5. Instalacja i sprawdzenie na drukarce (NIE wykonywane - robi sesja główna, poza drukiem, za zgodą)
 
 ```
-py tools/install.py install --host <adres drukarki> --with algo-app-gate
+py tools/install.py install --host <adres drukarki>
 ```
 Instalator pokaże `new .../_internal/cv2/q2gate/__init__.py  (algo-app-gate)` i zrestartuje `algo_app`. Sprawdzenie (jako root, `sudo -n`):
 

@@ -515,7 +515,7 @@ class SourceAndModule(unittest.TestCase):
     def test_module_json(self):
         spec = json.loads((MOD / "module.json").read_text(encoding="utf-8"))
         self.assertEqual(spec["id"], "algo-app-stream-decrypt")
-        self.assertEqual(spec["default"], False)
+        self.assertTrue(spec.get("default", True))
         self.assertEqual(spec["restart"], ["algo_app"])
         (target, entry), = spec["files"].items()
         self.assertEqual(target, "/usr/local/bin/algo_app/_internal/cv2/q2stream/__init__.py")

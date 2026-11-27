@@ -510,7 +510,7 @@ class SourceAndModule(unittest.TestCase):
     def test_module_json(self):
         spec = json.loads((MOD / "module.json").read_text(encoding="utf-8"))
         self.assertEqual(spec["id"], "algo-app-gate")
-        self.assertEqual(spec["default"], False)
+        self.assertTrue(spec.get("default", True))
         self.assertEqual(spec["order"], 153)
         self.assertEqual(spec["restart"], ["algo_app"])
         (target, entry), = spec["files"].items()
