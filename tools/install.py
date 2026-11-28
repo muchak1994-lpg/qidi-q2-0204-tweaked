@@ -31,6 +31,7 @@ import posixpath
 import re
 import shlex
 import sys
+import tarfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -80,6 +81,11 @@ class PrinterBusy(InstallError):
 HASH_CHUNK = 40      # files per sha256sum command
 HASH_WORKERS = 3     # commands that run at the same time (separate SSH channels)
 FIND_FORMAT = "'%p|%s|%C@|%i\n'"   # path | size | ctime (nanoseconds) | inode: the printer's own identity of a file
+# A new file is first written beside its place under this ending (nothing on the printer reads such a name: not Klipper's
+# *.cfg and *.py, not systemd, not Fluidd), then swapped in with one rename. So a file is the old one or the new one.
+TMP_SUFFIX = ".q2tmp"
+BATCH_BYTES = 16 * 1024 * 1024   # files that travel in one upload: at most this much (a bigger file goes alone)
+BATCH_FILES = 50                 # and at most this many
 
 
 class HashCache:
@@ -126,6 +132,28 @@ class HashCache:
             self.dirty = False
         except OSError:
             pass  # a cache is a help, never a reason to stop
+
+
+def place_command(source, path, owner, group, mode):
+    """Shell commands (as root) that put the file `source` at `path`: copy beside it, make sure the copy is on the disk,
+    rename it over the old file. A cut at any moment leaves the old file or the new one, never a part of it."""
+    part = shlex.quote(path + TMP_SUFFIX)
+    return "mkdir -p %s && install -o %s -g %s -m %s %s %s && sync %s && mv -fT %s %s" % (
+        shlex.quote(posixpath.dirname(path)), shlex.quote(owner), shlex.quote(group), shlex.quote(mode),
+        shlex.quote(source), part, part, part, shlex.quote(path))
+
+
+def batches(items):
+    """The (path, data, ...) items cut into uploads of limited size and number, in the same order."""
+    batch, size = [], 0
+    for item in items:
+        if batch and (len(batch) >= BATCH_FILES or size + len(item[1]) > BATCH_BYTES):
+            yield batch
+            batch, size = [], 0
+        batch.append(item)
+        size += len(item[1])
+    if batch:
+        yield batch
 
 
 def hash_cache_file(printer_id, host):
@@ -176,20 +204,28 @@ class SSHPrinter:
         out.read()
         return out.channel.recv_exit_status() == 0
 
+    def _sudo_start(self, command):
+        """Start `command` as root; the three streams of the running command."""
+        if self.password is None:
+            command = "sudo -n sh -c %s" % shlex.quote(command)
+        else:
+            command = "sudo -S -p '' sh -c %s" % shlex.quote(command)
+        stdin, out, err = self.client.exec_command(command, timeout=900)
+        if self.password is not None:
+            stdin.write(self.password + "\n")
+            stdin.flush()
+        return stdin, out, err
+
     def _run(self, command, sudo=False, check=True, raw=False):
         """raw: run as is and return None on a non-zero exit."""
         if raw:
             _, out, _ = self.client.exec_command(command, timeout=60)
             data = out.read()
             return data if out.channel.recv_exit_status() == 0 else None
-        if sudo and self.password is None:
-            command = "sudo -n sh -c %s" % shlex.quote(command)
-        elif sudo:
-            command = "sudo -S -p '' sh -c %s" % shlex.quote(command)
-        stdin, out, err = self.client.exec_command(command, timeout=900)
-        if sudo and self.password is not None:
-            stdin.write(self.password + "\n")
-            stdin.flush()
+        if sudo:
+            stdin, out, err = self._sudo_start(command)
+        else:
+            stdin, out, err = self.client.exec_command(command, timeout=900)
         data = out.read()
         error = err.read().decode("utf-8", "replace")
         code = out.channel.recv_exit_status()
@@ -285,30 +321,89 @@ class SSHPrinter:
         out = self._run("stat -c '%%U %%G %%a' %s 2>/dev/null || true" % shlex.quote(path), sudo=True).decode()
         return out.split() or None
 
-    def install(self, data, path, owner, group, mode):
+    def _staging(self):
         if self.staging is None:
             self.staging = self._run("mktemp -d /tmp/q2t.XXXXXXXX").decode().strip()
-        tmp = posixpath.join(self.staging, "upload")
+        return self.staging
+
+    def _written(self, path, data, digest, key):
+        """Check what the printer says it holds now, and remember it in the hash cache."""
+        if digest != sha(data):
+            raise InstallError("verification failed after writing " + path)
+        if self.hash_cache is not None:
+            if key.count("|") == 2:
+                self.hash_cache.put(path, key, digest)
+            else:
+                self.hash_cache.drop(path)
+
+    def install(self, data, path, owner, group, mode):
+        tmp = posixpath.join(self._staging(), "upload")
         self.sftp.putfo(io.BytesIO(data), tmp)
         self._units = None  # what was remembered about services may be out of date now
         # one command: write, then print the digest and the identity of the file as it is on the printer
-        out = self._run("mkdir -p %s && install -o %s -g %s -m %s %s %s && rm -f %s && sha256sum %s && find -L %s -maxdepth 0 -printf %s" % (
-            shlex.quote(posixpath.dirname(path)), owner, group, mode, tmp, shlex.quote(path), tmp,
-            shlex.quote(path), shlex.quote(path), FIND_FORMAT), sudo=True).decode().splitlines()
-        if not out or out[0].partition("  ")[0] != sha(data):
-            raise InstallError("verification failed after writing " + path)
-        if self.hash_cache is not None:
-            parts = out[1].rsplit("|", 3) if len(out) > 1 else []
-            if len(parts) == 4:
-                self.hash_cache.put(path, "|".join(parts[1:]), sha(data))
-            else:
-                self.hash_cache.drop(path)
+        out = self._run("%s && rm -f %s && sha256sum %s && find -L %s -maxdepth 0 -printf %s" % (
+            place_command(tmp, path, owner, group, mode), shlex.quote(tmp), shlex.quote(path), shlex.quote(path),
+            FIND_FORMAT), sudo=True).decode().splitlines()
+        digest = out[0].partition("  ")[0] if out else ""
+        parts = out[1].rsplit("|", 3) if len(out) > 1 else []
+        self._written(path, data, digest, "|".join(parts[1:]))
+
+    def install_many(self, items, sending, written):
+        """Put many files [(path, data, owner, group, mode)] on the printer: one upload for all of them, then one
+        command that writes them one after another. sending() is called when the printer is about to start writing,
+        written(path) after each file the printer reports back and that matches."""
+        staging = self._staging()
+        folder = posixpath.join(staging, "batch")
+        pack = posixpath.join(staging, "batch.tar")
+        apply = posixpath.join(folder, "apply.sh")
+        script = ["set -e"]
+        archive = io.BytesIO()
+        with tarfile.open(fileobj=archive, mode="w", format=tarfile.GNU_FORMAT) as tar:
+            def add(name, content):
+                info = tarfile.TarInfo(name)
+                info.size, info.mode = len(content), 0o600
+                tar.addfile(info, io.BytesIO(content))
+
+            for n, (path, data, owner, group, mode) in enumerate(items):
+                add(str(n), data)
+                source = posixpath.join(folder, str(n))
+                # "|| exit": set -e does not act on a step that fails in the middle of an && chain
+                script.append(place_command(source, path, owner, group, mode) + " || exit 1")
+                script.append("rm -f %s" % shlex.quote(source))
+                script.append('echo; echo "Q2 %d $(sha256sum %s | cut -c1-64) $(find -L %s -maxdepth 0 -printf \'%%s|%%C@|%%i\')"'
+                              % (n, shlex.quote(path), shlex.quote(path)))
+            add("apply.sh", ("\n".join(script) + "\n").encode("utf-8"))
+        archive.seek(0)
+        self.sftp.putfo(archive, pack)
+        self._run("rm -rf %s && mkdir %s && tar -xf %s -C %s && rm -f %s" % tuple(
+            shlex.quote(x) for x in (folder, folder, pack, folder, pack)))
+        self._units = None
+        sending()
+        # 2>&1: one stream to read, so error text can never fill a second one and stall the printer's shell
+        _, out, err = self._sudo_start("sh %s 2>&1" % shlex.quote(apply))
+        done, said = 0, ""
+        for line in out:
+            text = line.decode("utf-8", "replace") if isinstance(line, bytes) else line
+            fields = text.split()
+            if len(fields) < 3 or fields[0] != "Q2" or fields[1] != str(done) or done >= len(items):
+                if fields:
+                    said = (said + text)[-400:]  # the end of what the commands said, for the error message
+                continue
+            path, data = items[done][0], items[done][1]
+            self._written(path, data, fields[2], fields[3] if len(fields) > 3 else "")
+            written(path)
+            done += 1
+        said += err.read().decode("utf-8", "replace")  # sudo's own complaints
+        code = out.channel.recv_exit_status()
+        if code != 0 or done < len(items):
+            raise InstallError("writing failed on the printer (%d) after %d of %d file(s), at %s\n%s" % (
+                code, done, len(items), items[min(done, len(items) - 1)][0], said.strip()[-400:]))
 
     def remove(self, path):
         self._units = None
         if self.hash_cache is not None:
             self.hash_cache.drop(path)
-        self._run("rm -f %s" % shlex.quote(path), sudo=True)
+        self._run("rm -f %s %s" % (shlex.quote(path), shlex.quote(path + TMP_SUFFIX)), sudo=True)
 
     def action(self, argv, check=True):
         self._units = None  # an action may change a service: ask again next time
@@ -871,12 +966,37 @@ def resolve_action(p, action):
     return action
 
 
+def confirm_pending(p, found):
+    """Files a run sent to the printer without hearing back (the connection was lost): ask the printer which of them
+    it wrote, and mark those as installed, so that the next run and the uninstall know about them."""
+    if p is None:
+        return
+    for backup in found:
+        try:
+            record = json.loads((backup / "install.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        pending = [(path, e) for path, e in record.get("files", {}).items() if "pending" in e]
+        if not pending:
+            continue
+        for path, entry in pending:
+            current, old = p.sha(path), entry.get("old_sha256")
+            # a config file may have been saved again by the printer since: anything but the file from before counts.
+            # A record without these fields (another version, an edited file) proves nothing.
+            if current is not None and (current == entry.get("new_sha256") or (
+                    entry.get("kind") == "config" and old is not None and current != old)):
+                entry["installed"] = True
+            del entry["pending"]
+        (backup / "install.json").write_text(json.dumps(record, indent=1), encoding="utf-8")
+
+
 def unfinished_modules(host, backups=BACKUPS, p=None):
     """Modules whose files the newest run put on the printer before it stopped, or that it was itself
     finishing for an earlier run (restarts still owed)."""
     found = host_backups(host, backups, p)
     if not found:
         return set()
+    confirm_pending(p, found)
     record = json.loads((found[-1] / "install.json").read_text(encoding="utf-8"))
     if record.get("complete", True):
         return set()
@@ -958,6 +1078,37 @@ def progress(what, n, total):
     sys.stdout.flush()
 
 
+def write_changes(p, changes, record, save):
+    """The files of the plan onto the printer, each marked in the record when it is there."""
+    items = []
+    for path, new, _, _ in changes:
+        st = record["files"][path].get("stat")
+        items.append((path, new) + tuple(st if st else default_owner(path)))
+    count = [0]
+
+    def written(path):
+        entry = record["files"][path]
+        entry.pop("pending", None)
+        entry["installed"] = True
+        save()
+        count[0] += 1
+        progress("Installing", count[0], len(items))
+
+    if not hasattr(p, "install_many"):  # one at a time
+        for path, new, owner, group, mode in items:
+            p.install(new, path, owner, group, mode)
+            written(path)
+        return
+    progress("Installing", 0, len(items))
+    for batch in batches(items):
+        def sending(batch=batch):
+            for item in batch:  # from now on the printer may hold these, whether or not we hear about it
+                record["files"][item[0]]["pending"] = True
+            save()
+
+        p.install_many(batch, sending, written)
+
+
 def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resumed=None):
     check_idle(p)  # before the first write: "Install now?" may be answered long after the check at the start
     if resumed is None:
@@ -998,13 +1149,7 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
     restarts = {r for m in selected for r in m.get("restart", []) if m["id"] in touched}
     stopped_busy = False
     try:
-        for n, (path, new, kind, mods) in enumerate(changes, 1):
-            progress("Installing", n, len(changes))
-            st = record["files"][path].get("stat")
-            owner, group, mode = st if st else default_owner(path)
-            p.install(new, path, owner, group, mode)
-            record["files"][path]["installed"] = True
-            save()
+        write_changes(p, changes, record, save)
         print("Installed %d file(s)" % len(changes))
         # Look again now the files are on the printer: "enable this service" was judged "not there, nothing to do"
         # when the plan was made, before the service file existed.
@@ -1043,7 +1188,8 @@ def do_install(p, selected, changes, host, backups=BACKUPS, actions=None, resume
         record["complete"] = True
     finally:
         save()
-        if not record["complete"] and not stopped_busy and (resumed or any(e.get("installed") for e in record["files"].values())):
+        if not record["complete"] and not stopped_busy and (
+                resumed or any(e.get("installed") or e.get("pending") for e in record["files"].values())):
             print("\nNOT FINISHED. Some files are already on the printer, but the services were not restarted.\n"
                   "Do not print yet: run the installer again (it continues where it stopped), or turn the\n"
                   "printer off and on. Backup of this run: %s" % backup)
@@ -1236,6 +1382,7 @@ def merged_record(found):
 
 def do_uninstall(p, backup):
     found = backup if isinstance(backup, list) else [backup]
+    confirm_pending(p, found)
     files, all_actions, complete = merged_record(found)
     check_idle(p)
     remove_retired(p, find_retired(p))

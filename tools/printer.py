@@ -51,7 +51,8 @@ def connect_with_key(host, user, port=22):
     import paramiko
     client = _client()
     try:
-        client.connect(host, port=port, username=user, timeout=15, allow_agent=True, look_for_keys=True)
+        client.connect(host, port=port, username=user, timeout=15, allow_agent=True, look_for_keys=True,
+                       compress=True)  # the files shrink to about half: much faster over a slow link
     except paramiko.AuthenticationException:
         client.close()
         return None
@@ -72,7 +73,7 @@ def connect(host, user, port=22, password=None):
         password = getpass.getpass("SSH password for %s@%s: " % (user, host))
     client = _client()
     client.connect(host, port=port, username=user, password=password,
-                   timeout=15, allow_agent=False, look_for_keys=False)
+                   timeout=15, allow_agent=False, look_for_keys=False, compress=True)
     return client
 
 

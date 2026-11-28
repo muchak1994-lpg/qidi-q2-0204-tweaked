@@ -79,8 +79,10 @@ class Remote:
                 out += (__import__("base64").b64encode(self.files[p]) if p in self.files else b"MISSING") + b"\n"
             return out
         if "install -o" in command:
-            parts = shlex.split(command.split(" && ")[1])
-            owner, group, mode, tmp, path = parts[2], parts[4], parts[6], parts[7], parts[8]
+            steps = command.split(" && ")
+            parts = shlex.split(steps[1])
+            owner, group, mode, tmp = parts[2], parts[4], parts[6], parts[7]
+            path = shlex.split(steps[3])[-1]  # written beside the file, then renamed over it: "mv -fT part path"
             self.touch(path, self.uploads[tmp])
             self.inode.setdefault(path, 900 + len(self.inode))
             self.owner[path] = (owner, group, mode)
